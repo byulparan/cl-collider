@@ -30,7 +30,7 @@ live coding demo: <https://www.youtube.com/watch?v=xzTH_ZqaFKI>
 	
 	(defsynth sine-wave ((note 60))
 	  (let* ((freq (midicps note))
-	     	 (sig (sin-osc.ar [freq (+ freq 2)] 0 .2)))
+	            (sig (sin-osc.ar [freq (+ freq 2)] 0 .2)))
         (out.ar 0 sig)))
 
 	(defparameter *synth* (sine-wave))
@@ -53,8 +53,8 @@ live coding demo: <https://www.youtube.com/watch?v=xzTH_ZqaFKI>
 
 	(defsynth saw-synth ((note 60) (dur 4.0))
 	   (let* ((env (env-gen.kr (env [0 .2 0] [(* dur .2) (* dur .8)]) :act :free))
-	          (freq (midicps note))
-         	  (sig (lpf.ar (saw.ar freq env) (* freq 2))))
+	             (freq (midicps note))
+	    		 (sig (lpf.ar (saw.ar freq env) (* freq 2))))
 		  (out.ar 0 [sig sig])))
 
 	(defun make-melody (time n &optional (offset 0))
@@ -72,8 +72,8 @@ live coding demo: <https://www.youtube.com/watch?v=xzTH_ZqaFKI>
 	;; re-define saw-synth. it's synthdef file write to *sc-synthdefs-path*.
 	(defsynth saw-synth ((note 60) (dur 4.0))
 	   (let* ((env (env-gen.kr (env [0 .2 0] [(* dur .2) (* dur .8)]) :act :free))
-	          (freq (midicps note))
-         	  (sig (lpf.ar (saw.ar freq env) (* freq 2))))
+	             (freq (midicps note))
+                 (sig (lpf.ar (saw.ar freq env) (* freq 2))))
 		  (out.ar 0 [sig sig])))
 
 	;; redering audio-file.
