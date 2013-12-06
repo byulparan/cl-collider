@@ -2,12 +2,12 @@
 (in-package #:collider)
 
 (defugen (line "Line")
-    (&optional (start 0.0) (end 1.0) (dur 1.0) &key (mul 1.0) (add 0.0) (act 0.0))
+    (&optional (start 0.0) (end 1.0) (dur 1.0) &key (mul 1.0) (add 0.0) (act :no-action))
   ((:ar (madd (multinew new 'ugen start end dur (act act)) mul add))
    (:kr (madd (multinew new 'ugen start end dur (act act)) mul add))))
 
 (defugen (x-line "XLine")
-    (&optional (start 1.0) (end 2.0) (dur 1.0) &key (mul 1.0) (add 0.0) (act 0.0))
+    (&optional (start 1.0) (end 2.0) (dur 1.0) &key (mul 1.0) (add 0.0) (act :no-action))
   ((:ar (madd (multinew new 'ugen start end dur (act act)) mul add))
    (:kr (madd (multinew new 'ugen start end dur (act act)) mul add))))
 

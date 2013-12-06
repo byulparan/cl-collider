@@ -32,14 +32,14 @@
 (defgeneric make-list-from-env (env))
 
 (defugen (env-gen "EnvGen")
-    (envelope &key (gate 1) (level-scale 1) (level-bias 0) (time-scale 1) (act 0.0))
+    (envelope &key (gate 1) (level-scale 1) (level-bias 0) (time-scale 1) (act :no-action))
   ((:ar (apply 'multinew new 'ugen (append (list gate level-scale level-bias time-scale (act act))
 				 (make-list-from-env envelope))))
    (:kr (apply 'multinew new 'ugen (append (list gate level-scale level-bias time-scale (act act))
 				 (make-list-from-env envelope))))))
 
 (defugen (linen "Linen")
-    (&optional (gate 1.0) &key (attack-time 0.01) (sus-level 1.0) (release-time 1.0) (act 0.0))
+    (&optional (gate 1.0) &key (attack-time 0.01) (sus-level 1.0) (release-time 1.0) (act :no-action))
   ((:kr (multinew new 'ugen gate attack-time sus-level release-time (act act)))))
 
 

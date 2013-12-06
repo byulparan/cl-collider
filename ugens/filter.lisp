@@ -233,7 +233,7 @@
   :check-fn #'check-same-rate-as-first-input)
 
 (defugen (detect-silence "DetectSilence")
-    (&optional (in 0.0) (amp 0.0001) &key (time 0.1) (act 0))
+    (&optional (in 0.0) (amp 0.0001) &key (time 0.1) (act :no-action))
   ((:ar (multinew new 'pure-ugen in amp time (act act)))
    (:kr (multinew new 'pure-ugen in amp time (act act))))
   :check-fn #'check-same-rate-as-first-input)

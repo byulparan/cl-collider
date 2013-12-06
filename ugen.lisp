@@ -87,10 +87,22 @@
 
 
 (defun act (act)
-  (ecase act 
+  (ecase act
+    (:no-action 0)
     (:pause 1)
     (:free 2)
-    (t 0)))
+    (:free-and-before 3)
+    (:free-and-after 4)
+    (:free-and-group-before 5)
+    (:free-and-group-after 6)
+    (:free-upto-this 7)
+    (:free-from-this-on 8)
+    (:free-pause-before 9)
+    (:free-pause-after 10)
+    (:free-and-group-before-deep 11)
+    (:free-and-group-after-deep 12)
+    (:free-children 13)
+    (:free-group 14)))
 
 ;;; UGen  ---------------------------------------------------------------------------------------
 

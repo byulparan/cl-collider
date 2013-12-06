@@ -15,12 +15,12 @@
 	(error (format nil "reset input is not ~a rate : ~a ~a"
 		       (rate ugen) (nth 1 (inputs ugen)) (rate (nth 1 (inputs ugen))))))))
 
-(defugen (duty "Duty") (&optional (dur 1.0) &key (reset 0.0) (level 1.0) (action 0))
-  ((:ar (multinew new 'ugen dur reset action level))
-   (:kr (multinew new 'ugen dur reset action level)))
+(defugen (duty "Duty") (&optional (dur 1.0) &key (reset 0.0) (level 1.0) (act :no-action))
+  ((:ar (multinew new 'ugen dur reset (act act) level))
+   (:kr (multinew new 'ugen dur reset (act act) level)))
   :check-fn #'check-duty)
 
-(defugen (t-duty "TDuty") (&optional (dur 1.0) &key (reset 0.0) (level 1.0) (act 0) (gap-first 0))
+(defugen (t-duty "TDuty") (&optional (dur 1.0) &key (reset 0.0) (level 1.0) (act :no-action) (gap-first 0))
   ((:ar (multinew new 'ugen dur reset (act act) level gap-first))
    (:kr (multinew new 'ugen dur reset (act act) level gap-first)))
   :check-fn #'check-duty)
@@ -28,8 +28,8 @@
 
 (defugen (demand-envgen "DemandEnvGen")
     (level dur &key (shape 1) (curve 0) (gate 1.0) (reset 1.0)
-	   (level-scale 1.0) (level-bias 0.0) (time-scale 1.0) (action 0.0))
-  ((:kr (multinew new 'ugen level dur shape curve gate reset level-scale level-bias time-scale action))
+	   (level-scale 1.0) (level-bias 0.0) (time-scale 1.0) (act :no-action))
+  ((:kr (multinew new 'ugen level dur shape curve gate reset level-scale level-bias time-scale (act act)))
    (:ar (progn
 	  (when (or (eql (rate gate) :audio)
 		    (eql (rate reset) :audio))
@@ -37,7 +37,7 @@
 	      (setf gate (k2a.ar gate)))
 	    (when (not (eql (rate reset) :audio))
 	      (setf reset (k2a.ar reset))))
-	  (multinew new 'ugen level dur shape curve gate reset level-scale level-bias time-scale action)))))
+	  (multinew new 'ugen level dur shape curve gate reset level-scale level-bias time-scale (act act))))))
 
 
 (defclass dugen (ugen)

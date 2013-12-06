@@ -2,7 +2,7 @@
 (in-package #:collider)
 
 (defugen (play-buf "PlayBuf")
-    (chanls &optional (bufnum 0) (rate 1.0) &key (trig 1.0) (start-pos 0.0) (loop 0.0) (act 0.0))
+    (chanls &optional (bufnum 0) (rate 1.0) &key (trig 1.0) (start-pos 0.0) (loop 0.0) (act :no-action))
   ((:ar (multinew new 'multiout-ugen chanls bufnum rate trig start-pos loop (act act)))
    (:kr (multinew new 'multiout-ugen chanls bufnum rate trig start-pos loop (act act)))))
 
@@ -44,7 +44,7 @@
 
 (defugen (record-buf "RecordBuf")
     (input-array &optional (bufnum 0) &key (offset 0.0) (rec-level 1.0) (pre-level 0.0)
-		 (run 1.0) (loop 1.0) (trig 1.0) (act 0))
+		 (run 1.0) (loop 1.0) (trig 1.0) (act :no-action))
   ((:ar (multinew-list new 'ugen (append (list bufnum offset rec-level pre-level run loop trig (act act))
 					 (su:mklist input-array))))
    (:kr (multinew-list new 'ugen (append (list bufnum offset rec-level pre-level run loop trig (act act))
