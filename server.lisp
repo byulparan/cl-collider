@@ -326,7 +326,7 @@
 
 (defmethod bootup-server-process ((rt-server external-server))
   #+ccl (unless (sync-tool rt-server)
-	  (setf (sync-tool rt-server) (cb:make-sync-tool #'osc::osc-time)))
+	  (setf (sync-tool rt-server) (cb:make-sync-tool #'osc::osc-time "sync-to-osc-time thread")))
   (let ((sock nil))			;verify port-number.
     (handler-case (setf sock (usocket:socket-connect nil nil :protocol :datagram :local-port (port rt-server)))
       (error nil
