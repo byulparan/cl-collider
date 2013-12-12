@@ -25,7 +25,7 @@
 
 (defun make-osc-device (name)
   (let ((device (make-instance 'osc-device
-			       :name name
+			       :name name 
 			       :socket (usocket:socket-connect nil nil
 							       :protocol :datagram)
 			       :reply-handle-table (make-hash-table :test #'equalp))))

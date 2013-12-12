@@ -2,7 +2,7 @@
 (defpackage #:collider
   (:use #:cl)
   (:nicknames :sc)
-  (:import-from :cb #:now #:callback)
+  (:import-from :cb #:now #:callback #:quant)
   #+ccl (:import-from :ccl #:make-id-map #:assign-id-map-id #:id-map-free-object)
   #+sbcl (:lock t)
   (:export #:*s*
@@ -34,6 +34,8 @@
 	   #:server-quit
 	   #:send-message
 	   #:send-bundle
+	   #:addr
+	   #:lisp-port
 	   #:synth-group
 	   #:control-get
 	   #:control-set

@@ -177,7 +177,7 @@
                      (second (multiple-value-list  
                               (floor (/ (get-internal-real-time) 
                                         internal-time-units-per-second)))))))))
-    ((numberp utime) (encode-int64 (unix-time->timetag utime)))
+    ((numberp utime) (encode-int64 (make-timetag utime)))
     (t (error "the time or subsecond given is not an integer or float"))))
 
 (defun decode-timetag (timetag)
@@ -186,31 +186,23 @@
       (decode-uint64 timetag)))
 
 #+ccl
-(defun get-unix-time ()
+(defun osc-time ()
   (ccl:rlet ((tv :timeval))
     (ccl::gettimeofday tv)
     (multiple-value-bind (secs usecs)
 	(values (ccl:pref tv :timeval.tv_sec) (ccl:pref tv :timeval.tv_usec))
-      (+ secs (microseconds->subsecs usecs)))))
+      (+ (+ secs +unix-epoch+) (microseconds->subsecs usecs)))))
 
-#+sbcl
-(defun get-unix-time ()
-  (multiple-value-bind (m secs usecs)
-      (sb-unix:unix-gettimeofday)
-    (declare (ignore m))
-    (+ secs (microseconds->subsecs usecs))))
+(defun make-timetag (osc-time)
+  (multiple-value-bind (secs subsecs)
+      (floor osc-time)
+    (osc-secs+usecs->timetag secs (subsecs->microseconds subsecs))))
 
-
-(defun unix-secs+usecs->timetag (secs usecs)
+(defun osc-secs+usecs->timetag (secs usecs)
   (setf secs (ash secs 32))   ; Make seconds the top
   (let ((usec-offset
 	     (round (* usecs +2^32/MILLION+))))	; Fractional part.
 	(+ secs usec-offset)))
-
-(defun unix-time->timetag (unix-time)
-  (multiple-value-bind (secs subsecs)
-      (floor unix-time)
-    (unix-secs+usecs->timetag secs (subsecs->microseconds subsecs))))
 
 (defun subsecs->microseconds (subsecs)
   (round (* subsecs +usecs+)))

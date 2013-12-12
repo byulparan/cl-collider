@@ -3,7 +3,7 @@
 (in-package #:sc)
 
 (defun run-program (cmd args &key wait)
-  #+ccl (progn wait (ccl:run-program cmd args :output t))
+  #+ccl (ccl:run-program cmd args :wait wait :output t)
   #+sbcl (sb-ext:run-program cmd args :wait wait :output t))
 
 (defun make-semaphore ()

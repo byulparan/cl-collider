@@ -16,7 +16,6 @@
   :components ((:file "package")
 	       #+sbcl (:file "id-map")
 	       (:file "impl")
-	       (:file "time")
 	       (:file "osc")
 	       (:file "transmit")
 	       (:file "server")

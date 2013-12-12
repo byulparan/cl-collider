@@ -14,8 +14,6 @@
 (defvar *sc-synth-program* "scsynth"
   "scsynth program's path. If wrong path is given, scsynth is can't run.")
 
-(cb:set-timer-func #'osc::get-unix-time)
-
 ;;; -------------------------------------------------------
 ;;; Server - base class
 ;;; -------------------------------------------------------
@@ -295,6 +293,7 @@
    (port :initarg :port :accessor port :initform (error "server's port not specified."))
    (client-port :initarg :client-port :reader client-port)
    (osc-device :accessor osc-device)
+   #+ccl (sync-tool :initform nil :accessor sync-tool :allocation :class)
    (just-connect-p :initarg :just-connect-p :reader just-connect-p)))
 
 (defmethod print-object ((self external-server) stream)
@@ -310,6 +309,12 @@
     (error "~a's port ~a already bind to ~a" self (port self)  server))
   (push self *external-servers*))
 
+(defmethod addr ((server external-server))
+  (cons (host server) (port server)))
+
+(defmethod lisp-port ((server external-server))
+  (usocket:get-local-port (socket (osc-device server))))
+
 (defmethod is-local-p ((server external-server))
   (string= (host server) "127.0.0.1"))
 
@@ -320,14 +325,26 @@
   (setf (print-log-p (osc-device server)) v))
 
 (defmethod bootup-server-process ((rt-server external-server))
+  #+ccl (unless (sync-tool rt-server)
+	  (setf (sync-tool rt-server) (cb:make-sync-tool #'osc::osc-time)))
+  (let ((sock nil))			;verify port-number.
+    (handler-case (setf sock (usocket:socket-connect nil nil :protocol :datagram :local-port (port rt-server)))
+      (error nil
+	(error "~a's port ~d is already used by another process. maybe..that process is \"scsynth\"
+which previously create by you. check processes in system." rt-server (port rt-server))))
+    (usocket:socket-close sock))
   (setf (osc-device rt-server) (make-osc-device (format nil "scsynth:~d-~d" (host rt-server) (port rt-server))))
   (unless (just-connect-p rt-server)
     (bt:make-thread
      (lambda () (run-program (su:get-fullpath *sc-synth-program*) 
 				 (list "-u" (format nil "~a" (port rt-server)) "-U"
 				       (format nil "~{~a~^:~}" (mapcar #'su:get-fullpath *sc-plugin-paths*)))
-				 :wait nil)
-       (force-output *standard-output*))
+				 :wait t)
+       (when (boot-p rt-server)
+	 (unwind-protect (error "~a was abnormal termination!" rt-server)
+	   (cb:scheduler-clear)
+	   (setf (boot-p rt-server) nil)
+	   (close-osc-device (osc-device rt-server)))))
      :name "scsynth")))
 
 (defmethod server-quit ((rt-server external-server))
@@ -354,13 +371,13 @@
   (apply #'send-message-to-osc-device (osc-device server) (host server) (port server) msg)
   (values))
 
-(defmethod send-bundle ((server external-server) time lists-of-messages)
+(defmethod send-bundle ((server external-server) time list-of-messages)
   (apply #'send-bundle-to-osc-device
 	 (osc-device server)
 	 (host server)
 	 (port server)
-	 (+ osc::+unix-epoch+ time)
-	 lists-of-messages)
+	 #+ccl (+ time (cb:offset (sync-tool server))) #+sbcl (+ time osc::+unix-epoch+)
+	 list-of-messages)
   (values))
 
 
@@ -382,9 +399,9 @@
 (defmethod send-message ((server nrt-server) &rest msg)
   (send-bundle server 0.0d0 msg))
 
-(defmethod send-bundle ((server nrt-server) time lists-of-messages)
+(defmethod send-bundle ((server nrt-server) time list-of-messages)
   (declare (type double-float time))
-  (push (list time lists-of-messages) (streams server)))
+  (push (list time list-of-messages) (streams server)))
 
 
 (defmacro with-rendering ((output-files &key (pad nil) (keep-osc-file nil) (format :int24) (sr 44100)) &body body)
