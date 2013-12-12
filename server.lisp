@@ -235,7 +235,7 @@
 (defmethod initialize-server-responder ((rt-server rt-server))
   (add-reply-responder rt-server "/done"
 		       (lambda (args)
-			 (cond ((string= (car args) "/quit") (progn (setf (boot-p rt-server) nil))))))
+			 (cond ((string= (car args) "/quit") (setf (boot-p rt-server) nil)))))
   (add-reply-responder rt-server "/status.reply"
 		       (lambda (args)
 			 (apply #'format t "~&UGens    : ~4d~&Synths   : ~4d~&Groups   : ~4d~&SynthDefs: ~4d~&% CPU (Averate): ~a~&% CPU (Peak)   : ~a~&SampleRate (Nominal): ~a~&SampleRate (Actual) : ~a~%" (cdr args))))
@@ -293,7 +293,7 @@
    (port :initarg :port :accessor port :initform (error "server's port not specified."))
    (client-port :initarg :client-port :reader client-port)
    (osc-device :accessor osc-device)
-   #+ccl (sync-tool :initform nil :accessor sync-tool :allocation :class)
+   #+darwin (sync-tool :initform nil :accessor sync-tool :allocation :class)
    (just-connect-p :initarg :just-connect-p :reader just-connect-p)))
 
 (defmethod print-object ((self external-server) stream)
@@ -325,16 +325,17 @@
   (setf (print-log-p (osc-device server)) v))
 
 (defmethod bootup-server-process ((rt-server external-server))
-  #+ccl (unless (sync-tool rt-server)
-	  (setf (sync-tool rt-server) (cb:make-sync-tool #'osc::osc-time "sync-to-osc-time thread")))
-  (let ((sock nil))			;verify port-number.
-    (handler-case (setf sock (usocket:socket-connect nil nil :protocol :datagram :local-port (port rt-server)))
-      (error nil
-	(error "~a's port ~d is already used by another process. maybe..that process is \"scsynth\"
-which previously create by you. check processes in system." rt-server (port rt-server))))
-    (usocket:socket-close sock))
+  #+darwin (unless (sync-tool rt-server)
+	     (setf (sync-tool rt-server) (cb:make-sync-tool #'cb:unix-time "sync-to-unix-time thread")))
   (setf (osc-device rt-server) (make-osc-device (format nil "scsynth:~d-~d" (host rt-server) (port rt-server))))
   (unless (just-connect-p rt-server)
+    (let ((sock nil))			;verify port-number.
+      (handler-case (setf sock (usocket:socket-connect nil nil :protocol :datagram :local-port (port rt-server)))
+	(error nil
+	  (unwind-protect (error "~a's port ~d is already used by another process. maybe..that process is \"scsynth\"
+which previously create by you. check processes in system." rt-server (port rt-server))
+	    (close-osc-device (osc-device rt-server)))))
+      (usocket:socket-close sock))
     (bt:make-thread
      (lambda () (run-program (su:get-fullpath *sc-synth-program*) 
 				 (list "-u" (format nil "~a" (port rt-server)) "-U"
@@ -376,7 +377,7 @@ which previously create by you. check processes in system." rt-server (port rt-s
 	 (osc-device server)
 	 (host server)
 	 (port server)
-	 #+ccl (+ time (cb:offset (sync-tool server))) #+sbcl (+ time osc::+unix-epoch+)
+	 (+ time #+darwin (cb:offset (sync-tool server)))
 	 list-of-messages)
   (values))
 

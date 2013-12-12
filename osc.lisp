@@ -168,15 +168,6 @@
     ;; a 1bit timetag will be interpreted as 'imediately' 
     ((equalp utime :now)
      #(0 0 0 0 0 0 0 1)) 
-    ;; converts seconds since 19000101 to seconds since 19700101
-    ;; note: fractions of a second is accurate, but not syncronised.
-    ((equalp utime :time)
-     (cat (encode-int32 (- (get-universal-time) +unix-epoch+))
-          (encode-int32 
-           (round (* internal-time-units-per-second
-                     (second (multiple-value-list  
-                              (floor (/ (get-internal-real-time) 
-                                        internal-time-units-per-second)))))))))
     ((numberp utime) (encode-int64 (make-timetag utime)))
     (t (error "the time or subsecond given is not an integer or float"))))
 
@@ -185,20 +176,12 @@
       1
       (decode-uint64 timetag)))
 
-#+ccl
-(defun osc-time ()
-  (ccl:rlet ((tv :timeval))
-    (ccl::gettimeofday tv)
-    (multiple-value-bind (secs usecs)
-	(values (ccl:pref tv :timeval.tv_sec) (ccl:pref tv :timeval.tv_usec))
-      (+ (+ secs +unix-epoch+) (microseconds->subsecs usecs)))))
-
-(defun make-timetag (osc-time)
+(defun make-timetag (unix-time-in-seconds)
   (multiple-value-bind (secs subsecs)
-      (floor osc-time)
-    (osc-secs+usecs->timetag secs (subsecs->microseconds subsecs))))
+      (floor unix-time-in-seconds)
+    (secs+usecs->timetag (+ +unix-epoch+ secs) (subsecs->microseconds subsecs))))
 
-(defun osc-secs+usecs->timetag (secs usecs)
+(defun secs+usecs->timetag (secs usecs)
   (setf secs (ash secs 32))   ; Make seconds the top
   (let ((usec-offset
 	     (round (* usecs +2^32/MILLION+))))	; Fractional part.
