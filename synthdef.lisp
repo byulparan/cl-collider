@@ -89,7 +89,7 @@
   synthdef)
 
 (defun write-synthdef-file (name encoded-synthdef)
-  (let ((path (make-pathname :directory (su:get-fullpath *sc-synthdefs-path*) :name name :type "scsyndef")))
+  (let ((path (make-pathname :directory (su:full-pathname *sc-synthdefs-path*) :name name :type "scsyndef")))
     (with-open-file (stream path :direction :output
 				 :if-exists :supersede
 				 :element-type '(unsigned-byte 8))
@@ -252,7 +252,7 @@
 			      :meta (list :has-fade-time-p ,has-fade-time-p))))))
 
 
-(defparameter *node-proxy-table* (make-hash-table :size 256))
+(defparameter *node-proxy-table* (make-hash-table))
 
 (defmacro proxy (key &optional body &key (fade-time 2.0) (pos :head) (to 1) (out-bus 0))
   (alexandria:with-gensyms (node)

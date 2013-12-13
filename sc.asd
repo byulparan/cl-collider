@@ -10,12 +10,14 @@
 	       #:ieee-floats
 	       #:usocket
 	       #:bordeaux-threads
+	       #:bt-semaphore
+	       #:main-thread
 	       #+ccl #:chanl
 	       #:flexi-streams)
   :serial t
   :components ((:file "package")
 	       #+sbcl (:file "id-map")
-	       (:file "impl")
+	       (:file "util")
 	       (:file "osc")
 	       (:file "transmit")
 	       (:file "server")

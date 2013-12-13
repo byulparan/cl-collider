@@ -20,7 +20,7 @@
   (floatfy (bufnum buffer)))
 
 (defun buffer-read (server path &key bufnum)
-  (let ((file-path (su:get-fullpath path)))
+  (let ((file-path (su:full-pathname path)))
     (assert (probe-file file-path) (path) "not have file< ~a >" file-path)
     (let* ((bufnum (if bufnum bufnum (get-next-buffer-number server)))
 	   (new-buffer (make-instance 'buffer :path file-path
@@ -45,7 +45,7 @@
   "Make audio-file from Buffer."
   (let ((bufnum (bufnum buffer))
 	(server (server buffer))
-	(file-path (su:get-fullpath path)))
+	(file-path (su:full-pathname path)))
     (send-message server "/b_write" bufnum file-path (pathname-type file-path) (ecase format
 										 (:int16 "int16")
 										 (:int24 "int24")

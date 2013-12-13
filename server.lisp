@@ -23,7 +23,7 @@
 
 (defclass server ()
   ((name :initarg :name :initform "" :reader name)
-   (buffers :initarg :buffers :initform (make-hash-table :size 1024) :reader buffers)
+   (buffers :initarg :buffers :initform (make-hash-table) :reader buffers)
    (synth-group :initarg :synth-group :accessor synth-group)
    (id-and-buffer-number :initarg :id-and-buffer-number
 			 :initform #+ccl (cons 999 -1) #+sbcl (cons (make-counter :count 1000)
@@ -192,21 +192,18 @@
   ((sr :initarg :sr :initform 44100 :reader sr)
    (boot-p :initform nil :accessor boot-p)
    (buffer-get-handlers :initarg :buffer-get-handlers
-			:initform (make-hash-table :size 1024 :test #'equal)
+			:initform (make-hash-table :test #'equal)
 			:reader buffer-get-handlers)
    (control-get-handlers :initform (make-hash-table) :reader control-get-handlers)
-   #+sbcl (temp-number :initform (make-counter) :reader temp-number)
-   (end-node-handler :initform (make-hash-table :size 256) :reader end-node-handler)
-   (semaphores :initform (make-hash-table) :reader semaphores :allocation :class)
+   (end-node-handler :initform (make-hash-table) :reader end-node-handler)
    (sync-id-map :initform (make-id-map) :reader sync-id-map :allocation :class)
    (node-watcher :initform nil :accessor node-watcher)))
 
 (defun sync (rt-server)
-  (let* ((semaphore (or (gethash (bt:current-thread) (semaphores rt-server))
-			(setf (gethash (bt:current-thread) (semaphores rt-server)) (make-semaphore))))
+  (let* ((semaphore (mt:get-semaphore-by-thread))
 	 (id (assign-id-map-id (sync-id-map rt-server) semaphore)))
     (send-message rt-server "/sync" id)
-    (wait-on-semaphore semaphore)))
+    (bt-sem:wait-on-semaphore semaphore)))
 
 (defmethod server-boot ((rt-server rt-server))
   (when (boot-p rt-server) (error "already supercollider server running"))
@@ -245,7 +242,7 @@
 			   (case id
 			     (-1  (setf (boot-p rt-server) t))
 			     (otherwise (let ((semaphore (id-map-free-object (sync-id-map rt-server) id)))
-					  (signal-semaphore semaphore)))))))
+					  (bt-sem:signal-semaphore semaphore)))))))
   (add-reply-responder rt-server "/c_set"
 		       (lambda (args)
 			 (funcall (gethash (first args) (control-get-handlers rt-server)) (second args))))
@@ -337,10 +334,10 @@ which previously create by you. check processes in system." rt-server (port rt-s
 	    (close-osc-device (osc-device rt-server)))))
       (usocket:socket-close sock))
     (bt:make-thread
-     (lambda () (run-program (su:get-fullpath *sc-synth-program*) 
-				 (list "-u" (format nil "~a" (port rt-server)) "-U"
-				       (format nil "~{~a~^:~}" (mapcar #'su:get-fullpath *sc-plugin-paths*)))
-				 :wait t)
+     (lambda () (su:run-program (su:full-pathname *sc-synth-program*)
+				(list "-u" (format nil "~a" (port rt-server))
+				      "-U" (format nil "~{~a~^:~}" (mapcar #'su:full-pathname *sc-plugin-paths*)))
+				:output t :wait t)
        (when (boot-p rt-server)
 	 (unwind-protect (error "~a was abnormal termination!" rt-server)
 	   (cb:scheduler-clear)
@@ -402,40 +399,39 @@ which previously create by you. check processes in system." rt-server (port rt-s
 
 (defmethod send-bundle ((server nrt-server) time list-of-messages)
   (declare (type double-float time))
-  (push (list time list-of-messages) (streams server)))
+  (push (list (- time osc::+unix-epoch+) list-of-messages) (streams server)))
 
 
 (defmacro with-rendering ((output-files &key (pad nil) (keep-osc-file nil) (format :int24) (sr 44100)) &body body)
-  (alexandria:with-gensyms (osc-files file-name non-realtime-stream message)
-    `(let* ((,file-name (su:get-fullpath ,output-files))
-	    (,osc-files (su:cat (subseq ,file-name 0 (position #\. ,file-name)) ".osc"))
+  (alexandria:with-gensyms (osc-file file-name non-realtime-stream message)
+    `(let* ((,file-name (su:full-pathname ,output-files))
+	    (,osc-file (su:cat (subseq ,file-name 0 (position #\. ,file-name)) ".osc"))
 	    (scheduler::*scheduling-mode* :step)
 	    (*s* (make-instance 'nrt-server :name "NRTSynth" :streams nil)))
        (setf (synth-group *s*) (make-group *s* 1 "synth group" :pos :head :to 0))
        ,@body
        (when ,pad (send-bundle *s* (* 1.0d0 ,pad) (list "/c_set" 0 0)))
-       (with-open-file (,non-realtime-stream ,osc-files :direction :output :if-exists :supersede
-					     :element-type '(unsigned-byte 8))
+       (with-open-file (,non-realtime-stream ,osc-file :direction :output :if-exists :supersede
+						       :element-type '(unsigned-byte 8))
 	 (dolist (,message (sort (streams *s*)  #'<= :key #'car))
 	   (when (and ,pad (> (car ,message) ,pad)) (return))
 	   (let ((,message (osc::encode-bundle (second ,message) (car ,message))))
 	     (write-sequence (osc::encode-int32 (length ,message)) ,non-realtime-stream)
 	     (write-sequence ,message ,non-realtime-stream))))
-       (run-program (su:get-fullpath *sc-synth-program*)
-		    (list "-U" ,(format nil "~{~a~^:~}" (mapcar #'su:get-fullpath *sc-plugin-paths*))
-			  "-N" ,osc-files
-			  "_"
-			  ,file-name
-			  ,(format nil "~d" sr)
-			  (string-upcase (pathname-type ,file-name))
-			  (ecase ,format
-			    (:int16 "int16")
-			    (:int24 "int24")
-			    (:float "float")
-			    (:double "double"))
-			  "-o" "2")
-		    :wait t)
+       (su:run-program (su:full-pathname *sc-synth-program*)
+		       (list "-U" ,(format nil "~{~a~^:~}" (mapcar #'su:full-pathname *sc-plugin-paths*))
+			     "-N" ,osc-file
+			     "_"
+			     ,file-name (format nil "~a" ,sr)
+			     (string-upcase (pathname-type ,file-name))
+			     (ecase ,format
+			       (:int16 "int16")
+			       (:int24 "int24")
+			       (:float "float")
+			       (:double "double"))
+			     "-o" "2")
+		       :output t :wait t)
        (unless ,keep-osc-file
-	 (delete-file ,osc-files))
+	 (delete-file ,osc-file))
        (values))))
 

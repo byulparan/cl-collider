@@ -2,22 +2,6 @@
 
 (in-package #:sc)
 
-(defun run-program (cmd args &key wait)
-  #+ccl (ccl:run-program cmd args :wait wait :output t)
-  #+sbcl (sb-ext:run-program cmd args :wait wait :output t))
-
-(defun make-semaphore ()
-  #+ccl (ccl:make-semaphore)
-  #+sbcl (sb-thread:make-semaphore))
-
-(defun signal-semaphore (semaphore)
-  #+ccl (ccl:signal-semaphore semaphore)
-  #+sbcl (sb-thread:signal-semaphore semaphore))
-
-(defun wait-on-semaphore (semaphore)
-  #+ccl (ccl:wait-on-semaphore semaphore)
-  #+sbcl (sb-thread:wait-on-semaphore semaphore))
-
 (defun join-thread (thread)
   #+ccl (bt:join-thread thread)
   #+sbcl (sb-thread:join-thread thread :default nil))
