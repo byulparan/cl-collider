@@ -334,10 +334,12 @@ which previously create by you. check processes in system." rt-server (port rt-s
 	    (close-osc-device (osc-device rt-server)))))
       (usocket:socket-close sock))
     (bt:make-thread
-     (lambda () (su:run-program (su:full-pathname *sc-synth-program*)
-				(list "-u" (format nil "~a" (port rt-server))
-				      "-U" (format nil "~{~a~^:~}" (mapcar #'su:full-pathname *sc-plugin-paths*)))
-				:output t :wait t)
+     (lambda () (su:run-program
+		 (format nil "~a -u ~a -U \"~{~a~^:~}\""
+			 (su:full-pathname *sc-synth-program*)
+			 (port rt-server)
+			 (mapcar #'su:full-pathname *sc-plugin-paths*)) 
+		 :output t :wait t)
        (when (boot-p rt-server)
 	 (unwind-protect (error "~a was abnormal termination!" rt-server)
 	   (cb:scheduler-clear)
@@ -418,19 +420,18 @@ which previously create by you. check processes in system." rt-server (port rt-s
 	   (let ((,message (osc::encode-bundle (second ,message) (car ,message))))
 	     (write-sequence (osc::encode-int32 (length ,message)) ,non-realtime-stream)
 	     (write-sequence ,message ,non-realtime-stream))))
-       (su:run-program (su:full-pathname *sc-synth-program*)
-		       (list "-U" ,(format nil "~{~a~^:~}" (mapcar #'su:full-pathname *sc-plugin-paths*))
-			     "-N" ,osc-file
-			     "_"
-			     ,file-name (format nil "~a" ,sr)
-			     (string-upcase (pathname-type ,file-name))
-			     (ecase ,format
-			       (:int16 "int16")
-			       (:int24 "int24")
-			       (:float "float")
-			       (:double "double"))
-			     "-o" "2")
-		       :output t :wait t)
+       (su:run-program
+	(format nil "~a -U \"~{~a~^:~}\" -N ~a _ ~a ~a ~a ~a -o 2"
+		(su:full-pathname *sc-synth-program*)
+		(mapcar #'su:full-pathname *sc-plugin-paths*)
+		,osc-file ,file-name ,sr
+		(string-upcase (pathname-type ,file-name))
+		(ecase ,format
+		  (:int16 "int16")
+		  (:int24 "int24")
+		  (:float "float")
+		  (:double "double")))
+	:output t :wait t)
        (unless ,keep-osc-file
 	 (delete-file ,osc-file))
        (values))))
