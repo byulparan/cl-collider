@@ -207,7 +207,7 @@
 
 (defmethod server-boot ((rt-server rt-server))
   (when (boot-p rt-server) (error "already supercollider server running"))
-  (unless (cb:scheduler-running-p) (cb:scheduler-start))
+  (cb:scheduler-start)
   (bootup-server-process rt-server)
   (initialize-server-responder rt-server)
   (let* ((try-count 0) (success? t))
