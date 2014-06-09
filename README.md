@@ -6,12 +6,14 @@ tutorial video: <http://youtu.be/JivNMDUqNQc>
 live coding demo: <https://www.youtube.com/watch?v=xzTH_ZqaFKI>  
 
 ### require:
+
+please check version of dependency library.
+
 - [SuperCollider](http://supercollider.sourceforge.net) - I tested on latest stable version(3.6.5)
 - [Quicklisp](http://www.quicklisp.org)
 - [ClozureCL](http://www.clozure.com/clozurecl.html) or [SBCL](http://www.sbcl.org)
-- [Scheduler](http://github.com/byulparan/scheduler) - The time based task scheduler
+- [Scheduler-0.1.5](http://github.com/byulparan/scheduler) - The time based task scheduler
 - [Simple-Utils](http://github.com/byulparan/Simple-Utils) - The Collection of simple-functions
-- [Main-Thread](http://github.com/byulparan/main-thread) - Thread-Utility
 
 ## Usage:
 ### Server

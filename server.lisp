@@ -24,7 +24,6 @@
 (defclass server ()
   ((name :initarg :name :initform "" :reader name)
    (buffers :initarg :buffers :initform (make-hash-table) :reader buffers)
-   (synth-group :initarg :synth-group :accessor synth-group)
    (id-and-buffer-number :initarg :id-and-buffer-number
 			 :initform #+ccl (cons 999 -1) #+sbcl (cons (make-counter :count 1000)
 								    (make-counter :count 0))
@@ -150,7 +149,7 @@
 (defmethod print-object ((node group) stream)
   (format stream "#<Group :server ~s :id ~a>" (server node) (id node)))
 
-(defun make-group (group-id &key (server *s*) (pos :after) (to (synth-group server)))
+(defun make-group (group-id &key (server *s*) (pos :after) (to 1))
   (with-node (to target-id rt-server)
     (unless (numberp to)
       (assert (eql rt-server server) nil "target's server != group's server.(/= ~a ~a)" rt-server server))
@@ -169,15 +168,15 @@
     (cb:scheduler-clear)
     (send-message rt-server "/g_freeAll" 0)		
     (send-message rt-server "/clearSched")
-    (setf (synth-group rt-server) (make-group 1 :pos :head :to 0))
+    (make-group 1 :pos :head :to 0)
     (alexandria:when-let ((hook *group-free-all-hook*))
       (funcall hook))))
 
-(defun stop (&optional (server *s*) &rest servers)
+(defun stop (&optional (group 1) &rest groups)
   (cb:scheduler-clear)
-  (dolist (server (cons server servers))
-    (send-message server "/g_freeAll" (id (synth-group server)))
-    (send-message server "/clearSched")))
+  (dolist (group (cons group groups))
+    (send-message *s* "/g_freeAll" group)
+    (send-message *s* "/clearSched")))
 
 (defun server-status (&optional (rt-server *s*))
   (send-message rt-server "/status"))
@@ -199,8 +198,19 @@
    (sync-id-map :initform (make-id-map) :reader sync-id-map :allocation :class)
    (node-watcher :initform nil :accessor node-watcher)))
 
+
+(let ((semaphore-table (make-hash-table)))
+  (defun get-semaphore-by-thread ()
+    "Returns a one semaphore per thread."
+    (let* ((semaphore (gethash (bt:current-thread) semaphore-table)))
+      (unless semaphore
+	(let ((new-semaphore (bt-sem:make-semaphore)))
+	  (setf (gethash (bt:current-thread) semaphore-table) new-semaphore
+		semaphore new-semaphore)))
+      semaphore)))
+
 (defun sync (&optional (rt-server *s*))
-  (let* ((semaphore (mt:get-semaphore-by-thread))
+  (let* ((semaphore (get-semaphore-by-thread))
 	 (id (assign-id-map-id (sync-id-map rt-server) semaphore)))
     (send-message rt-server "/sync" id)
     (bt-sem:wait-on-semaphore semaphore)))
@@ -233,7 +243,9 @@
   (let ((*s* rt-server))
     (add-reply-responder "/done"
 			 (lambda (args)
-			   (cond ((string= (car args) "/quit") (setf (boot-p rt-server) nil)))))
+			   (cond ((string= (car args) "/quit") (setf (boot-p rt-server) nil))
+				 ((string= (car args) "/b_write") (alexandria:when-let ((f (gethash args (buffer-get-handlers rt-server))))
+								    (funcall f (gethash (second args) (buffers rt-server))))))))
     (add-reply-responder "/status.reply"
 			 (lambda (args)
 			   (apply #'format t "~&UGens    : ~4d~&Synths   : ~4d~&Groups   : ~4d~&SynthDefs: ~4d~&% CPU (Averate): ~a~&% CPU (Peak)   : ~a~&SampleRate (Nominal): ~a~&SampleRate (Actual) : ~a~%" (cdr args))))
@@ -291,7 +303,6 @@
    (port :initarg :port :accessor port :initform (error "server's port not specified."))
    (client-port :initarg :client-port :reader client-port)
    (osc-device :accessor osc-device)
-   #+darwin (sync-tool :initform nil :accessor sync-tool :allocation :class)
    (just-connect-p :initarg :just-connect-p :reader just-connect-p)))
 
 (defmethod print-object ((self external-server) stream)
@@ -323,8 +334,6 @@
   (setf (print-log-p (osc-device server)) v))
 
 (defmethod bootup-server-process ((rt-server external-server))
-  #+darwin (unless (sync-tool rt-server)
-	     (setf (sync-tool rt-server) (cb:make-sync-tool #'cb:unix-time "sync-to-unix-time thread")))
   (setf (osc-device rt-server) (make-osc-device (format nil "scsynth:~d-~d" (host rt-server) (port rt-server))))
   (unless (just-connect-p rt-server)
     (let ((sock nil))			;verify port-number.
@@ -377,7 +386,7 @@ which previously create by you. check processes in system." rt-server (port rt-s
 	 (osc-device server)
 	 (host server)
 	 (port server)
-	 (+ time #+darwin (cb:offset (sync-tool server)))
+	 time
 	 list-of-messages)
   (values))
 
@@ -411,7 +420,7 @@ which previously create by you. check processes in system." rt-server (port rt-s
 	    (,osc-file (su:cat (subseq ,file-name 0 (position #\. ,file-name)) ".osc"))
 	    (scheduler::*scheduling-mode* :step)
 	    (*s* (make-instance 'nrt-server :name "NRTSynth" :streams nil)))
-       (setf (synth-group *s*) (make-group 1 :pos :head :to 0))
+       (make-group 1 :pos :head :to 0)
        ,@body
        (when ,pad (send-bundle *s* (* 1.0d0 ,pad) (list "/c_set" 0 0)))
        (with-open-file (,non-realtime-stream ,osc-file :direction :output :if-exists :supersede

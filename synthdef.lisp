@@ -204,7 +204,7 @@
 
 (defmacro synth-funcall-definition (name args)
   (alexandria:with-gensyms (next-id new-synth)
-    `(defun ,name (&key ,@(su:cat args (list '(pos :head) '(to (synth-group *s*)) 'end-f)))
+    `(defun ,name (&key ,@(su:cat args (list '(pos :head) '(to 1) 'end-f)))
        (let* ((,next-id (get-next-id *s*))
 	      (,new-synth (make-instance 'node :server *s* :id ,next-id :name ,(string-downcase name) :pos pos :to to)))
 	 (prog1

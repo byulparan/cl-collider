@@ -1,7 +1,3 @@
-;;; in CCL send via "chanl queue". but SBCL use socket directly.
-;;; because, sending via chanl is too many slow in SBCL.(many latency..)
-;;; As far as I know, UDP socket buffer is thread-safe. so send-message in SBCL is thread-safe.
-;;; but, I think use "chanl queue" is better way.
 
 (in-package :sc)
 
@@ -18,8 +14,8 @@
   ((name :initarg :name :reader name)
    (socket :initarg :socket :reader socket)
    (reply-handle-table :initarg :reply-handle-table :reader reply-handle-table)
-   #+ccl   (send-q :initform (make-instance 'chanl:bounded-channel :size 1024) :reader send-q)
-   #+ccl   (send-thread :accessor send-thread)
+   (send-q :initform (make-instance 'chanl:bounded-channel :size 1024) :reader send-q)
+   (send-thread :accessor send-thread)
    (listening-thread :accessor listening-thread)
    (print-log-p :initarg :print-log-p :initform nil :accessor print-log-p)))
 
@@ -29,14 +25,14 @@
 			       :socket (usocket:socket-connect nil nil
 							       :protocol :datagram)
 			       :reply-handle-table (make-hash-table :test #'equalp))))
-    #+ccl    (setf (send-thread device) (make-send-thread device))
+    (setf (send-thread device) (make-send-thread device))
     (setf (listening-thread device) (make-listening-thread device))
     device))
 
 (defun close-osc-device (osc-device)
-  #+ccl  (bt:destroy-thread (send-thread osc-device))
+  (bt:destroy-thread (send-thread osc-device))
   (bt:destroy-thread (listening-thread osc-device))
-  #+ccl  (join-thread (send-thread osc-device))
+  (join-thread (send-thread osc-device))
   (join-thread (listening-thread osc-device))
   (usocket:socket-close (socket osc-device))
   (values))
@@ -49,20 +45,18 @@
 
 (defun send-message-to-osc-device (osc-device address port &rest message)
   (let ((msg (apply #'osc:encode-message message)))
-    #+ccl(chanl:send (send-q osc-device) (make-instance 'message :message msg
-								 :address address
-								 :port port))
-    #+sbcl(usocket:socket-send (socket osc-device) msg (length msg) :host address :port port)
+    (chanl:send (send-q osc-device) (make-instance 'message :message msg
+							    :address address
+							    :port port))
     (values)))
 
 (defun send-bundle-to-osc-device (osc-device address port timestamp &rest messages)
   (let ((msg (osc:encode-bundle messages timestamp)))
-    #+ccl(chanl:send (send-q osc-device) (make-instance 'message :message msg
-								 :address address
-								 :port port))
-    #+sbcl(values (usocket:socket-send (socket osc-device) msg (length msg) :host address :port port))))
+    (chanl:send (send-q osc-device) (make-instance 'message :message msg
+							    :address address
+							    :port port))))
 
-#+ccl
+
 (defun make-send-thread (osc-device)
   (bt:make-thread
    (lambda ()

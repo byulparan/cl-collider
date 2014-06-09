@@ -2,23 +2,20 @@
   :name "cl-collider"
   :author "Park Sungmin. byulparan@icloud.com"
   :description "SuperCollider client for CommonLisp"
-  :version "0.1"
+  :version "0.1.5"
   :depends-on (#:simple-utils
 	       #:scheduler
+	       #:osc-ext
 	       #:alexandria
-	       #:osc
-	       #:ieee-floats
 	       #:usocket
 	       #:bordeaux-threads
 	       #:bt-semaphore
-	       #:main-thread
-	       #+ccl #:chanl
-	       #:flexi-streams)
+	       #:flexi-streams
+	       #:chanl)
   :serial t
   :components ((:file "package")
 	       #+sbcl (:file "id-map")
 	       (:file "util")
-	       (:file "osc")
 	       (:file "transmit")
 	       (:file "server")
 	       (:file "buffer")

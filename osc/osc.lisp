@@ -143,8 +143,6 @@
 (defun encode-int16 (i)
   (subseq (encode-int32 i) 2))
 
-
-
 (defun encode-blob (blob)
   (let* ((bl (length blob))
 	 (mod-length (mod bl 4))
@@ -152,13 +150,7 @@
     (osc::cat (osc::encode-int32 bl) blob
 	      (osc::pad padding-length))))      
 
-
-
-
-(defconstant +unix-epoch+ (encode-universal-time 0 0 0 1 1 1970 0))
 (defconstant +2^32+ (expt 2 32))
-(defconstant +2^32/million+ (/ +2^32+ (expt 10 6)))
-(defconstant +usecs+ (expt 10 6))
 
 (defun encode-timetag (utime)
   "encodes an osc timetag from a universal-time and 32bit 'sub-second' part.
@@ -179,17 +171,4 @@
 (defun make-timetag (unix-time-in-seconds)
   (multiple-value-bind (secs subsecs)
       (floor unix-time-in-seconds)
-    (secs+usecs->timetag (+ +unix-epoch+ secs) (subsecs->microseconds subsecs))))
-
-(defun secs+usecs->timetag (secs usecs)
-  (setf secs (ash secs 32))   ; Make seconds the top
-  (let ((usec-offset
-	     (round (* usecs +2^32/MILLION+))))	; Fractional part.
-	(+ secs usec-offset)))
-
-(defun subsecs->microseconds (subsecs)
-  (round (* subsecs +usecs+)))
-
-(defun microseconds->subsecs (usecs)
-  (declare (type (integer 0 1000000) usecs))
-  (coerce (/ usecs  +usecs+) 'double-float))
+    (+ (ash (+ secs +unix-epoch+) 32) (round (* subsecs +2^32+)))))

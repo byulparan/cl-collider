@@ -36,7 +36,7 @@
 	   #:send-bundle
 	   #:addr
 	   #:lisp-port
-	   #:synth-group
+
 	   #:control-get
 	   #:control-set
 	   #:add-reply-responder
@@ -60,7 +60,7 @@
 	   #:chanls
 	   #:buffer-read
 	   #:buffer-alloc
-	   #:buffer-write
+	   #:buffer-save
 	   #:buffer-get
 	   #:buffer-get-list
 	   #:buffer-set
@@ -92,7 +92,7 @@
 	   #:flop
 	   #:clump
 	   #:product
-;;; OK. this is secondaray Math Operator.				       
+
 	   #:clip2
 	   
 	   #:env-shape-number
