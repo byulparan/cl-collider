@@ -1,7 +1,7 @@
 
 ;;; ...from [Osc.sc FSinOsc.sc]
 
-(in-package #:collider)
+(in-package #:sc)
 
 (defugen (osc "Osc")
     (bufnum &optional (freq 440.0) (phase 0.0) (mul 1.0) (add 0.0))

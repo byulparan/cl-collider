@@ -1,5 +1,5 @@
 
-(in-package #:collider)
+(in-package #:sc)
 
 (defugen (crossover-distortion "CrossoverDistortion")
     (in &optional (amp .5) (smooth .5) (mul 1.0) (add 0.0))

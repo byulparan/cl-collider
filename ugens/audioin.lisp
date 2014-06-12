@@ -1,5 +1,5 @@
 
-(in-package #:collider)
+(in-package #:sc)
 
 (defun sound-in (chan-offset bus mul add)
   (if (not (listp bus)) (sc::madd (in.ar (sc::add chan-offset bus) 1) mul add)

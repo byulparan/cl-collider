@@ -1,5 +1,5 @@
 
-(in-package #:collider)
+(in-package #:sc)
 
 (defugen (info-ugen-base "InfoUGenBase") ()
   ((:ir (multinew new 'ugen))))

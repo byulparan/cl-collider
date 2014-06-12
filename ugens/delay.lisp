@@ -1,5 +1,5 @@
 
-(in-package #:collider)
+(in-package #:sc)
 
 (defun as-audio-rate-input (input)
   "input 이 :audio 가 아니라면 k2a.ar 을 이용하여 강제로 :audio 로 변환한다."

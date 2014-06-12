@@ -1,4 +1,4 @@
-(in-package #:collider)
+(in-package #:sc)
 
 (defugen (tartini "Tartini")
     (&optional (in 0.0) (threshold .93) (n 2048) (k 0) (overlap 1024) (small-cutoff .5))

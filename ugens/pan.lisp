@@ -1,7 +1,7 @@
 
 ;;; ...from [Pan.sc]
 
-(in-package #:collider)
+(in-package #:sc)
 
 (defugen (pan2 "Pan2") (in &optional (pos 0.0) (level 1.0))
   ((:ar (multinew new 'multiout-ugen 2 in pos level))

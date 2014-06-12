@@ -1,5 +1,5 @@
 
-(in-package #:collider)
+(in-package #:sc)
 
 (defugen (done "Done") (src)
   ((:kr (multinew new 'ugen src))))

@@ -1,5 +1,5 @@
 
-(in-package #:collider)
+(in-package #:sc)
 
 (defugen (trig-1 "Trig1") (&optional (in 0.0) (dur 0.1))
   ((:ar (multinew new 'ugen in dur))

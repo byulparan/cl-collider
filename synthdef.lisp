@@ -1,5 +1,5 @@
 
-(in-package #:collider)
+(in-package #:sc)
 
 (defclass synthdef ()
   ((name :initarg :name :accessor name)

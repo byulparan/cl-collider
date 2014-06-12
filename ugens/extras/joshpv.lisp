@@ -1,5 +1,5 @@
 
-(in-package #:collider)
+(in-package #:sc)
 
 (defgeneric calc-pv-recsize (buffer frame-size hop &optional sample-rate))
 

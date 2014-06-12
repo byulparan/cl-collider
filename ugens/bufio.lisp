@@ -1,5 +1,5 @@
 
-(in-package #:collider)
+(in-package #:sc)
 
 (defugen (play-buf "PlayBuf")
     (chanls &optional (bufnum 0) (rate 1.0) &key (trig 1.0) (start-pos 0.0) (loop 0.0) (act :no-action))

@@ -1,5 +1,5 @@
 
-(in-package #:collider)
+(in-package #:sc)
 
 (defun splay-new (rate spread level center level-comp &rest in-array)
   (let* ((n (max 2 (length in-array)))

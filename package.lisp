@@ -1,7 +1,6 @@
 
-(defpackage #:collider
+(defpackage #:sc
   (:use #:cl)
-  (:nicknames :sc)
   (:import-from :cb #:now #:callback #:quant)
   #+ccl (:import-from :ccl #:make-id-map #:assign-id-map-id #:id-map-free-object)
   #+sbcl (:lock t)

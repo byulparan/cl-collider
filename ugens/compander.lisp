@@ -1,5 +1,5 @@
 
-(in-package #:collider)
+(in-package #:sc)
 
 
 (defugen (amplitude "Amplitude")

@@ -1,5 +1,5 @@
 
-(in-package #:collider)
+(in-package #:sc)
 
 (defugen (demand "Demand") (trig reset demand-ugens)
   ((:ar (let ((demand-ugens (su:mklist demand-ugens)))

@@ -1,5 +1,5 @@
 
-(in-package #:collider)
+(in-package #:sc)
 
 (defugen (freeverb "FreeVerb")
     (in &key (mix 0.33) (room 0.5) (damp 0.5) (mul 1.0) (add 0.0))

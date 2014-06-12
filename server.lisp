@@ -204,7 +204,8 @@
     "Returns a one semaphore per thread."
     (let* ((semaphore (gethash (bt:current-thread) semaphore-table)))
       (unless semaphore
-	(let ((new-semaphore (bt-sem:make-semaphore)))
+	(let ((new-semaphore #+ccl (ccl:make-semaphore)
+			     #+sbcl (sb-thread:make-semaphore)))
 	  (setf (gethash (bt:current-thread) semaphore-table) new-semaphore
 		semaphore new-semaphore)))
       semaphore)))
@@ -213,7 +214,8 @@
   (let* ((semaphore (get-semaphore-by-thread))
 	 (id (assign-id-map-id (sync-id-map rt-server) semaphore)))
     (send-message rt-server "/sync" id)
-    (bt-sem:wait-on-semaphore semaphore)))
+    #+ccl (ccl:wait-on-semaphore semaphore)
+    #+sbcl (sb-thread:wait-on-semaphore semaphore)))
 
 (defmethod server-boot ((rt-server rt-server))
   (when (boot-p rt-server) (error "already supercollider server running"))
@@ -255,7 +257,8 @@
 			     (case id
 			       (-1  (setf (boot-p rt-server) t))
 			       (otherwise (let ((semaphore (id-map-free-object (sync-id-map rt-server) id)))
-					    (bt-sem:signal-semaphore semaphore)))))))
+					    #+ccl (ccl:signal-semaphore semaphore)
+					    #+sbcl (sb-thread:signal-semaphore semaphore)))))))
     (add-reply-responder "/c_set"
 			 (lambda (args)
 			   (funcall (gethash (first args) (control-get-handlers rt-server)) (second args))))

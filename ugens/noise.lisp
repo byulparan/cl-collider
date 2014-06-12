@@ -1,5 +1,5 @@
 
-(in-package #:collider)
+(in-package #:sc)
 
 (defugen (rand-seed "RandSeed") (&optional (trig 0.0) (seed 56789))
   ((:ar (progn (multinew new 'width-first-ugen trig seed) 0.0))

@@ -1,5 +1,5 @@
 
-(in-package #:collider)
+(in-package #:sc)
 
 
 (defclass pv-chain-ugen (width-first-ugen) ())

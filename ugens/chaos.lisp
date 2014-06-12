@@ -1,5 +1,5 @@
 
-(in-package #:collider)
+(in-package #:sc)
 
 (defugen (quad-n "QuadN")
     (&optional (freq 22050) (a 1) (b -1) (c -0.75) (xi 0) &key (mul 1) (add 0))

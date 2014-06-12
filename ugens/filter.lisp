@@ -1,5 +1,5 @@
 ;;; ...in Filter.sc
-(in-package #:collider)
+(in-package #:sc)
 
 (defugen (reson-z "Resonz") (&optional (in 0.0) (freq 440.0) (bwr 1.0) (mul 1.0) (add 0.0))
   ((:ar (madd (multinew new 'pure-ugen in freq bwr) mul add))

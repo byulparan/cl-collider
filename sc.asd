@@ -9,7 +9,6 @@
 	       #:alexandria
 	       #:usocket
 	       #:bordeaux-threads
-	       #:bt-semaphore
 	       #:flexi-streams
 	       #:chanl)
   :serial t
