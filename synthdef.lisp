@@ -190,6 +190,7 @@
     (> 'sc::>~)
     (<= 'sc::<=~)
     (max 'sc::max~)
+    (min 'sc::min~)
     (if 'sc::if~)    
     (t atom)))
 

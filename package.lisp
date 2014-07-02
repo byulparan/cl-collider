@@ -78,6 +78,7 @@
 	   #:squared
 	   #:cubed
 	   #:midicps
+	   #:cpsmidi
 	   #:dbamp
 	   #:ampdb
 	   #:distort

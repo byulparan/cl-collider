@@ -66,6 +66,9 @@
 (def-unary-op midicps (lambda (note) (* 440 (expt 2 (/ (- note 69) 12.0))))
   :special-index 17)
 
+(def-unary-op cpsmidi (lambda (note) (* 440 (expt 2 (/ (- note 69) 12.0))))
+  :special-index 18)
+
 (def-unary-op dbamp (lambda (db) (expt 10.0 (* db .05)))
   :special-index 21)
 

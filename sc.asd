@@ -5,7 +5,7 @@
   :version "0.1.5"
   :depends-on (#:simple-utils
 	       #:scheduler
-	       #:osc-ext
+	       #:osc-lib
 	       #:alexandria
 	       #:usocket
 	       #:bordeaux-threads
@@ -15,7 +15,6 @@
   :components ((:file "package")
 	       #+sbcl (:file "id-map")
 	       (:file "util")
-	       (:file "transmit")
 	       (:file "server")
 	       (:file "buffer")
 	       (:file "ugen")

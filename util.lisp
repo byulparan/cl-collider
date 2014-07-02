@@ -2,10 +2,6 @@
 
 (in-package #:sc)
 
-(defun join-thread (thread)
-  #+ccl (bt:join-thread thread)
-  #+sbcl (sb-thread:join-thread thread :default nil))
-
 (defun thread-wait (f)
   #+ccl (ccl:process-wait "wait.." f)
   #+sbcl (or (apply f nil)
