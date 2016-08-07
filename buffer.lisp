@@ -107,8 +107,8 @@
 (defun buffer-free (buff-num &optional (server *s*))
   (let ((bufhash (buffers *s*)))
     (remhash buff-num bufhash)
-    (send-message *s* "/b_free" buff-num)
-    (sync *s*)
+    (send-message server "/b_free" buff-num)
+    (sync server)
     (free-buffer-number server buff-num)))
 
 ;;; wavetable
