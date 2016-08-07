@@ -39,7 +39,7 @@
   #+sbcl (sb-ext:atomic-incf (counter-count (car (id-and-buffer-number server)))))
 
 (defmethod get-next-buffer-number ((server server))
-  #+ccl (let ((num (position nil (buffer-number server))))
+  (let ((num (position nil (buffer-number server))))
 	  (setf (elt (buffer-number server) num) t)
 	  num))
 
