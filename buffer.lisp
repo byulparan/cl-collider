@@ -105,7 +105,7 @@
 
 
 (defun buffer-free (buff-num &optional (server *s*))
-  (let ((bufhash (buffers server)))xs
+  (let ((bufhash (buffers server)))
     (remhash buff-num bufhash)
     (send-message server "/b_free" buff-num)
     (sync server)
