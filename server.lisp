@@ -27,7 +27,10 @@
    (id-and-buffer-number :initarg :id-and-buffer-number
 			 :initform #+ccl (cons 999 -1) #+sbcl (cons (make-counter :count 1000)
 								    (make-counter :count 0))
-			 :accessor id-and-buffer-number))
+			 :accessor id-and-buffer-number)
+  (buffer-number :initarg :buffer-number
+		 :initform (make-array 1024 :element-type 'boolean :initial-element nil)
+		 :accessor buffer-number))
   (:documentation "This is base server class of scsynth server. This library include realtime server,NRT server,
  internal server(yet..)"))
 
@@ -36,9 +39,12 @@
   #+sbcl (sb-ext:atomic-incf (counter-count (car (id-and-buffer-number server)))))
 
 (defmethod get-next-buffer-number ((server server))
-  #+ccl (ccl::%atomic-incf-cdr (id-and-buffer-number server))
-  #+sbcl (sb-ext:atomic-incf (counter-count (cdr (id-and-buffer-number server)))))
+  (let ((num (position nil (buffer-number server))))
+	  (setf (elt (buffer-number server) num) t)
+	  num))
 
+(defmethod free-buffer-number ((server server) (bufnum integer))
+  (setf (elt (buffer-number server) bufnum) nil))
 
 
 ;;; declare generic function for realtime server

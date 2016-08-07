@@ -64,6 +64,7 @@
 	   #:buffer-get-list
 	   #:buffer-set
 	   #:buffer-set-list
+	   #:buffer-free
 	   #:b-cheby-msg
 	   #:calc-pv-recsize
 	   #:local-buf

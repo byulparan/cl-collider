@@ -104,6 +104,13 @@
     buffer))
 
 
+(defun buffer-free (buff-num &optional (server *s*))
+  (let ((bufhash (buffers server)))
+    (remhash buff-num bufhash)
+    (send-message server "/b_free" buff-num)
+    (sync server)
+    (free-buffer-number server buff-num)))
+
 ;;; wavetable
 (defun b-cheby-msg (buffer data &optional (normalize t) (as-wavetable t) (clear-first t))
   (append (list "/b_gen" (bufnum buffer) "cheby" (+ (if normalize 1 0) (if as-wavetable 2 0) (if clear-first 4 0))) data))
