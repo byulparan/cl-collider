@@ -41,8 +41,7 @@
 (defmethod get-next-buffer-number ((server server))
   #+ccl (let ((num (position nil (buffer-number server))))
 	  (setf (elt (buffer-number server) num) t)
-	  num)
-  #+sbcl (sb-ext:atomic-incf (counter-count (cdr (id-and-buffer-number server)))))
+	  num))
 
 (defmethod free-buffer-number ((server server) (bufnum integer))
   (setf (elt (buffer-number server) bufnum) nil))
