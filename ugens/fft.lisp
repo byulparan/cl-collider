@@ -21,10 +21,6 @@
    (:kr
     (multinew new 'width-first-ugen buffer wintype winsize))))
 
-
-(defun ifft (buffer &optional (wintype 0) (winsize 0))
-  (ifft.ar buffer wintype winsize))
-
 (def-pv-chain-ugen (pv-mag-above "PV_MagAbove") (buffer &optional (threshold 0.0))
   (multinew new 'pv-chain-ugen buffer threshold))
 
@@ -34,6 +30,11 @@
 (def-pv-chain-ugen (pv-mag-clip "PV_MagClip")
     (buffer &optional (threshold 0.0))
   (multinew new 'pv-chain-ugen buffer threshold))
+
+(def-pv-chain-ugen (pv-local-max "PV_LocalMax")
+    (buffer &optional (threshold 0.0))
+  (multinew new 'pv-chain-ugen buffer threshold))
+
 
 (def-pv-chain-ugen (pv-mag-smear "PV_MagSmear")
     (buffer &optional (bins 0.0))
@@ -201,5 +202,5 @@
 
 (defun running-sum-rms (in &optional (num-samp 40.0))
   (sqrt
-   (mul (running-sum.ar (squared in) num-samp)
+   (mul (running-sum (squared in) num-samp)
 	(reciprocal num-samp))))

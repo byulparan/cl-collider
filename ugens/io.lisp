@@ -37,7 +37,7 @@
   (let* ((pos 0)
 	 (num-zeros (count 0 channel-array :test #'equalp)))
     (when (zerop num-zeros) (return-from replace-zeroes-with-silence channel-array))
-    (let ((silent-ch (su:mklist (silent.ar num-zeros))))
+    (let ((silent-ch (su:mklist (silent num-zeros))))
       (loop for item in channel-array
 	    for i from 0
 	    do (let (res)

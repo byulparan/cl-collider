@@ -1,7 +1,7 @@
 ;;; ...in Filter.sc
 (in-package #:sc)
 
-(defugen (reson-z "Resonz") (&optional (in 0.0) (freq 440.0) (bwr 1.0) (mul 1.0) (add 0.0))
+(defugen (resonz "Resonz") (&optional (in 0.0) (freq 440.0) (bwr 1.0) (mul 1.0) (add 0.0))
   ((:ar (madd (multinew new 'pure-ugen in freq bwr) mul add))
    (:kr (madd (multinew new 'pure-ugen in freq bwr) mul add)))
   :check-fn #'check-same-rate-as-first-input)
@@ -165,7 +165,7 @@
 
 (defugen (changed "Changed")
     (&optional (in 0.0) (threshold 0.0))
-  ((:ar (progn new (>~ (abs~ (hpz-1.ar in)) threshold)))
+  ((:ar (progn new (>~ (abs~ (hpz-1 in)) threshold)))
    (:kr (progn new (>~ (abs~ (hpz-1.kr in)) threshold))))
   :check-fn #'check-same-rate-as-first-input)
 
@@ -254,11 +254,11 @@
     (if (not (equalp curve 1))
 	(let* ((e (make-list-from-env (env (list start in) (list time) warp)))) 
 	  (setf (nth 6 e) curve (nth 7 e) curvature)
-	  (let ((trig (if (eql rate :audio) (+~ (changed.ar in) (impulse.ar 0))
+	  (let ((trig (if (eql rate :audio) (+~ (changed in) (impulse 0))
 			  (+~ (changed.kr in) (impulse.kr 0)))))
 	    (unless (eql (rate time) :scalar)
 	      (setf trig (+~ trig (changed.kr time))))
-	    (if (eql rate :audio) (env-gen.ar e :gate trig)
+	    (if (eql rate :audio) (env-gen e :gate trig)
 		(env-gen.kr e :gate trig))))
 	(funcall new 'pure-ugen in time start))))
 

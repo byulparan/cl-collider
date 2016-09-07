@@ -17,7 +17,7 @@
    (:kr (multinew new 'pure-ugen in src-lo src-hi dst-lo dst-hi)))
   :check-fn #'check-same-rate-as-first-input)
 
-(defugen (lin-lin "LinLin") (&optional (in 0.0) (src-lo 0.0) (src-hi 1.0) (dst-lo 1.0) (dst-hi 2.0))
+(defugen (lin-lin-ugen "LinLin") (&optional (in 0.0) (src-lo 0.0) (src-hi 1.0) (dst-lo 1.0) (dst-hi 2.0))
   ((:ar  (let* ((scale (divide (minus dst-hi dst-lo) (minus src-hi src-lo)))
 	       (offset (minus dst-lo (mul scale src-lo))))
 	   new
@@ -28,9 +28,10 @@
 	  (add (mul in scale) offset)))))
 
 (defun lin-lin (ugen in-min in-max out-min out-max &optional (clip :minmax))
-  (if (eql (rate ugen) :audio) (lin-lin.ar (prune ugen in-min in-max clip) in-min in-max out-min out-max)
-      (lin-lin.kr (prune ugen in-min in-max clip) in-min in-max out-min out-max)))
+  (if (eql (rate ugen) :audio) (lin-lin-ugen (prune ugen in-min in-max clip) in-min in-max out-min out-max)
+      (lin-lin-ugen.kr (prune ugen in-min in-max clip) in-min in-max out-min out-max)))
 
+(unexport '(lin-lin-ugen lin-lin-ugen.kr))
 
 
 (defun when-audio-check-first-input (ugen)
@@ -68,6 +69,6 @@
    (:kr (multinew new 'multiout-ugen 1 in))))
 
 (defugen (silent "Silent") (&optional (chanls 1))
-  ((:ar (let ((sig (dc.ar 0)))
+  ((:ar (let ((sig (dc 0)))
 	  new
 	  (if (= chanls 1) sig (su:dup sig chanls))))))

@@ -1,7 +1,6 @@
 
 (defpackage #:sc
   (:use #:cl)
-  (:import-from :cb #:now #:callback #:quant)
   #+ccl (:import-from :ccl #:make-id-map #:assign-id-map-id #:id-map-free-object)
   #+sbcl (:lock t)
   (:export #:*s*
@@ -12,6 +11,10 @@
 	   #:now
 	   #:callback
 	   #:quant
+
+	   #:make-server-options
+	   #:server-options
+	   #:server-options-block-size
 	   
 	   #:*synth-definition-mode*
 	   #:defsynth
@@ -52,9 +55,10 @@
 	   #:group-free-all
 	   #:stop
 	   #:server-status
-	   #:set-hook-group-free-all
+	   #:set-group-free-all-hook
 
 	   #:bufnum
+	   #:sr
 	   #:frames
 	   #:chanls
 	   #:buffer-read
@@ -64,7 +68,7 @@
 	   #:buffer-get-list
 	   #:buffer-set
 	   #:buffer-set-list
-	   #:b-cheby-msg
+	   #:wavetable
 	   #:calc-pv-recsize
 	   #:local-buf
 	   #:set-buf
@@ -79,6 +83,7 @@
 	   #:cubed
 	   #:midicps
 	   #:cpsmidi
+	   #:midiratio
 	   #:dbamp
 	   #:ampdb
 	   #:distort
@@ -91,8 +96,9 @@
 	   #:unbubble
 	   #:flop
 	   #:clump
+	   #:mean
 	   #:product
-
+	   #:==
 	   #:clip2
 	   
 	   #:env-shape-number

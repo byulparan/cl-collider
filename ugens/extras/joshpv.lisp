@@ -8,7 +8,7 @@
 
 (defmethod calc-pv-recsize ((buffer number) frame-size hop &optional sample-rate)
   (let ((rawsize))
-    (setf sample-rate (if sample-rate sample-rate (sr *s*)))
+    (setf sample-rate (if sample-rate sample-rate 44100.0))
     (setf rawsize (* frame-size (ceil~ (/ (* buffer sample-rate) frame-size))))
     (+ (* rawsize (reciprocal hop)) 3)))
 

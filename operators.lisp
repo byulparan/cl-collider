@@ -69,6 +69,9 @@
 (def-unary-op cpsmidi (lambda (note) (* 440 (expt 2 (/ (- note 69) 12.0))))
   :special-index 18)
 
+(def-unary-op midiratio (lambda (note) (expt 2 (* note 0.083333333333)))
+  :special-index 19)
+
 (def-unary-op dbamp (lambda (db) (expt 10.0 (* db .05)))
   :special-index 21)
 
@@ -135,7 +138,6 @@
   ((equalp 1.0 in2) in1)
   ((equalp -1.0 in2) (neg in1)))
 
-
 (defgeneric optimize-graph (ugen))
 (defgeneric optimize-sub (ugen))
 (defgeneric optimize-add-neg (ugen))
@@ -200,6 +202,15 @@
 (defun /~ (&rest args)
   (reduce 'divide args))
 
+;; (defun my/~ (&rest args)
+;;   "(/ (in bus) number) 가 생각과 다르게 나와서 (* (in bus) (/ 1.0 number)) 로 우회."
+;;   (labels ((div (a b)
+;; 	     (mul a (reciprocal b))))
+;;     (reduce #'div args)))
+
+(def-binary-op mod~ #'mod
+    (:special-index 5))
+
 (def-binary-op round~ (lambda (a b) (let* ((round (round a b))
 					   (lo (* round b))
 					   (hi (* (+ 1 round) b)))
@@ -210,6 +221,9 @@
 
 (def-binary-op trunc (lambda (a b) (* b (truncate a b)))
     (:special-index 21))
+
+(def-binary-op == #'=
+    (:special-index 6))
 
 (def-binary-op <~ #'<
     (:special-index 8))
@@ -254,8 +268,22 @@
 (def-binary-op <! #'(lambda (in1 in2) (declare (ignore in2)) in1)
     (:special-index 46))
 
+(def-binary-op logand~ #'logand
+    (:special-index 14))
+
+(def-binary-op logior~ #'logior
+    (:special-index 15))
 
 
+(def-binary-op << #'(lambda (in1 in2) (ash in1 in2))
+    (:special-index 26))
+
+(def-binary-op >> #'(lambda (in1 in2) (ash in1 (- in2)))
+    (:special-index 27))
+
+(defun ash~ (in1 in2)
+  (if (plusp in2) (<< in1 in2)
+      (>> in1 (- in2))))
 ;;;
 ;;;
 ;;; 
@@ -377,7 +405,7 @@
 		(t (list nil nil)))
 	(when (and x y)
 	  (alexandria:removef (children (synthdef ugen)) x)
-	  (sum4 (nth 0 (inputs a)) (nth 1 (inputs a)) (nth 2 (inputs a)) y))))))
+	  (sum4 (nth 0 (inputs x)) (nth 1 (inputs x)) (nth 2 (inputs x)) y))))))
 
 
 ;;; operations ugen
@@ -401,7 +429,6 @@
 (defun range (ugen &optional (lo 0.0) (hi 1.0))
   (multinew #'_range nil ugen lo hi))
 
-
 (defun unipolar (ugen &optional (mul 1))
   (range ugen 0 mul))
 
@@ -418,7 +445,6 @@
 		(:min (max~ ugen min))
 		(:max (min~ ugen max))))))
     (multinew op nil ugen min max type)))
-
 
 (defun sum (array)
   (let ((sum (first array)))
@@ -459,6 +485,9 @@
 	  ((= (length mixed-col) 3) (apply #'sum3 mixed-col))
 	  (t (mix mixed-col)))))
 
+(defun mean (array)
+  (if (every #'numberp array) (alexandria:mean array)
+      (/~ (sum array) (length array))))
 
 (defun product (list &optional f)
   (let ((product 1))
@@ -467,3 +496,4 @@
 	(loop for elem in list
 	      do (setf product (*~ product elem))))
     product))
+

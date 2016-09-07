@@ -97,19 +97,17 @@
     (namestring path)))
 
 
-(defmethod load-synthdef ((synthdef synthdef) &optional (completion-message 0))
+(defmethod load-synthdef ((synthdef synthdef) node &optional (completion-message 0))
   (assert (is-local-p *s*) nil "server ~a is not in local-machine. load-synthdef is only can do it in localhost server." *s*)
-  (send-message *s* "/d_load"
-		(write-synthdef-file (name synthdef) (encode-synthdef synthdef))
-		completion-message))
+  (message-distribute node (list "/d_load" (write-synthdef-file (name synthdef) (encode-synthdef synthdef)) completion-message) *s*))
 
-(defmethod recv-synthdef ((synthdef synthdef) &optional (completion-message 0))
+(defmethod recv-synthdef ((synthdef synthdef) node &optional (completion-message 0))
   (let* ((name (name synthdef))
 	 (data (encode-synthdef synthdef)))
-    (cond ((> (/ usocket:+max-datagram-packet-size+ 4) (length data)) (send-message *s* "/d_recv" data completion-message))
-	  ((is-local-p *s*) (progn (format t "~&~a too big for sending.  Retrying via synthdef file~%" name)
-				   (send-message *s* "/d_load" (write-synthdef-file name data) completion-message)))
-	  (t (error "~a too big for sending" name)))))
+    (cond ((>= usocket:+max-datagram-packet-size+ (length data)) (message-distribute node (list "/d_recv" data completion-message) *s*))
+    	  ((is-local-p *s*) (progn (format t "~&~a too big for sending.  Retrying via synthdef file~%" name)
+				   (load-synthdef synthdef node completion-message)))
+    	  (t (error "~a too big for sending" name)))))
 
 (defclass control (multiout-ugen) ())
 
@@ -126,42 +124,66 @@
 								       :output-index i)
 				  do (incf i))))))
 
+
+(defun add-controls (rate lag-p controls)
+  (ugen-new (if lag-p "LagControl" "Control")
+	    rate 'control #'identity :bipolar (mapcar #'second controls) (control-ugen-count *synthdef*)
+	    (alexandria:flatten
+	     (when lag-p
+	       (mapcar (lambda (ctrl)
+			 (let ((lag-value (alexandria:if-let ((value (getf ctrl :lag))) value 0))
+			       (ctrl-value (second ctrl)))
+			   (when (and (consp lag-value) (numberp ctrl-value))
+			     (error "single-control with multi-lag not support"))
+			   (when (and (consp lag-value) (consp ctrl-value) (/= (length lag-value) (length ctrl-value)))
+			     (error "control-value != lag-value length"))
+			   (when (and (consp ctrl-value) (atom lag-value))
+			     (setf lag-value (su:dup lag-value (length ctrl-value))))
+			   lag-value))
+		       controls)))))
+
 (defun make-control (params rate)
   (assert (and (every #'stringp (mapcar #'first params))
   	       (every #'numberp (alexandria:flatten (mapcar #'second params)))
-	       (every #!(or (eql % :tr) (eql % :lag) (not %)) (mapcar #'third params))))
+	       (every #!(or (eql % :ar) (eql % :tr) (eql % :lag) (not %)) (mapcar #'third params))))
   (labels ((make-ctrl (params)
 	     (dolist (controls (mapcar #'second params))
 	       (dolist (control-val (su:mklist controls))
 		 (alexandria:appendf (controls *synthdef*) (list (floatfy control-val)))))))
     (let* ((trig-controls (remove-if-not #!(eql :tr (third %)) params))
-	   (controls (remove-if #!(eql :tr (third %)) params))
+	   (audio-controls (remove-if-not #!(eql :ar (third %)) params))
+	   (controls (remove-if #!(or (eql :tr (third %)) (eql :ar (third %))) params))
 	   (lag-p (some #!(getf % :lag) controls)))
       (alexandria:appendf (control-names *synthdef*)
-			  (loop for all-controls in (append trig-controls controls)
-				and index = (control-ugen-count *synthdef*) then (incf index (length (su:mklist (second all-controls))))
-				for containers = nil
-				collect (alexandria:appendf containers (list (first all-controls) index))))
-      (make-ctrl trig-controls)
-      (make-ctrl controls)
+			  (loop with control-names = (mapcar #'first (control-names *synthdef*))
+				for controls in (append trig-controls audio-controls controls)
+				and index = (control-ugen-count *synthdef*) then (incf index (length (su:mklist (second controls))))
+				do (when (find (first controls) control-names :test #'string=)
+				     (error "duplicate control name ~s" (first controls)))
+				collect (list (first controls) index)))
+      (make-ctrl trig-controls) (make-ctrl audio-controls) (make-ctrl controls)
       (append
        (when trig-controls
-	 (prog1 (ugen-new "TrigControl" rate 'control #'identity :bipolar (mapcar #'second trig-controls) (control-ugen-count *synthdef*))
+	 (prog1 (ugen-new "TrigControl" rate 'control #'identity :bipolar
+			  (mapcar #'second trig-controls)
+			  (control-ugen-count *synthdef*))
 	   (incf (control-ugen-count *synthdef*) (length (alexandria:flatten (mapcar #'second trig-controls))))))
+       (when audio-controls
+	 (prog1 (ugen-new "AudioControl" :audio 'control #'identity :bipolar
+			  (mapcar #'second audio-controls)
+			  (control-ugen-count *synthdef*))
+	   (incf (control-ugen-count *synthdef*) (length (alexandria:flatten (mapcar #'second audio-controls))))))
        (when controls
-	 (prog1 (ugen-new (if lag-p "LagControl" "Control")
-			  rate'control #'identity :bipolar (mapcar #'second controls)
-			  (control-ugen-count *synthdef*)
-			  (when lag-p (mapcar #!(cond ((numberp %) %)
-						      ((not %) 0)
-						      (t (error "lag value is must be number or nil(= 0)")))
-					      (mapcar #!(getf % :lag) controls))))
+	 (prog1 (add-controls rate lag-p controls)
 	   (incf (control-ugen-count *synthdef*) (length (alexandria:flatten (mapcar #'second controls))))))))))
 
 (defmacro with-controls (params &body body)
-  (if params `(destructuring-bind ,(mapcar #'first (append (remove-if-not #!(eql :tr (third %)) params)
-						    (remove-if #!(eql :tr (third %)) params)))
-		  (make-control (list ,@(mapcar #!(cons 'list (list (string-downcase (first %)) (second %) (third %) (fourth %)))
+  (if params `(destructuring-bind ,(mapcar #'first (append
+						    (remove-if-not (lambda (a) (eql :tr (third a))) params)
+						    (remove-if-not (lambda (a) (eql :ar (third a))) params)
+						    (remove-if (lambda (a) (or (eql :tr (third a)) (eql :ar (third a)))) params)))
+		  (make-control (list ,@(mapcar (lambda (a)
+						  (cons 'list (list (string-downcase (first a)) `(floatfy ,(second a)) (third a) (fourth a))))
 						params))
 				:control)
 		,@body)
@@ -185,13 +207,17 @@
     (- 'sc::-~)
     (* 'sc::*~)
     (/ 'sc::/~)
+    (mod 'sc::mod~)
     (round 'sc::round~)
     (< 'sc::<~)
     (> 'sc::>~)
     (<= 'sc::<=~)
     (max 'sc::max~)
     (min 'sc::min~)
-    (if 'sc::if~)    
+    (if 'sc::if~)
+    (logand 'sc::logand~)
+    (logior 'sc::logior~)
+    (ash 'sc::ash~)
     (t atom)))
 
 (defun convert-code (form)
@@ -201,21 +227,25 @@
 		 (convert-code (cdr form))))))
 
 
-
-
 (defmacro synth-funcall-definition (name args)
   (alexandria:with-gensyms (next-id new-synth)
-    `(defun ,name (&key ,@(su:cat args (list '(pos :head) '(to 1) 'end-f)))
-       (let* ((,next-id (get-next-id *s*))
-	      (,new-synth (make-instance 'node :server *s* :id ,next-id :name ,(string-downcase name) :pos pos :to to)))
-	 (prog1
-	     (message-distribute 
-	      ,new-synth
-	      (make-synth-msg *s* ,(string-downcase name) ,next-id to pos
-			      ,@(alexandria:flatten (mapcar #!(list (string-downcase (first %)) (first %)) args)))
-	      *s*)
-	   (when end-f
-	     (setf (gethash ,next-id (end-node-handler *s*)) end-f)))))))
+    (let ((delim (position '&key args)))
+      `(defun ,name (,@(mapcar #!(if (listp %) (car %) %) (if delim (subseq args 0 delim) args))
+		     &key ,@(su:cat (mapcar #!(if (listp %) (subseq % 0 2) (list % 0))
+					    (if delim (subseq args (1+ delim)) nil))
+				    (list '(pos :head) '(to 1) 'end-f)))
+	 (let* ((,next-id (get-next-id *s*))
+		(,new-synth (make-instance 'node :server *s* :id ,next-id :name ,(string-downcase name) :pos pos :to to)))
+	   (prog1
+	       (message-distribute 
+		,new-synth
+		(make-synth-msg *s* ,(string-downcase name) ,next-id to pos
+				,@(alexandria:flatten (mapcar #!(list (string-downcase %) %)
+							      (mapcar #!(if (listp %) (car %) %)
+								      (remove '&key args)))))
+		*s*)
+	     (when end-f
+	       (setf (gethash ,next-id (end-node-handler *s*)) end-f))))))))
 
 (defparameter *synth-definition-mode* :recv)
 
@@ -223,64 +253,68 @@
   (alexandria:with-gensyms (synthdef)
     `(let* ((,synthdef (make-instance 'synthdef :name ,(string-downcase name)))
 	    (*synthdef* ,synthdef))
-       (with-controls (,@params)
+       (with-controls (,@(mapcar #!(if (symbolp %) (list % 0) %) (remove '&key params)))
 	 ,@(convert-code body)
 	 (build-synthdef ,synthdef)
 	 (when (and *s* (boot-p *s*))
 	   (ecase *synth-definition-mode*
-	     (:recv (recv-synthdef ,synthdef))
-	     (:load (load-synthdef ,synthdef)))
+	     (:recv (recv-synthdef ,synthdef nil))
+	     (:load (load-synthdef ,synthdef nil)))
 	   (sync)
-	   (synth-funcall-definition ,name ,(mapcar #!(subseq % 0 2) params)))
+	   (synth-funcall-definition ,name ,params))
 	 ,synthdef))))
 
 (defvar *temp-synth-name* "temp-synth")
 
-(defmacro play (body &key (out-bus 0) (fade-time 0.02) (to 1) (pos :head))
-  (alexandria:with-gensyms (synthdef result dt gate start-val env i_out node-id name has-fade-time-p)
+(defmacro play (body &key (out-bus 0) (gain 1.0) (lag 1.0) (fade 0.02) (to 1) (pos :head))
+  (alexandria:with-gensyms (synthdef result dt gate gain-sym lag-sym
+				     start-val env node-id name is-signal-p outlets seqs node)
     `(let* ((,name *temp-synth-name*)
-	    (,has-fade-time-p nil)
+	    (,is-signal-p nil)
 	    (,synthdef (make-instance 'synthdef :name ,name))
 	    (*synthdef* ,synthdef))
-       (let ((,i_out (make-control (list (list "i_out" ,out-bus)) :scalar)))
+       (labels ((,seqs (indx lists)
+		  (nth (mod indx (length lists)) lists))
+		(,outlets (f bus result gain lag)
+		  (if (numberp gain) (funcall f bus (*~ result (var-lag.kr gain lag)))
+		      (loop with bus = (su:mklist bus)
+		  	    with gain = (su:mklist gain)
+		  	    for i from 0 below (max (length bus) (length gain))
+		  	    do (funcall f (,seqs i bus) (*~ (var-lag.kr (,seqs i gain) lag) result))))))
 	 (let ((,result ,(convert-code body)))
 	   (unless (numberp ,result)
-	     (setf ,has-fade-time-p t)
-	     (let* ((,dt (first (make-control (list (list "fade-time" ,fade-time)) :control)))
-		    (,gate (first (make-control (list (list "gate" 1.0)) :control)))
-		    (,start-val (<=~ ,dt 0))
-		    (,env (env-gen.kr
-			   (env (list ,start-val 1 0) (list 1,1) :lin 1) :gate ,gate :level-scale 1
-									 :level-bias 0.0 :time-scale ,dt
-									 :act :free)))
-	       (setf ,result (*~ ,env ,result))
-	       (cond ((eql :audio (rate ,result)) (out.ar ,i_out ,result))
-		     ((eql :control (rate ,result)) (out.kr ,i_out ,result))
-		     (t (error "not ugen ~a in play" ,result)))))))
+	     (setf ,is-signal-p t)
+	     (destructuring-bind (,dt ,gate ,gain-sym ,lag-sym)
+		 (make-control (list (list "fade" ,fade) (list "gate" 1.0) (list "gain" ,gain) (list "lag" ,lag)) :control)
+	       (let* ((,start-val (<=~ ,dt 0))
+		      (,env (env-gen.kr
+			     (env (list ,start-val 1 0) (list 1,1) :lin 1) :gate ,gate :level-scale 1 :level-bias 0.0
+									   :time-scale ,dt :act :free)))
+		 (setf ,result (*~ ,env ,result))
+		 (cond ((eql :audio (rate ,result)) (,outlets 'out ,out-bus ,result ,gain-sym ,lag-sym))
+		       ((eql :control (rate ,result)) (,outlets 'out.kr ,out-bus ,result ,gain-sym ,lag-sym))
+		       (t (error "not ugen ~a in play" ,result))))))))
        (build-synthdef ,synthdef)
-       (recv-synthdef ,synthdef)
-       (sync)
-       (let ((,node-id (get-next-id *s*)))
-	 (message-distribute 
-	  (make-instance 'node :server *s* :id ,node-id :name *temp-synth-name* :pos ,pos :to ,to
-			       :meta (list :has-fade-time-p ,has-fade-time-p))
-	  (make-synth-msg *s* ,name ,node-id ,to ,pos) 
-	  *s*)))))
+       (let* ((,node-id (get-next-id *s*))
+	      (,node (make-instance 'node :server *s* :id ,node-id :name *temp-synth-name* :pos ,pos :to ,to :meta (list :is-signal-p ,is-signal-p))))
+	 (recv-synthdef ,synthdef ,node (apply 'osc:encode-message (make-synth-msg *s* ,name ,node-id ,to ,pos)))
+	 (sync)
+	 ,node))))
 
 
-(defparameter *node-proxy-table* (make-hash-table))
-
-(defmacro proxy (key &optional body &key (fade-time 2.0) (pos :head) (to 1) (out-bus 0))
+(defmacro proxy (key &optional body &key (gain 1.0) (fade 0.5) (pos :head) (to 1) (out-bus 0))
   (alexandria:with-gensyms (node)
-    (if body `(progn
-		(let ((,node (gethash ,key *node-proxy-table*))
-		      (*temp-synth-name* ,(string-downcase key)))
+    `(let ((,node (gethash ,key (node-proxy-table *s*))))
+       (labels ((clear-node ()
 		  (when (and ,node  (is-playing-p ,node))
-		    (if (getf (meta ,node) :has-fade-time-p) (ctrl ,node :gate 0 :fade-time ,fade-time)
-			(bye ,node)))
-		  (setf (gethash ,key *node-proxy-table*)
-			(play ,body :out-bus ,out-bus :fade-time ,fade-time :to ,to :pos ,pos))))
-	`(gethash ,key *node-proxy-table*))))
+		    (if (getf (meta ,node) :is-signal-p) (ctrl ,node :gate 0 :fade ,fade)
+			(bye ,node)))))
+	 ,(if body `(progn
+		      (let ((*temp-synth-name* ,(string-downcase key)))
+			(prog1 (setf (gethash ,key (node-proxy-table *s*))
+				     (play ,body :out-bus ,out-bus :fade ,fade :to ,to :pos ,pos :gain ,gain))
+			  (clear-node))))
+	      `(clear-node))))))
 
 
 ;;; ======================================================================

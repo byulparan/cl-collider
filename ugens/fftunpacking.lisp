@@ -51,6 +51,10 @@
     (setf magsphases (alexandria:flatten (flop magsphases)))
     (pack-fft pv-ugen frames magsphases :frombin frombin :tobin tobin :zeroothers zeroothers)))
 
+
+
+
+
 (defmethod pv-collect ((pv-ugen pv-chain-ugen) frames func &key (frombin 0) tobin (zeroothers 0))
   (let ((magsphases (clump (unpack-fft pv-ugen frames frombin tobin) 2))
 	(ret nil))
@@ -62,5 +66,20 @@
 		 collect
 		 (progn
 		   (setf ret (su:mklist (funcall func (nth 0 mp) (nth 1 mp) index)))
-		   (setf ret (if (= 1 (length ret)) (concatenate 'list ret (nth 1 mp)) ret))))))
+		   (setf ret (if (= 1 (length ret)) (concatenate 'list ret (su:mklist (nth 1 mp))) ret))))))
+    (pack-fft pv-ugen frames magsphases :frombin frombin :tobin tobin :zeroothers zeroothers)))
+
+
+(defmethod pv-collect2 ((pv-ugen pv-chain-ugen) frames func &key (frombin 0) tobin (zeroothers 0))
+  (let ((magsphases (clump (unpack-fft pv-ugen frames frombin tobin) 2))
+	(ret nil))
+    (setf magsphases
+	  (alexandria:flatten
+	   (loop repeat (length magsphases)
+		 for index from 0
+		 for mp = (nth index magsphases)
+		 collect
+		 (progn
+		   (setf ret (su:mklist (funcall func (nth 0 mp) (nth 1 mp) (+ frombin index))))
+		   (setf ret (if (= 1 (length ret)) (concatenate 'list ret (su:mklist (nth 1 mp))) ret))))))
     (pack-fft pv-ugen frames magsphases :frombin frombin :tobin tobin :zeroothers zeroothers)))

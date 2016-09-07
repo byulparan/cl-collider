@@ -5,14 +5,13 @@
   "It's special symbol bind to default scsynth server. If functions that are not specified target server,
  that message send to *s*")
 
-(defvar *sc-synthdefs-path* ""
-  "This path is where the scsyndef file is saved.")
-
-(defvar *sc-plugin-paths* nil
-  "list of scsynth's plugins(scx) path.")
-
 (defvar *sc-synth-program* "scsynth"
   "scsynth program's path. If wrong path is given, scsynth is can't run.")
+
+(defvar *sc-plugin-paths* nil)
+
+(defvar *sc-synthdefs-path* ""
+  "This path is where the scsyndef file is saved.")
 
 ;;; -------------------------------------------------------
 ;;; Server - base class
@@ -32,7 +31,7 @@
  internal server(yet..)"))
 
 (defmethod get-next-id ((server server))
-  #+ccl(ccl::%atomic-incf-car (id-and-buffer-number server))
+  #+ccl (ccl::%atomic-incf-car (id-and-buffer-number server))
   #+sbcl (sb-ext:atomic-incf (counter-count (car (id-and-buffer-number server)))))
 
 (defmethod get-next-buffer-number ((server server))
@@ -58,7 +57,7 @@
   (:documentation "scsynth server can run everywhere in Network.
  If server in local-machine return T, otherwise NIL"))
  
-(defgeneric sr (server/buffer))
+(defgeneric sr (buffer))
 (defgeneric (setf sr) (sr buffer))
 (defgeneric chanls (buffer))
 (defgeneric (setf chanls) (chanls buffer))
@@ -88,21 +87,49 @@
 (defgeneric send-message (server &rest msg))
 (defgeneric send-bundle (server time list-of-messages))
 
-(defgeneric initialize-server-responder (rt-server))
 (defgeneric node-watcher (rt-server))
 (defgeneric (setf node-watcher) (value rt-server))
 
-(defclass rt-server (server)
-  ((sr :initarg :sr :initform 44100 :reader sr)
-   (boot-p :initform nil :accessor boot-p)
-   (buffer-get-handlers :initarg :buffer-get-handlers
-			:initform (make-hash-table :test #'equal)
-			:reader buffer-get-handlers)
-   (control-get-handlers :initform (make-hash-table) :reader control-get-handlers)
-   (end-node-handler :initform (make-hash-table) :reader end-node-handler)
-   (sync-id-map :initform (make-id-map) :reader sync-id-map :allocation :class)
-   (node-watcher :initform nil :accessor node-watcher)))
 
+(defvar *all-rt-servers* nil)
+
+(defclass rt-server (server)
+  ((server-options
+    :initarg :server-options
+    :reader server-options)
+   (server-time-stamp
+    :initarg :server-time-stamp
+    :initform #'cb:unix-time
+    :accessor server-time-stamp)
+   (scheduler
+    :accessor scheduler)
+   (boot-p
+    :initform nil
+    :accessor boot-p)
+   (buffer-get-handlers
+    :initarg :buffer-get-handlers
+    :initform (make-hash-table :test #'equal)
+    :reader buffer-get-handlers)
+   (control-get-handlers
+    :initform (make-hash-table)
+    :reader control-get-handlers)
+   (end-node-handler
+    :initform (make-hash-table)
+    :reader end-node-handler)
+   (sync-id-map
+    :initform (make-id-map)
+    :reader sync-id-map
+    :allocation :class)
+   (node-watcher
+    :initform nil
+    :accessor node-watcher)
+   (node-proxy-table
+    :accessor node-proxy-table)))
+
+(defmethod initialize-instance :after ((self rt-server) &key)
+  (push self *all-rt-servers*)
+  (setf (scheduler self) (make-instance 'cb:scheduler :name (name self)
+						      :timestamp (server-time-stamp self))))
 
 (let ((semaphore-table (make-hash-table)))
   (defun get-semaphore-by-thread ()
@@ -116,15 +143,16 @@
       semaphore)))
 
 (defun sync (&optional (rt-server *s*))
-  (let* ((semaphore (get-semaphore-by-thread))
-	 (id (assign-id-map-id (sync-id-map rt-server) semaphore)))
-    (send-message rt-server "/sync" id)
-    #+ccl (ccl:wait-on-semaphore semaphore)
-    #+sbcl (sb-thread:wait-on-semaphore semaphore)))
+  (when (typep rt-server 'rt-server)
+    (let* ((semaphore (get-semaphore-by-thread))
+	   (id (assign-id-map-id (sync-id-map rt-server) semaphore)))
+      (send-message rt-server "/sync" id)
+      #+ccl (ccl:wait-on-semaphore semaphore)
+      #+sbcl (sb-thread:wait-on-semaphore semaphore))))
 
 (defmethod server-boot ((rt-server rt-server))
   (when (boot-p rt-server) (error "already supercollider server running"))
-  (cb:scheduler-start)
+  (cb:sched-run (scheduler rt-server))
   (bootup-server-process rt-server)
   (initialize-server-responder rt-server)
   (let* ((try-count 0) (success? t))
@@ -138,11 +166,13 @@
       (error "Failed Server Boot"))
     (when success?
       (send-message rt-server "/notify" 1)
-      (group-free-all rt-server))))
+      (group-free-all rt-server)
+      (setf (node-proxy-table rt-server) (make-hash-table))))
+  rt-server)
 
 (defmethod server-quit ((rt-server rt-server))
   (unless (boot-p rt-server) (error "supercollider not running"))
-  (cb:scheduler-clear)
+  (cb:sched-stop (scheduler rt-server))
   (send-message rt-server "/quit")
   (thread-wait (lambda () (not (boot-p rt-server))))
   (cleanup-server rt-server))
@@ -153,50 +183,63 @@
 (defun remove-reply-responder (cmd)
   (uninstall-reply-responder *s* cmd))
 
-
-(defmethod initialize-server-responder ((rt-server rt-server))
+(defun initialize-server-responder (rt-server)
   (let ((*s* rt-server))
-    (add-reply-responder "/done"
-			 (lambda (args)
-			   (cond ((string= (car args) "/quit") (setf (boot-p rt-server) nil))
-				 ((string= (car args) "/b_write") (alexandria:when-let ((f (gethash args (buffer-get-handlers rt-server))))
-								    (funcall f (gethash (second args) (buffers rt-server))))))))
-    (add-reply-responder "/status.reply"
-			 (lambda (args)
-			   (apply #'format t "~&UGens    : ~4d~&Synths   : ~4d~&Groups   : ~4d~&SynthDefs: ~4d~&% CPU (Averate): ~a~&% CPU (Peak)   : ~a~&SampleRate (Nominal): ~a~&SampleRate (Actual) : ~a~%" (cdr args))))
-    (add-reply-responder "/synced"
-			 (lambda (args)
-			   (let ((id (car args)))
-			     (case id
-			       (-1  (setf (boot-p rt-server) t))
-			       (otherwise (let ((semaphore (id-map-free-object (sync-id-map rt-server) id)))
-					    #+ccl (ccl:signal-semaphore semaphore)
-					    #+sbcl (sb-thread:signal-semaphore semaphore)))))))
-    (add-reply-responder "/c_set"
-			 (lambda (args)
-			   (funcall (gethash (first args) (control-get-handlers rt-server)) (second args))))
-    (add-reply-responder "/b_set"
-			 (lambda (args)
-			   (destructuring-bind (bufnum index value) args
-			     (let ((action (gethash (list "/b_set" bufnum index) (buffer-get-handlers rt-server))))
-			       (funcall action value)))))
-    (add-reply-responder "/b_setn"
-			 (lambda (args)
-			   (destructuring-bind (bufnum start frames &rest values) args
-			     (let ((action (gethash (list "/b_setn" bufnum start frames) (buffer-get-handlers rt-server))))
-			       (funcall action values)))))
-    (add-reply-responder "/b_info"
-			 (lambda (args)
-			   (destructuring-bind (bufnum frames chanls sr) args
-			     (let ((buffer (gethash bufnum (buffers rt-server))))
-			       (setf (frames buffer) frames (chanls buffer) chanls (sr buffer) sr)))))
-    (add-reply-responder "/fail" (lambda (args) (format t "FAIL! ~{~a ~}~%" args)))
-    (add-reply-responder "/n_go" (lambda (args) (push (car args) (node-watcher rt-server))))
-    (add-reply-responder "/n_end" (lambda (args)
-					      (alexandria:when-let ((handle (gethash (car args) (end-node-handler rt-server))))
-						(funcall handle))
-					      (alexandria:removef (node-watcher rt-server) (car args))))
-    (add-reply-responder "/d_removed" (lambda (args) (declare (ignore args))))))
+    (add-reply-responder
+     "/done"
+     (lambda (path &optional bufnum)
+       (cond ((string= path "/quit") (setf (boot-p rt-server) nil))
+	     ((string= path "/b_write") (alexandria:when-let ((f (gethash (list path bufnum) (buffer-get-handlers rt-server))))
+					  (funcall f (gethash bufnum (buffers rt-server))))))))
+    (add-reply-responder
+     "/status.reply"
+     (lambda (&rest args)
+       (apply #'format t "~&UGens  : ~4d~&Synths   : ~4d~&Groups   : ~4d~&SynthDefs: ~4d~&% CPU (Averate): ~a~&% CPU (Peak)   : ~a~&SampleRate (Nominal): ~a~&SampleRate (Actual) : ~a~%" (cdr args))))
+    (add-reply-responder
+     "/synced"
+     (lambda (id)
+       (case id
+	 (-1  (setf (boot-p rt-server) t))
+	 (otherwise (let ((semaphore (id-map-free-object (sync-id-map rt-server) id)))
+		      #+ccl (ccl:signal-semaphore semaphore)
+		      #+sbcl (sb-thread:signal-semaphore semaphore))))))
+    (add-reply-responder
+     "/c_set"
+     (lambda (bus value)
+       (funcall (gethash bus (control-get-handlers rt-server)) value)))
+    (add-reply-responder
+     "/b_set"
+     (lambda (bufnum index value)
+       (let ((action (gethash (list "/b_set" bufnum index) (buffer-get-handlers rt-server))))
+	 (funcall action value))))
+    (add-reply-responder
+     "/b_setn"
+     (lambda (bufnum start frames &rest values)
+       (let ((action (gethash (list "/b_setn" bufnum start frames)
+			      (buffer-get-handlers rt-server))))
+	 (funcall action values))))
+    (add-reply-responder
+     "/b_info"
+     (lambda (bufnum frames chanls sr)
+       (let ((buffer (gethash bufnum (buffers rt-server))))
+	   (setf (frames buffer) frames (chanls buffer) chanls (sr buffer) sr))))
+    (add-reply-responder
+     "/fail"
+     (lambda (&rest args) (format t "FAIL in Server! ~{~a ~}~%" args)))
+    (add-reply-responder
+     "/n_go"
+     (lambda (id &rest args)
+       (declare (ignore args))
+       (push id (node-watcher rt-server))))
+    (add-reply-responder
+     "/n_end"
+     (lambda (id &rest args)
+       (declare (ignore args))
+       (alexandria:when-let ((handle (gethash id (end-node-handler rt-server))))
+	 (funcall handle))
+       (alexandria:removef (node-watcher rt-server) id)))
+    (add-reply-responder
+     "/d_removed" (lambda (&rest args) (declare (ignore args))))))
 
 
 
@@ -211,16 +254,28 @@
 (defun control-set (index value)
   (message-distribute nil (list "/c_set" index value) *s*))
 
+
+;;; scheduler
+(defun callback (time f &rest args)
+  (apply #'cb:sched-add (scheduler *s*) time f args))
+
+(defun now ()
+  (cb:sched-time (scheduler *s*)))
+
+(defun quant (next-time &optional (offset .5))
+  (cb:sched-quant (scheduler *s*) next-time offset))
+
 ;;; --------------------------------------------------------------------------------------------
 ;;; external server
 ;;; --------------------------------------------------------------------------------------------
 
-(defvar *external-servers* nil)
-
 (defclass external-server (rt-server)
-  ((addr
-    :initarg :addr
-    :reader addr)
+  ((host 
+    :initarg :host
+    :reader host)
+   (port
+    :initarg :port
+    :reader port)
    (osc-device
     :reader osc-device)
    (just-connect-p
@@ -229,36 +284,29 @@
 
 (defmethod print-object ((self external-server) stream)
   (format stream "#<SC-SYNTH ~a-~d:~d>"
-	  (name self)
-	  (osc:net-addr-host (addr self))
-	  (osc:net-addr-port (addr self))))
+	  (name self) (host self) (port self)))
 
 (defun all-running-servers ()
-  (remove-if-not #!(boot-p %) *external-servers*))
+  (remove-if-not #!(boot-p %) *all-rt-servers*))
 
-(defmethod initialize-instance :after ((self external-server) &key)
-  (let ((port (osc:net-addr-port (addr self))))
-    (alexandria:when-let ((server (find port *external-servers* :key #!(osc:net-addr-port (addr %)))))
-      (error "~a's port ~a already bind to ~a" self port server)))
-  (push self *external-servers*))
-
-(defmethod is-local-p ((server external-server))
-  (string= (osc:net-addr-host (addr server)) "127.0.0.1"))
+(defmethod is-local-p ((rt-server external-server))
+  (string= (host rt-server) "127.0.0.1"))
 
 (defmethod bootup-server-process ((rt-server external-server))
   (with-slots (osc-device) rt-server
-    (setf osc-device (osc:osc-device nil t)))
+    (setf osc-device (osc:osc-device (host rt-server) (port rt-server) :local-port t)))
   (unless (just-connect-p rt-server)
     (bt:make-thread
      (lambda () (su:run-program
-		 (format nil "~a -u ~a -U \"~{~a~^:~}\""
+		 (format nil "~a -u ~a ~a"
 			 (su:full-pathname *sc-synth-program*)
-			 (osc:net-addr-port (addr rt-server))
-			 (mapcar #'su:full-pathname *sc-plugin-paths*)) 
+			 (port rt-server)
+			 (build-server-options (server-options rt-server))) 
 		 :output t :wait t))
      :name "scsynth")))
 
 (defmethod cleanup-server ((rt-server external-server))
+  (cb:sched-stop (scheduler rt-server))
   (osc:close-device (osc-device rt-server)))
 
 (defmethod server-quit ((rt-server external-server))
@@ -269,30 +317,30 @@
 
 (defmethod install-reply-responder ((rt-server external-server) cmd-name f)
   (osc:add-osc-responder (osc-device rt-server) cmd-name
-			 (lambda (msg addr)
-			   (declare (ignore addr))
-			   (funcall f msg))))
+			 (lambda (msg)
+			   (apply f msg))))
 
 (defmethod uninstall-reply-responder ((rt-server external-server) cmd-name)
   (osc:remove-osc-responder (osc-device rt-server) cmd-name))
 
 (defmethod send-message ((server external-server) &rest msg)
-  (apply #'osc:send-message (osc-device server) (addr server) msg))
+  (apply #'osc:send-message (osc-device server) msg))
 
 (defmethod send-bundle ((server external-server) time list-of-messages)
   (apply #'osc:send-bundle
 	 time
 	 (osc-device server)
-	 (addr server)
 	 list-of-messages))
 
-(defun make-external-server (name host port &key just-connect-p)
+(defun make-external-server (name server-options &key (host "127.0.0.1") port just-connect-p)
   (make-instance 'external-server :name name
-				  :addr (osc:net-addr host port)
+				  :server-options server-options
+				  :host host
+				  :port port
 				  :just-connect-p just-connect-p))
 
 
-;;; cleanup
+;;cleanup
 (labels ((clean-up-server ()
 	   (dolist (server (all-running-servers))
 	     (server-quit server))))
@@ -313,7 +361,6 @@
 (defmethod send-bundle ((server nrt-server) time list-of-messages)
   (declare (type double-float time))
   (push (list (- time osc::+unix-epoch+) list-of-messages) (streams server)))
-
 
 (defmacro with-rendering ((output-files &key (pad nil) (keep-osc-file nil) (format :int24) (sr 44100)) &body body)
   (alexandria:with-gensyms (osc-file file-name non-realtime-stream message)
@@ -347,6 +394,9 @@
 	 (delete-file ,osc-file))
        (values))))
 
+
+
+
 ;;; -------------------------------------------------------
 ;;; Node
 ;;; -------------------------------------------------------
@@ -378,9 +428,14 @@
     (t 0)))
 
 (defmacro with-node ((node id server) &body body)
-  `(let ((,id (if (numberp ,node) ,node (id ,node)))
-	 (,server (if (numberp ,node) *s* (server ,node))))
-     ,@body))
+  `(let ((,id (etypecase ,node
+		(number ,node)
+		(node (id ,node))
+		(keyword (alexandria:when-let ((node (gethash ,node (node-proxy-table *s*))))
+			   (id node)))))
+	 (,server (if (typep ,node 'node) (server ,node) *s*)))
+     (when ,id
+       ,@body)))
 
 (defun make-synth-msg (rt-server name id to pos &rest args)
   (with-node (to target server)
@@ -409,36 +464,38 @@
 (defmethod print-object ((node group) stream)
   (format stream "#<Group :server ~s :id ~a>" (server node) (id node)))
 
-(defun make-group (group-id &key (server *s*) (pos :after) (to 1))
-  (with-node (to target-id rt-server)
-    (unless (numberp to)
-      (assert (eql rt-server server) nil "target's server != group's server.(/= ~a ~a)" rt-server server))
-    (let ((group (make-instance 'group :server server :id group-id :pos pos :to target-id)))
-      (message-distribute group (list "/g_new" group-id (node-to-pos pos) target-id) server))))
+(let ((new-group-id 1))
+  (defun make-group (&key id (server *s*) (pos :after) (to 1))
+    (with-node (to target-id rt-server)
+      (unless (numberp to)
+	(assert (eql rt-server server) nil "target's server != group's server.(/= ~a ~a)" rt-server server))
+      (let* ((group-id (if id id (incf new-group-id)))
+	     (group (make-instance 'group :server server :id group-id :pos pos :to target-id)))
+	(message-distribute group (list "/g_new" group-id (node-to-pos pos) target-id) server)
+	(sync)
+	group))))
 
 (defun server-query-all-nodes (&optional (rt-server *s*))
   (send-message rt-server "/g_dumpTree" 0 0))
 
 (defvar *group-free-all-hook* nil)
-(defun set-hook-group-free-all (f)
+(defun set-group-free-all-hook (f)
   (setf *group-free-all-hook* f))
 
 (defun group-free-all (&optional (rt-server *s*))
   (let ((*s* rt-server))
-    (cb:scheduler-clear)
+    (cb:sched-clear (scheduler rt-server))
     (send-message rt-server "/g_freeAll" 0)		
     (send-message rt-server "/clearSched")
-    (make-group 1 :pos :head :to 0)
+    (make-group :id 1 :pos :head :to 0)
     (alexandria:when-let ((hook *group-free-all-hook*))
       (funcall hook))))
 
 (defun stop (&optional (group 1) &rest groups)
-  (cb:scheduler-clear)
+  (cb:sched-clear (scheduler *s*))
   (dolist (group (cons group groups))
     (send-message *s* "/g_freeAll" group)
     (send-message *s* "/clearSched")))
 
 (defun server-status (&optional (rt-server *s*))
   (send-message rt-server "/status"))
-
-

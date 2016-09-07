@@ -15,7 +15,7 @@
 	  (setf level (*~ level (sqrt~ (reciprocal n))))
 	  (setf level (/~ level n))))
     (if (eql rate :audio)
-	(*~ (sum (pan2.ar in-array position)) level)
+	(*~ (sum (pan2 in-array position)) level)
 	(*~ (sum (pan2.kr in-array position)) level))))
 
 (defugen (splay "Splay") (in-array &optional (spread 1) (level 1) (center 0.0) (level-comp t))
@@ -26,8 +26,8 @@
     (declare (ignore new))
     (apply #'multinew #'splay-new :control spread level center level-comp (su:mklist in-array)))))
 
-(defun splay.ar-fill (n function &optional (spread 1) (level 1) (center 0.0) (level-comp t))
-  (splay.ar (su:dup function n) spread level center level-comp))
+(defun splay-fill (n function &optional (spread 1) (level 1) (center 0.0) (level-comp t))
+  (splay (su:dup function n) spread level center level-comp))
 
-(export 'splay.ar-fill)
+(export 'splay-fill)
 

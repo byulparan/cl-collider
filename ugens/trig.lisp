@@ -13,8 +13,8 @@
 
 (defugen (send-trig "SendTrig")
     (&optional (in 0.0) (id 0) (value 0.0))
-  ((:ar (progn (multinew new 'ugen in id value) 0.0))
-   (:kr (progn (multinew new 'ugen in id value) 0.0)))
+  ((:ar (progn (multinew new 'nooutput-ugen in id value) 0.0))
+   (:kr (progn (multinew new 'nooutput-ugen in id value) 0.0)))
   :check-fn #'check-same-rate-as-first-input)
 
 (defugen (send-reply "SendReply")
@@ -25,7 +25,7 @@
       (dolist (args (flop (list trig cmd values reply-id)))
 	(destructuring-bind (trig cmd value rep-id) args
 	  (let ((arg (list trig rep-id (length cmd))))
-	    (apply #'multinew new 'ugen
+	    (apply #'multinew new 'nooutput-ugen
 		   (append arg (map 'list #'char-code cmd) (su:mklist value))))))
       0.0))
    (:ar
@@ -34,7 +34,7 @@
       (dolist (args (flop (list trig cmd values reply-id)))
 	(destructuring-bind (trig cmd value rep-id) args
 	  (let ((arg (list trig rep-id (length cmd))))
-	    (apply #'multinew new 'ugen
+	    (apply #'multinew new 'nooutput-ugen
 		   (append arg (map 'list #'char-code cmd) (su:mklist value))))))
       0.0))))
 
@@ -140,7 +140,7 @@
   ((:ar (multinew new 'ugen in lo hi))
    (:kr (multinew new 'ugen in lo hi))))
 
-(defugen (fold "Fold")
+(defugen (fold-ugen "Fold")
     (&optional (in 0.0) (lo 0.0) (hi 1.0))
   ((:ar (multinew new 'ugen in lo hi))
    (:kr (multinew new 'ugen in lo hi))))
@@ -149,13 +149,15 @@
   (when (every #'numberp (list ugen lo hi)) (error "not yet implemented"))
   (let ((op (lambda (cls ugen lo hi)
 	      (declare (ignore cls))
-	      (cond ((eql (rate ugen) :control) (fold.kr ugen lo hi))
-		    ((eql (rate ugen) :audio) (fold.ar ugen lo hi))))))
+	      (cond ((eql (rate ugen) :control) (fold-ugen.kr ugen lo hi))
+		    ((eql (rate ugen) :audio) (fold-ugen ugen lo hi))))))
     (multinew op nil ugen lo hi)))
 
-(defugen (clip "Clip") (&optional (in 0.0) (lo 0.0) (hi 1.0))
+(defugen (clip-ugen "Clip") (&optional (in 0.0) (lo 0.0) (hi 1.0))
   ((:ar (multinew new 'ugen in lo hi))
    (:kr (multinew new 'ugen in lo hi))))
+
+
 
 (defmethod clip (in &optional (lo 0.0) (hi 1.0))
   (when (and (numberp in) (not (every #'numberp (list lo hi))))
@@ -163,11 +165,11 @@
   (if (every #'numberp (list in lo hi)) (max~ lo (min~ hi in))
       (let ((op (lambda (cls in lo hi)
 		  (declare (ignore cls))
-		  (cond ((eql (rate in) :control) (clip.kr in lo hi))
-			((eql (rate in) :audio) (clip.ar in lo hi))))))
+		  (cond ((eql (rate in) :control) (clip-ugen.kr in lo hi))
+			((eql (rate in) :audio) (clip-ugen in lo hi))))))
 	(multinew op nil in lo hi))))
 
-(defugen (wrap "Wrap")
+(defugen (wrap-ugen "Wrap")
     (&optional (in 0.0) (lo 0.0) (hi 1.0))
   ((:ar (multinew new 'ugen in lo hi))
    (:kr (multinew new 'ugen in lo hi))))
@@ -177,9 +179,11 @@
   (let ((op (lambda (cls ugen lo hi)
 	      (declare (ignore cls))
 	      (ecase (rate ugen)
-		(:control (wrap.kr ugen lo hi))
-		(:audio (wrap.ar ugen lo hi))))))
+		(:control (wrap-ugen.kr ugen lo hi))
+		(:audio (wrap-ugen ugen lo hi))))))
     (multinew op nil ugen lo hi)))
+
+(unexport '(clip-ugen clip-ugen.kr fold-ugen fold-ugen.kr wrap-ugen wrap-ugen.kr))
 
 (defugen (Schmidt "Schmidt")
     (&optional (in 0.0) (lo 0.0) (hi 1.0))

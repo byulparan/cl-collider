@@ -57,14 +57,11 @@
 
 (defmethod initialize-instance :after ((self env) &key)
   (with-slots (levels times release-node loop-node) self
-    (assert
-     (and (every (lambda (obj) (or (typep obj 'number) (typep obj 'ugen))) levels)
-	  (every (lambda (obj) (or (typep obj 'number) (typep obj 'ugen))) times)
-	  (typep release-node 'number)
-	  (typep loop-node 'number)
-	  (= (1- (length levels)) (length times)))
-     nil
-     "잘못된 Env Segments")))
+    (assert (every (lambda (obj) (or (typep obj 'number) (typep obj 'ugen))) levels))
+    (assert (every (lambda (obj) (or (typep obj 'number) (typep obj 'ugen))) times))
+    (assert (typep release-node 'number))
+    (assert (typep loop-node 'number))
+    (assert (= (1- (length levels)) (length times)))))
 
 (defparameter +env-shape-table+
   (let ((table (make-hash-table)))

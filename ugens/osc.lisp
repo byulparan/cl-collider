@@ -189,8 +189,8 @@
 (defugen (select-x "SelectX") (which array &optional (wrap 1.0))
   ((:ar (progn
 	  new wrap
-	  (x-fade2.ar (select.ar (round~ which 2) array)
-			   (select.ar (add (trunc which 2) 1) array)
+	  (x-fade2 (select (round~ which 2) array)
+			   (select (add (trunc which 2) 1) array)
 			   (fold2 (minus (mul which 2) 1) 1))))
    (:kr (progn new wrap
 	       (x-fade2.kr (select.kr (round~ which 2) array)
@@ -200,8 +200,8 @@
 (defugen (lin-select-x "LinSelectX") (which array &optional (wrap 1.0))
   ((:ar (progn
 	  new wrap
-	  (lin-x-fade2.ar (select.ar (round~ which 2) array)
-			   (select.ar (add (trunc which 2) 1) array)
+	  (lin-x-fade2 (select (round~ which 2) array)
+			   (select (add (trunc which 2) 1) array)
 			   (fold2 (minus (mul which 2) 1) 1))))
    (:kr (progn new wrap
 	       (lin-x-fade2.kr (select.kr (round~ which 2) array)
@@ -226,11 +226,11 @@
 
 
 (defugen (t-choose "TChoose") (trig array)
-  ((:ar (progn new (select.ar (ti-rand.kr 0 (1- (length array)) trig) array)))
+  ((:ar (progn new (select (ti-rand.kr 0 (1- (length array)) trig) array)))
    (:kr (progn new (select.kr (ti-rand.kr 0 (1- (length array)) trig) array)))))
 
 (defugen (tw-choose "TWChoose") (trig array weights &optional (normalize 0))
-  ((:ar (progn new (select.ar (tw-index.ar trig weights normalize) array)))
+  ((:ar (progn new (select (tw-index trig weights normalize) array)))
    (:kr (progn new (select.kr (tw-index.kr trig weights normalize) array)))))
 
 
@@ -244,27 +244,40 @@
     (madd (multinew new 'ugen freq iphase) mul add))))
 
 
+;;;
+;; (defun assert-array-ref (array-ref)
+;;   (labels ((max-depth (lst &optional (rank 0)) 
+;; 	     (let ((lst (remove-if-not #'consp lst)))
+;; 	       (cond ((null lst) (1+ rank))
+;; 		     (t (max (max-depth (car lst) (+ rank 1))
+;; 			     (max-depth (cdr lst) rank)))))))
+;;     (let ((depth (apply #'max (mapcar #'max-depth array-ref))))
+;;       (assert (> 3 depth) nil
+;; 	      "too deep depth harm or amp or ring list. max depth is 2, but your max depth is ~a." depth))))
 
+(defun flop-argument (lst)
+  (assert (every #'numberp (alexandria:flatten lst)) nil
+	  "klang/klank is not support ugens arguments. You should be use dyn-klang/dyn-klank.")
+  (unless lst (setf lst [1.0]))
+  (flop lst))
 
 (defclass klang (ugen) ())
-
-(defun array-ref-modify (array-ref &optional a b)
-  (setf array-ref (map 'list (lambda (ref) ref) array-ref))
-  (unless (every #'listp array-ref) (error "ref must-be freqs-list amps-list phases-list"))
-  (destructuring-bind (freqs amps phases) array-ref
-     (list freqs (if amps amps (make-list (length freqs) :initial-element a))
-	   (if phases phases (make-list (length freqs) :initial-element b)))))
 
 (defmethod new1 ((ugen klang) &rest inputs)
   (destructuring-bind (freqscale freqoffset array-ref) inputs
     (setf (inputs ugen)
-	  (append (list freqscale freqoffset) (alexandria:flatten (flop (array-ref-modify array-ref 1.0 0.0)))))
+	  (append (list freqscale freqoffset)
+		  (alexandria:flatten (loop for arr across array-ref collect (if (null arr) 1.0 arr)))))
     (add-to-synth ugen)))
 
 (defugen (klang "Klang") (specificationsArrayRef &optional (freq-scale 1.0) (freq-offset 0.0))
-  ((:ar (multinew-list new 'klang  (list freq-scale freq-offset
-					 (make-array (length specificationsArrayRef)
-						     :initial-contents specificationsArrayRef))))))
+  ((:ar ;(assert-array-ref specificationsArrayRef)
+	(let ((len (length specificationsArrayRef)))
+	  (unless (= 3 len)
+	    (alexandria:appendf specificationsArrayRef (make-list (- 3 len)))))
+	(multinew new 'klang freq-scale freq-offset 
+		  (unbubble (mapcar #'(lambda (lst) (make-array (length lst) :initial-contents lst))
+				    (lst-operation (mapcar #'flop-argument specificationsArrayRef))))))))
 
 (defclass klank (ugen) ())
 
@@ -272,12 +285,17 @@
   (destructuring-bind (input freqscale freqoffset decayscale array-ref) inputs
     (setf (inputs ugen)
 	  (append (list input freqscale freqoffset decayscale)
-		  (alexandria:flatten (flop (array-ref-modify array-ref 1.0 1.0)))))
+		  (alexandria:flatten (loop for arr across array-ref collect (if (null arr) 1.0 arr)))))
     (add-to-synth ugen)))
 
 (defugen (klank "Klank") (specificationsArrayRef input &optional (freq-scale 1.0) (freq-offset 0.0) (decay-scale 1.0))
-  ((:ar (apply #'multinew new 'klank  input freq-scale freq-offset decay-scale
-	       (list (make-array (length specificationsArrayRef) :initial-contents specificationsArrayRef))))))
+  ((:ar ;(assert-array-ref specificationsArrayRef)
+	(let ((len (length specificationsArrayRef)))
+	  (unless (= 3 len)
+	    (alexandria:appendf specificationsArrayRef (make-list (- 3 len)))))
+	(multinew new 'klank  input freq-scale freq-offset decay-scale
+		  (unbubble (mapcar #'(lambda (lst) (make-array (length lst) :initial-contents lst))
+				    (lst-operation (mapcar #'flop-argument specificationsArrayRef))))))))
 
 
 (defclass dyn-klank (ugen) ())
@@ -286,7 +304,7 @@
   (destructuring-bind (array-ref input freq-scale freq-offset decay-scale) inputs
     (let ((array-ref (map 'list #'identity array-ref)))
       (ecase (rate ugen)
-	(:audio (sum (ringz.ar input (alexandria:if-let ((spec (nth 0 array-ref))) spec
+	(:audio (sum (ringz input (alexandria:if-let ((spec (nth 0 array-ref))) spec
 				       (add (mul (list 440.0) freq-scale) freq-offset))
 			       (alexandria:if-let ((spec (nth 2 array-ref))) spec
 				 (mul (list 1.0) decay-scale))
@@ -299,9 +317,11 @@
 
 (defugen (dyn-klank "DynKlank")
     (array-ref input &optional (freq-scale 1.0) (freq-offset 0.0) (decay-scale 1.0))
-  ((:ar (multinew new 'dyn-klank (make-array (length array-ref) :initial-contents array-ref)
+  ((:ar ;;(assert-array-ref array-ref)
+	(multinew new 'dyn-klank (make-array (length array-ref) :initial-contents array-ref)
 		  input freq-scale freq-offset decay-scale))
-   (:kr (multinew new 'dyn-klank (make-array (length array-ref) :initial-contents array-ref)
+   (:kr ;;(assert-array-ref array-ref)
+	(multinew new 'dyn-klank (make-array (length array-ref) :initial-contents array-ref)
 		  input freq-scale freq-offset decay-scale))))
 
 (defclass dyn-klang (ugen) ())
@@ -310,10 +330,10 @@
   (destructuring-bind (array-ref freq-scale freq-offset) inputs
     (let ((array-ref (map 'list #'identity array-ref)))
       (ecase (rate ugen)
-	(:audio (sum (sin-osc.ar (alexandria:if-let ((spec (nth 0 array-ref))) spec
-				   (add (mul (list 440.0) freq-scale) freq-offset))
-				 (alexandria:if-let ((spec (nth 2 array-ref))) spec (list 0.0))
-				 (alexandria:if-let ((spec (nth 1 array-ref))) spec (list 1.0)))))
+	(:audio (sum (sin-osc (alexandria:if-let ((spec (nth 0 array-ref))) spec
+				(add (mul (list 440.0) freq-scale) freq-offset))
+			      (alexandria:if-let ((spec (nth 2 array-ref))) spec (list 0.0))
+			      (alexandria:if-let ((spec (nth 1 array-ref))) spec (list 1.0)))))
 	(:control (sum (sin-osc.kr (alexandria:if-let ((spec (nth 0 array-ref))) spec
 				     (add (mul (list 440.0) freq-scale) freq-offset))
 				   (alexandria:if-let ((spec (nth 2 array-ref))) spec (list 0.0))
@@ -321,9 +341,11 @@
 
 (defugen (dyn-klang "DynKlang")
     (array-ref &optional (freq-scale 1.0) (freq-offset 0.0))
-  ((:ar (multinew new 'dyn-klang (make-array (length array-ref) :initial-contents array-ref)
+  ((:ar ;;(assert-array-ref array-ref)
+	(multinew new 'dyn-klang (make-array (length array-ref) :initial-contents array-ref)
 		  freq-scale freq-offset))
-   (:kr (multinew new 'dyn-klang (make-array (length array-ref) :initial-contents array-ref)
+   (:kr ;;(assert-array-ref array-ref)
+	(multinew new 'dyn-klang (make-array (length array-ref) :initial-contents array-ref)
 		  freq-scale freq-offset))))
 
 

@@ -12,8 +12,4 @@
 	   #:close-device
 	   
 	   #:add-osc-responder
-	   #:remove-osc-responder
-
-	   #:net-addr
-	   #:net-addr-host
-	   #:net-addr-port))
+	   #:remove-osc-responder))

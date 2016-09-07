@@ -15,9 +15,9 @@
   ((:ar (madd (multinew new 'ugen in control thresh slope-below slope-above clamp-time
 			relax-time) mul add))))
 
-(defun compander-d.ar (&optional (in 0.0) &key (thresh 0.5) (slope-below 1.0) (slope-above 1.0)
+(defun compander-d (&optional (in 0.0) &key (thresh 0.5) (slope-below 1.0) (slope-above 1.0)
 					    (clamp-time 0.01) (relax-time 0.01) (mul 1.0) (add 0.0))
-  (madd (compander.ar (delay-n.ar in clamp-time clamp-time) in
+  (madd (compander (delay-n in clamp-time clamp-time) in
 		      thresh slope-below slope-above clamp-time relax-time) mul add))
 
 

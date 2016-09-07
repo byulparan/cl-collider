@@ -7,14 +7,14 @@
 	       #:scheduler
 	       #:osc-lib
 	       #:alexandria
-	       #:usocket
 	       #:bordeaux-threads
 	       #:flexi-streams
-	       #:chanl)
+	       #:split-sequence)
   :serial t
   :components ((:file "package")
 	       #+sbcl (:file "id-map")
 	       (:file "util")
+	       (:file "server-options")
 	       (:file "server")
 	       (:file "buffer")
 	       (:file "ugen")

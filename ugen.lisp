@@ -35,21 +35,26 @@
 (defgeneric unbubble (list))
 
 ;;; create UGen -------------------------------------------------------------------------
-(defun multinew-list (new cls inputs)
+
+(defun lst-operation (lst &optional constructor)
   (labels ((list-ref (lst n)
-	     (nth (mod n (length lst)) lst))
+	     (if (null lst) nil
+		 (nth (mod n (length lst)) lst)))
 	   (mulnew (args)
 	     (let ((size 0) (results nil))
 	       (dolist (item args)
 		 (when (listp item) (setf size (max size (length item)))))
-	       (if (zerop size) (return-from mulnew (apply new cls args))
+	       (if (zerop size) (return-from mulnew (if constructor (funcall constructor args) args))
 		   (dotimes (i size)
 		     (let ((newargs nil))
 		       (dolist (item args)
 			 (alexandria:appendf newargs (list (if (listp item) (list-ref item i) item))))
 		       (alexandria:appendf results (list (mulnew newargs))))))
 	       results)))
-    (mulnew inputs)))
+    (mulnew lst)))
+
+(defun multinew-list (new cls inputs)
+  (lst-operation inputs (lambda (args) (apply new cls args))))
 
 (defun multinew (new cls &rest inputs)
   (multinew-list new cls inputs))
@@ -119,6 +124,9 @@
    (descendants :initform nil :accessor descendants)
    (width-first-antecedents :initarg :width-first-antecedents :initform nil :accessor width-first-antecedents)))
 
+(defclass nooutput-ugen (ugen)
+  ())
+
 (defmethod print-object ((c ugen) stream)
   (format stream "#<~a:~a>" (name c) (string-downcase (rate c))))
 
@@ -135,6 +143,9 @@
 
 (defmethod num-outputs ((ugen ugen))
   1)
+
+(defmethod num-outputs ((ugen nooutput-ugen))
+  0)
 
 (defmethod output-index ((ugen ugen))
   0)
@@ -297,9 +308,9 @@
       `(progn
 	 ,@(loop for func in function
 		 collect
-		 (let ((ugen-name (intern
-				   (su:cat
-				    (string-upcase (car name)) "." (string-upcase (car func))))))
+		 (let* ((ugen-name (intern
+				    (if (eql (car func) :ar) (string-upcase (car name))
+					(su:cat (string-upcase (car name)) "." (string-upcase (car func)))))))
 		   `(progn
 		      (defun ,ugen-name ,args
 			(let ((new (lambda (,cls &rest ,inputs)

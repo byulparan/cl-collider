@@ -26,7 +26,7 @@
     (let ((msg (list "/b_alloc" bufnum (floor frames) (floor chanls)
 		     (osc:encode-message "/b_query" bufnum))))
       (apply #'send-message server msg)
-      (sync *s*)
+      (sync server)
       new-buffer)))
 
 (defun buffer-read (path &key bufnum (server *s*))
@@ -38,12 +38,13 @@
 					      :server server))
 	   (msg (list "/b_allocRead" bufnum file-path 0 -1 (osc:encode-message "/b_query" bufnum))))
       (apply #'send-message server msg)
-      (sync *s*)
+      (sync server)
       new-buffer)))
 
 
 (defun buffer-normalize (buffer &optional (new-max 1.0) wavetable-p)
-  (send-message *s* "/b_gen" (floatfy buffer) (if wavetable-p "wnormalize" "normalize") new-max))
+  (send-message (server buffer) "/b_gen" (floatfy buffer) (if wavetable-p "wnormalize" "normalize") new-max)
+  (sync (server buffer)))
 
 
 ;;; 
@@ -61,7 +62,7 @@
 										 (:double "double"))
 		  num-frames start-frames 0)
     (unless action
-      (sync *s*)
+      (sync (server buffer))
       buffer)))
 
 
@@ -73,7 +74,7 @@
       (setf (gethash (list "/b_set" bufnum index) (buffer-get-handlers server)) (if action action #!(setf result %)))
       (send-message server "/b_get" bufnum index)
       (unless action
-	(sync *s*)
+	(sync (server buffer))
 	result))))
 
 (defun buffer-get-list (buffer start frames &optional action)
@@ -84,11 +85,12 @@
       (setf (gethash (list "/b_setn" bufnum start frames) (buffer-get-handlers server)) (if action action #!(setf result %)))
       (send-message server "/b_getn" bufnum start frames)
       (unless action
-	(sync *s*)
+	(sync (server buffer))
 	result))))
 
 (defun buffer-set (buffer index value)
-  (send-message (server buffer) "/b_set" (bufnum buffer) index value))
+  (send-message (server buffer) "/b_set" (bufnum buffer) index value)
+  (sync (server buffer)))
 
 
 (defun buffer-set-list (buffer data)
@@ -101,12 +103,22 @@
       (unless (zerop rest-message-len)
 	(let ((msg (subseq data (* repeat 1024) (+ (* repeat 1024) rest-message-len))))
 	  (apply #'send-message server (append (list "/b_setn" (bufnum buffer) (* repeat 1024) rest-message-len) msg)))))
+    (sync (server buffer))
     buffer))
 
 
 ;;; wavetable
-(defun b-cheby-msg (buffer data &optional (normalize t) (as-wavetable t) (clear-first t))
-  (append (list "/b_gen" (bufnum buffer) "cheby" (+ (if normalize 1 0) (if as-wavetable 2 0) (if clear-first 4 0))) data))
+(defun wavetable (buffer wave data &optional (normalize t) (as-wavetable t) (clear-first t))
+  (apply #'send-message
+	 (server buffer) 
+	 (append (list "/b_gen" (bufnum buffer)
+		       (ecase wave
+			 (:cheby "cheby")
+			 (:sine1 "sine1"))
+		       (+ (if normalize 1 0)
+			  (if as-wavetable 2 0)
+			  (if clear-first 4 0)))
+		 data)))
 
 
 
