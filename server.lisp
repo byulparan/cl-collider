@@ -5,7 +5,8 @@
   "It's special symbol bind to default scsynth server. If functions that are not specified target server,
  that message send to *s*")
 
-(defvar *sc-synth-program* "scsynth"
+(defvar *sc-synth-program*
+  #+darwin "/Applications/SuperCollider/SuperCollider.app/Contents/Resources/scsynth"
   "scsynth program's path. If wrong path is given, scsynth is can't run.")
 
 (defvar *sc-plugin-paths* nil)
@@ -103,6 +104,9 @@
     :accessor server-time-stamp)
    (scheduler
     :accessor scheduler)
+   (sc-thread
+    :initform nil
+    :accessor sc-thread)
    (boot-p
     :initform nil
     :accessor boot-p)
@@ -152,31 +156,34 @@
 
 (defmethod server-boot ((rt-server rt-server))
   (when (boot-p rt-server) (error "already supercollider server running"))
-  (cb:sched-run (scheduler rt-server))
   (bootup-server-process rt-server)
+  
   (initialize-server-responder rt-server)
-  (let* ((success? t))
-    (labels ((bootup ()
-	       (let* ((try-count 0))
-		 (send-message rt-server "/sync" -1)
-		 (loop while (not (thread-wait-with-timeout (lambda () (boot-p rt-server)) 30))
-		       do (incf try-count)
-			  (when (> try-count 30) (setf success? nil) (return))
-			  (send-message rt-server "/sync" -1))
-		 (when (and (not (boot-p rt-server)) (bt:thread-alive-p (sc-thread rt-server)))
-		   (bootup)))))
-      (bootup))
-    (when success?
-      (send-message rt-server "/notify" 1)
-      (group-free-all rt-server)
-      (setf (node-proxy-table rt-server) (make-hash-table))))
+  (labels ((bootup ()
+	     (let* ((try-count 0))
+	       (send-message rt-server "/sync" -1)
+	       (loop while (not (thread-wait-with-timeout (lambda () (boot-p rt-server)) 30))
+		     do (incf try-count)
+			(when (> try-count 30) (return))
+			(send-message rt-server "/sync" -1))
+	       (when (and (not (boot-p rt-server)) (bt:thread-alive-p (sc-thread rt-server)))
+		 (bootup)))))
+    (bootup))
+  (unless (boot-p rt-server)
+    (cleanup-server rt-server)
+    (error "Failed Server Boot"))
+  (when (boot-p rt-server)
+    (send-message rt-server "/notify" 1)
+    (cb:sched-run (scheduler rt-server))
+    (group-free-all rt-server)
+    (setf (node-proxy-table rt-server) (make-hash-table)))
   rt-server)
 
 (defmethod server-quit ((rt-server rt-server))
   (unless (boot-p rt-server) (error "supercollider not running"))
-  (cb:sched-stop (scheduler rt-server))
   (send-message rt-server "/quit")
   (thread-wait (lambda () (not (boot-p rt-server))))
+  (cb:sched-stop (scheduler rt-server))
   (cleanup-server rt-server))
 
 (defun add-reply-responder (cmd handler)
@@ -196,7 +203,7 @@
     (add-reply-responder
      "/status.reply"
      (lambda (&rest args)
-       (apply #'format t "~&UGens  : ~4d~&Synths   : ~4d~&Groups   : ~4d~&SynthDefs: ~4d~&% CPU (Averate): ~a~&% CPU (Peak)   : ~a~&SampleRate (Nominal): ~a~&SampleRate (Actual) : ~a~%" (cdr args))))
+       (apply #'format t "~&UGens    : ~4d~&Synths   : ~4d~&Groups   : ~4d~&SynthDefs: ~4d~&% CPU (Averate): ~a~&% CPU (Peak)   : ~a~&SampleRate (Nominal): ~a~&SampleRate (Actual) : ~a~%" (cdr args))))
     (add-reply-responder
      "/synced"
      (lambda (id)
@@ -296,19 +303,20 @@
 
 (defmethod bootup-server-process ((rt-server external-server))
   (with-slots (osc-device) rt-server
-    (setf osc-device (osc:osc-device (host rt-server) (port rt-server) :local-port t)))
+    (setf osc-device (osc:osc-device (host rt-server) (port rt-server) :local-port 0)))
   (unless (just-connect-p rt-server)
-    (bt:make-thread
-     (lambda () (su:run-program
-		 (format nil "~a -u ~a ~a"
-			 (su:full-pathname *sc-synth-program*)
-			 (port rt-server)
-			 (build-server-options (server-options rt-server))) 
-		 :output t :wait t))
-     :name "scsynth")))
+    (setf (sc-thread rt-server)
+      (bt:make-thread
+       (lambda () (su:run-program
+		   (format nil "~a -u ~a ~a"
+			   (su:full-pathname *sc-synth-program*)
+			   (port rt-server)
+			   (build-server-options (server-options rt-server))) 
+		   :output t :wait t))
+       :name "scsynth"))))
 
 (defmethod cleanup-server ((rt-server external-server))
-  (cb:sched-stop (scheduler rt-server))
+  (osc::join-thread (sc-thread rt-server))
   (osc:close-device (osc-device rt-server)))
 
 (defmethod server-quit ((rt-server external-server))
@@ -318,9 +326,7 @@
 
 
 (defmethod install-reply-responder ((rt-server external-server) cmd-name f)
-  (osc:add-osc-responder (osc-device rt-server) cmd-name
-			 (lambda (msg)
-			   (apply f msg))))
+  (osc:add-osc-responder (osc-device rt-server) cmd-name f))
 
 (defmethod uninstall-reply-responder ((rt-server external-server) cmd-name)
   (osc:remove-osc-responder (osc-device rt-server) cmd-name))
@@ -335,6 +341,7 @@
 	 list-of-messages))
 
 (defun make-external-server (name server-options &key (host "127.0.0.1") port just-connect-p)
+  (assert port nil "server port should be specified")
   (make-instance 'external-server :name name
 				  :server-options server-options
 				  :host host

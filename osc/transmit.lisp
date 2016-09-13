@@ -65,21 +65,15 @@
 (defun make-listening-thread (osc-device)
   (bt:make-thread
    (lambda ()
-     (labels ((listen-fun ()
-		(let ((buffer (make-array 2048 :element-type '(unsigned-byte 8))))
-		  (handler-case 
-		      (loop
-			do (multiple-value-bind (buffer length host port)
-			       (usocket:socket-receive (socket osc-device) buffer (length buffer))
-			     (declare (ignore host port length))
-			     (multiple-value-bind (message timetag)
-				 (osc:decode-bundle buffer)
-			       (declare (ignore timetag))
-			       (alexandria:if-let ((f (gethash (car message) (reply-handle-table osc-device))))
-				 (apply f (cdr message))
-				 (format t "not found reply handler : ~a [ ~{~a ~}]~%" (car message) (cdr message))))))
-		    (error (c) (format t "error ~a in receive-thread-for-OSC-device~%" c)
-		      (listen-fun))))))
-       (listen-fun)))
+     (let ((buffer (make-array 2048 :element-type '(unsigned-byte 8))))
+       (loop
+	 do (multiple-value-bind (buffer length host port)
+		(usocket:socket-receive (socket osc-device) buffer (length buffer))
+	      (declare (ignore host port length))
+	      (let* ((message (osc:decode-bundle buffer) )
+		     (handler (gethash (car message) (reply-handle-table osc-device))))
+		(if handler (handler-case (apply handler (cdr message))
+			     (error (c) (format t "error ~a in receive-thread-for-OSC-device~%" c)))
+		  (format t "not found reply handler : ~a [ ~{~a ~}]~%" (car message) (cdr message))))))))
    :name (format nil "receive-thread-for-OSC-device")))
 

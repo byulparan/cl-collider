@@ -27,7 +27,7 @@
   	  (server-options-num-input-bus server-options)
   	  (server-options-num-output-bus server-options)
   	  (server-options-block-size server-options)
-  	  (server-options-hardware-buffer-size server-options)
+  	  nil ;;(server-options-hardware-buffer-size server-options)
   	  (server-options-hardware-samplerate server-options)
   	  (server-options-num-sample-buffers server-options)
   	  (server-options-max-num-nodes server-options)
