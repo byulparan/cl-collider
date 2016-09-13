@@ -252,8 +252,10 @@
 	 (curve (gethash warp +env-shape-table+))
 	 (curve (if curve curve warp)))
     (if (not (equalp curve 1))
-	(let* ((e (make-list-from-env (env (list start in) (list time) warp)))) 
-	  (setf (nth 6 e) curve (nth 7 e) curvature)
+	(let* ((e (make-build-env-from-env (env (list start in) (list time) warp))))
+	  (loop for env in e
+		do (setf (nth 2 (build-env-env-seg env)) curve
+			 (nth 3 (build-env-env-seg env)) curvature))
 	  (let ((trig (if (eql rate :audio) (+~ (changed in) (impulse 0))
 			  (+~ (changed.kr in) (impulse.kr 0)))))
 	    (unless (eql (rate time) :scalar)

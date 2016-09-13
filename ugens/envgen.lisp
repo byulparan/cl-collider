@@ -29,19 +29,31 @@
 
 
 
-(defgeneric make-list-from-env (env))
+(defgeneric make-build-env-from-env (env))
+
+(defun process-env (env-ugen)
+  (let ((inputs (inputs env-ugen)))
+    (let ((build-env (alexandria:last-elt inputs)))
+      (setf (inputs env-ugen)
+	(append (butlast inputs)
+		(alexandria:flatten
+		 (list (build-env-start-level build-env)
+		       (build-env-times-len build-env)
+		       (build-env-release-node build-env)
+		       (build-env-loop-node build-env)
+		       (build-env-env-seg build-env)))))))
+  env-ugen)
 
 (defugen (env-gen "EnvGen")
     (envelope &key (gate 1) (level-scale 1) (level-bias 0) (time-scale 1) (act :no-action))
-  ((:ar (apply 'multinew new 'ugen (append (list gate level-scale level-bias time-scale (act act))
-				 (make-list-from-env envelope))))
-   (:kr (apply 'multinew new 'ugen (append (list gate level-scale level-bias time-scale (act act))
-				 (make-list-from-env envelope))))))
+  ((:ar (unbubble (mapcar #'process-env (multinew new 'ugen gate level-scale level-bias time-scale (act act)
+						  (make-build-env-from-env envelope)))))
+   (:kr (unbubble (mapcar #'process-env (multinew new 'ugen gate level-scale level-bias time-scale (act act)
+						  (make-build-env-from-env envelope)))))))
 
 (defugen (linen "Linen")
-    (&optional (gate 1.0) &key (attack-time 0.01) (sus-level 1.0) (release-time 1.0) (act :no-action))
+    (&optional (gate 1.0) (attack-time 0.01) (sus-level 1.0) (release-time 1.0) &key (act :no-action))
   ((:kr (multinew new 'ugen gate attack-time sus-level release-time (act act)))))
-
 
 ;;;
 ;;; Env Class
@@ -56,12 +68,9 @@
    (loop-node :initarg :loop-node :accessor loop-node)))
 
 (defmethod initialize-instance :after ((self env) &key)
-  (with-slots (levels times release-node loop-node) self
-    (assert (every (lambda (obj) (or (typep obj 'number) (typep obj 'ugen))) levels))
-    (assert (every (lambda (obj) (or (typep obj 'number) (typep obj 'ugen))) times))
-    (assert (typep release-node 'number))
-    (assert (typep loop-node 'number))
-    (assert (= (1- (length levels)) (length times)))))
+  (with-slots (levels times curve-number release-node loop-node) self
+    (assert (= (1- (length levels)) (length times)))
+    (assert (>= (length times) (length curve-number)))))
 
 (defparameter +env-shape-table+
   (let ((table (make-hash-table)))
@@ -96,24 +105,42 @@
 (defun env-shape-numbers (curves)
   (loop for curve in curves collect (env-shape-number curve)))
 
-(defmethod make-list-from-env ((env env))
-  (with-slots (levels times curve-number curve-value release-node loop-node) env
-    (let ((segments (alexandria:flatten
-		     (list (car levels)
-			   (length times)
-			   release-node
-			   loop-node
-			   (loop repeat (max (1- (length levels)) (length times))
-			      for i from 0 collect (list (nth (+ i 1) levels)
-							 (nth i times)
-							 (nth (mod i (length curve-number))
-							      curve-number)
-							 (nth (mod i (length curve-value))
-							      curve-value)))))))
-      segments)))
+(defstruct build-env start-level times-len env-seg release-node loop-node)
 
-(defmethod make-list-from-env ((env list))
+(defmethod make-build-env-from-env ((env list))
   env)
+
+(defmethod make-build-env-from-env ((env env))
+  (with-slots (levels times curve-number curve-value release-node loop-node) env
+    (let* ((env-segs (mapcar #'sc::lst-operation
+			     (mapcar #'su:mklist (list levels times curve-number curve-value)))))
+      (flet ((mk-deep-lst (x)
+	       (if (every #'atom x) (list x) x)))
+	(let ((deep-lst (mapcar #'mk-deep-lst env-segs)))
+	  (destructuring-bind (lvs tms cns cvs)
+	      deep-lst
+	    (flet ((wrap (idx lst)
+		     (nth (mod idx (length lst)) lst)))
+	      (let ((build-envs (loop for i from 0 below (apply #'max (mapcar #'length deep-lst))
+				     collect (make-build-env :start-level (car (wrap i lvs))
+							    :times-len (length (wrap i tms))
+							    :env-seg
+							    (alexandria:flatten
+							     (lst-operation
+							      (list
+							       (cdr (wrap i lvs))
+							       (wrap i tms)
+							       (wrap i cns)
+							       (wrap i cvs))))))))
+		(setf build-envs (lst-operation (list release-node loop-node build-envs)))
+		(mapcar #'(lambda (env)
+			    (let ((build-env (third env)))
+			      (make-build-env :start-level (build-env-start-level build-env)
+					      :times-len (build-env-times-len build-env)
+					      :env-seg (build-env-env-seg build-env)
+					      :release-node (first env)
+					      :loop-node (second env))))
+			 build-envs)))))))))
 
 (defun env (levels times &optional (curve :lin) (release-node -99) (loop-node -99))
   (let* ((curves (su:mklist curve))
