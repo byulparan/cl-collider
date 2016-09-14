@@ -250,22 +250,23 @@
 (defun var-lag-new (rate new in time curvature warp start)
   (let* ((start (if (not (eql :false start)) start in))
 	 (curve (gethash warp +env-shape-table+))
+	 (curvature (if curve 0 curvature))
 	 (curve (if curve curve warp)))
-    (if (not (equalp curve 1))
-	(let* ((e (make-build-env-from-env (env (list start in) (list time) warp))))
-	  (loop for env in e
-		do (setf (nth 2 (build-env-env-seg env)) curve
-			 (nth 3 (build-env-env-seg env)) curvature))
+    (if (/= curve 1)
+	(let* ((env-arrays (make-env-array-from-env (env (list start in) (list time) warp))))
+	  (loop for e in env-arrays
+		do (setf (aref e 6) curve
+			 (aref e 7) curvature))
 	  (let ((trig (if (eql rate :audio) (+~ (changed in) (impulse 0))
 			  (+~ (changed.kr in) (impulse.kr 0)))))
 	    (unless (eql (rate time) :scalar)
 	      (setf trig (+~ trig (changed.kr time))))
-	    (if (eql rate :audio) (env-gen e :gate trig)
-		(env-gen.kr e :gate trig))))
+	    (if (eql rate :audio) (env-gen env-arrays :gate trig)
+		(env-gen.kr env-arrays :gate trig))))
 	(funcall new 'pure-ugen in time start))))
 
 (defugen (var-lag "VarLag")
-    (&optional (in 0.0) (time .1) &key (curvature 0) (warp 5) start (mul 1.0) (add 0.0))
+    (&optional (in 0.0) (time .1) (curvature 0) (warp 5) start (mul 1.0) (add 0.0))
   ((:ar (madd (multinew #'var-lag-new :audio new in time curvature warp (if start start :false)) mul add))
    (:kr (madd (multinew #'var-lag-new :control new in time curvature warp (if start start :false)) mul add)))
   :check-fn #'check-same-rate-as-first-input)

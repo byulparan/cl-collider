@@ -29,27 +29,21 @@
 
 
 
-(defgeneric make-build-env-from-env (env))
+(defgeneric make-env-array-from-env (env))
 
 (defun process-env (env-ugen)
   (let ((inputs (inputs env-ugen)))
-    (let ((build-env (alexandria:last-elt inputs)))
+    (let ((env-array (alexandria:last-elt inputs)))
       (setf (inputs env-ugen)
-	(append (butlast inputs)
-		(alexandria:flatten
-		 (list (build-env-start-level build-env)
-		       (build-env-times-len build-env)
-		       (build-env-release-node build-env)
-		       (build-env-loop-node build-env)
-		       (build-env-env-seg build-env)))))))
+	(append (butlast inputs) (map 'list #'identity env-array)))))
   env-ugen)
 
 (defugen (env-gen "EnvGen")
     (envelope &key (gate 1) (level-scale 1) (level-bias 0) (time-scale 1) (act :no-action))
   ((:ar (unbubble (mapcar #'process-env (multinew new 'ugen gate level-scale level-bias time-scale (act act)
-						  (make-build-env-from-env envelope)))))
+						  (make-env-array-from-env envelope)))))
    (:kr (unbubble (mapcar #'process-env (multinew new 'ugen gate level-scale level-bias time-scale (act act)
-						  (make-build-env-from-env envelope)))))))
+						  (make-env-array-from-env envelope)))))))
 
 (defugen (linen "Linen")
     (&optional (gate 1.0) (attack-time 0.01) (sus-level 1.0) (release-time 1.0) &key (act :no-action))
@@ -105,12 +99,11 @@
 (defun env-shape-numbers (curves)
   (loop for curve in curves collect (env-shape-number curve)))
 
-(defstruct build-env start-level times-len env-seg release-node loop-node)
 
-(defmethod make-build-env-from-env ((env list))
+(defmethod make-env-array-from-env ((env list))
   env)
 
-(defmethod make-build-env-from-env ((env env))
+(defmethod make-env-array-from-env ((env env))
   (with-slots (levels times curve-number curve-value release-node loop-node) env
     (let* ((env-segs (mapcar #'sc::lst-operation
 			     (mapcar #'su:mklist (list levels times curve-number curve-value)))))
@@ -121,26 +114,29 @@
 	      deep-lst
 	    (flet ((wrap (idx lst)
 		     (nth (mod idx (length lst)) lst)))
-	      (let ((build-envs (loop for i from 0 below (apply #'max (mapcar #'length deep-lst))
-				     collect (make-build-env :start-level (car (wrap i lvs))
-							    :times-len (length (wrap i tms))
-							    :env-seg
-							    (alexandria:flatten
+	      (let ((env-arrays (loop for i from 0 below (apply #'max (mapcar #'length deep-lst))
+				      collect (let* ((env-array (make-array 3)))
+						(setf (aref env-array 0) (car (wrap i lvs))
+						      (aref env-array 1) (length (wrap i tms))
+						      (aref env-array 2)
+						      (alexandria:flatten
 							     (lst-operation
 							      (list
 							       (cdr (wrap i lvs))
 							       (wrap i tms)
 							       (wrap i cns)
-							       (wrap i cvs))))))))
-		(setf build-envs (lst-operation (list release-node loop-node build-envs)))
-		(mapcar #'(lambda (env)
-			    (let ((build-env (third env)))
-			      (make-build-env :start-level (build-env-start-level build-env)
-					      :times-len (build-env-times-len build-env)
-					      :env-seg (build-env-env-seg build-env)
-					      :release-node (first env)
-					      :loop-node (second env))))
-			 build-envs)))))))))
+							       (wrap i cvs)))))
+						env-array))))
+		(setf env-arrays (lst-operation (list release-node loop-node env-arrays)))
+		(mapcar #'(lambda (e)
+			    (let ((env-array (third e)))
+			      (make-array (+ 4 (length (aref env-array 2)))
+				:initial-contents (append (list (aref env-array 0)
+								(aref env-array 1)
+								(first e)
+								(second e))
+							  (aref env-array 2)))))
+			env-arrays)))))))))
 
 (defun env (levels times &optional (curve :lin) (release-node -99) (loop-node -99))
   (let* ((curves (su:mklist curve))
