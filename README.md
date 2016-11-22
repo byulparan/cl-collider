@@ -52,6 +52,7 @@ please check version of dependency library.
    (with-controls ((lfo-speed 4))
          (sin-osc (* [440 441] (range (lf-pulse [lfo-speed (+ lfo-speed .2)]) 0 1)) 0 .2))
    :fade-time 8.0)
+   
 (ctrl (proxy :sinesynth) :lfo-speed 8)
 (ctrl (proxy :sinesynth) :gate 0)
 ```
@@ -73,17 +74,19 @@ please check version of dependency library.
 (make-melody (+ 4 (quant 4)) 16 12)
 ```
 ### Make Audiofile from Your Sequence
-	(setf *synth-definition-mode* :load)
+```cl
+(setf *synth-definition-mode* :load)
 
-	;; re-define saw-synth. it's synthdef file write to *sc-synthdefs-path*.
-	(defsynth saw-synth (&key (note 60) (dur 4.0))
-	   (let* ((env (env-gen.kr (env [0 .2 0] [(* dur .2) (* dur .8)]) :act :free))
-	             (freq (midicps note))
-                 (sig (lpf (saw freq env) (* freq 2))))
-		  (out 0 [sig sig])))
+;; re-define saw-synth. it's synthdef file write to *sc-synthdefs-path*.
+(defsynth saw-synth (&key (note 60) (dur 4.0))
+   (let* ((env (env-gen.kr (env [0 .2 0] [(* dur .2) (* dur .8)]) :act :free))
+             (freq (midicps note))
+                (sig (lpf (saw freq env) (* freq 2))))
+	  (out 0 [sig sig])))
 
-	;; redering audio-file.
-	(with-rendering ("~/Desktop/foo.aiff" :pad 60)
-	  (make-melody 0.0d0 32)
-      (make-melody 8.0d0 32 12)
-      (make-melody 16.0d0 32 24))
+;; redering audio-file.
+(with-rendering ("~/Desktop/foo.aiff" :pad 60)
+  (make-melody 0.0d0 32)
+     (make-melody 8.0d0 32 12)
+     (make-melody 16.0d0 32 24))
+```
