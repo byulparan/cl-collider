@@ -8,6 +8,12 @@
   ((reply-handle-table
     :initform (make-hash-table :test #'equal)
     :reader reply-handle-table)
+   (host
+    :initarg :host
+    :reader host)
+   (port
+    :initarg :port
+    :reader port)
    (status
     :initform :not-running
     :accessor status)
@@ -23,10 +29,12 @@
 
 (defun osc-device (host port &key local-port)
   (let ((device (make-instance 'osc-device
-			       :socket (usocket:socket-connect host port
-							       :protocol :datagram
-							       :local-host "127.0.0.1"
-							       :local-port local-port))))
+		  :host host
+		  :port port
+		  :socket (usocket:socket-connect nil nil
+						  :protocol :datagram
+						  :local-host "127.0.0.1"
+						  :local-port local-port))))
     #+sbcl (setf (sb-bsd-sockets:sockopt-send-buffer (usocket:socket (socket device)))
 		 usocket:+max-datagram-packet-size+)
     #+ccl
@@ -47,12 +55,16 @@
 
 (defun send-message (osc-device &rest message)
   (let ((msg (apply #'osc:encode-message message)))
-    (usocket:socket-send (socket osc-device) msg (length msg))
+    (usocket:socket-send (socket osc-device) msg (length msg)
+			 :port (port osc-device)
+			 :host (host osc-device))
     (values)))
 
 (defun send-bundle (timestamp osc-device &rest messages)
   (let ((msg (osc:encode-bundle messages timestamp)))
-    (usocket:socket-send (socket osc-device) msg (length msg))
+    (usocket:socket-send (socket osc-device) msg (length msg)
+			 :port (port osc-device)
+			 :host (host osc-device))
     (values)))
 
 (defun close-device (osc-device)

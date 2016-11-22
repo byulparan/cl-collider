@@ -340,7 +340,10 @@
 	 (osc-device server)
 	 list-of-messages))
 
-(defun make-external-server (name server-options &key (host "127.0.0.1") port just-connect-p)
+(defun make-external-server (name &key (server-options (make-server-options))
+				    (host "127.0.0.1")
+				    port
+				    just-connect-p)
   (assert port nil "server port should be specified")
   (make-instance 'external-server :name name
 				  :server-options server-options
