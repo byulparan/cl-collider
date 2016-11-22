@@ -2,8 +2,9 @@
 SuperCollider client for CommonLisp.  
 It support ClozureCL and SBCL.  
 
-**don't try it! Some API Changed. I will reproduce to tutorial video asap**   
-tutorial video: <http://youtu.be/JivNMDUqNQc>  
+tutorial video: <http://youtu.be/JivNMDUqNQc>   
+**This video deprecated. because some API Changed. I will reproduce to tutorial video asap**     
+
 live coding demo: <https://www.youtube.com/watch?v=xzTH_ZqaFKI>  
 
 ### Status:
