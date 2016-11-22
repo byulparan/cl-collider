@@ -2,6 +2,7 @@
 SuperCollider client for CommonLisp.  
 It support ClozureCL and SBCL.  
 
+**don't try it! Some API Changed. I will reproduce to tutorial video asap**   
 tutorial video: <http://youtu.be/JivNMDUqNQc>  
 live coding demo: <https://www.youtube.com/watch?v=xzTH_ZqaFKI>  
 
@@ -33,10 +34,10 @@ please check version of dependency library.
 
 ### Synth Definition
 	
-	(defsynth sine-wave ((note 60))
+	(defsynth sine-wave (&key (note 60))
 	  (let* ((freq (midicps note))
-	            (sig (sin-osc.ar [freq (+ freq 2)] 0 .2)))
-        (out.ar 0 sig)))
+	            (sig (sin-osc [freq (+ freq 2)] 0 .2)))
+        (out 0 sig)))
 
 	(defparameter *synth* (sine-wave))
 	(ctrl *synth* :note 72)
@@ -44,11 +45,11 @@ please check version of dependency library.
 
 ### Proxy
 	(proxy :sinesynth
-	   (sin-osc.ar [440 441] 0 .2))
+	   (sin-osc [440 441] 0 .2))
 
 	(proxy :sinesynth
 	   (with-controls ((lfo-speed 4))
-          (sin-osc.ar (* [440 441] (range (lf-pulse.ar [lfo-speed (+ lfo-speed .2)]) 0 1)) 0 .2))
+          (sin-osc (* [440 441] (range (lf-pulse [lfo-speed (+ lfo-speed .2)]) 0 1)) 0 .2))
 	   :fade-time 8.0)
 
 	(ctrl (proxy :sinesynth) :lfo-speed 8)
@@ -56,11 +57,11 @@ please check version of dependency library.
 
 ### Make musical Sequence
 
-	(defsynth saw-synth ((note 60) (dur 4.0))
+	(defsynth saw-synth (&key (note 60) (dur 4.0))
 	   (let* ((env (env-gen.kr (env [0 .2 0] [(* dur .2) (* dur .8)]) :act :free))
 	             (freq (midicps note))
-	    		 (sig (lpf.ar (saw.ar freq env) (* freq 2))))
-		  (out.ar 0 [sig sig])))
+	    		 (sig (lpf (saw freq env) (* freq 2))))
+		  (out 0 [sig sig])))
 
 	(defun make-melody (time n &optional (offset 0))
 	   (when (> n 0)
@@ -75,11 +76,11 @@ please check version of dependency library.
 	(setf *synth-definition-mode* :load)
 
 	;; re-define saw-synth. it's synthdef file write to *sc-synthdefs-path*.
-	(defsynth saw-synth ((note 60) (dur 4.0))
+	(defsynth saw-synth (&key (note 60) (dur 4.0))
 	   (let* ((env (env-gen.kr (env [0 .2 0] [(* dur .2) (* dur .8)]) :act :free))
 	             (freq (midicps note))
-                 (sig (lpf.ar (saw.ar freq env) (* freq 2))))
-		  (out.ar 0 [sig sig])))
+                 (sig (lpf (saw freq env) (* freq 2))))
+		  (out 0 [sig sig])))
 
 	;; redering audio-file.
 	(with-rendering ("~/Desktop/foo.aiff" :pad 60)
