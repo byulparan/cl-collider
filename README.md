@@ -6,6 +6,9 @@ It support ClozureCL and SBCL.
 tutorial video: <http://youtu.be/JivNMDUqNQc>  
 live coding demo: <https://www.youtube.com/watch?v=xzTH_ZqaFKI>  
 
+### Status:
+cl-collider is my experimental project. so It possible to change API
+
 ### require:
 
 please check version of dependency library.
