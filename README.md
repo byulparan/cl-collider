@@ -20,18 +20,18 @@ please check version of dependency library.
 
 ## Usage:
 ### Server
-
-	(in-package :sc)
-	(setf *sc-synth-program* "...")  ;; scsynth program path.
-	(push "..." *sc-plugin-paths*)   ;; scx file's path.
-	(push "..." *sc-plugin-paths*)   ;; it support extensions
-	(setf *sc-synthdefs-path* "...") ;; your synthdef file will write here
+```cl
+(in-package :sc)
+(setf *sc-synth-program* "...")  ;; scsynth program path.
+(push "..." *sc-plugin-paths*)   ;; scx file's path.
+(push "..." *sc-plugin-paths*)   ;; it support extensions
+(setf *sc-synthdefs-path* "...") ;; your synthdef file will write here
 	
-	(defparameter *s* (make-external-server "localhost" :port ... :just-connect-p nil))
-	(server-boot *s*)
-	;;....hack music.....
-	(server-quit *s*)
-
+(defparameter *s* (make-external-server "localhost" :port ... :just-connect-p nil))
+(server-boot *s*)
+;;....hack music.....
+(server-quit *s*)
+```
 ### Synth Definition
 ```cl	
 (defsynth sine-wave (&key (note 60))
