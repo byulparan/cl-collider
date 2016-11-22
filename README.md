@@ -44,34 +44,34 @@ please check version of dependency library.
 (bye *synth*)
 ```
 ### Proxy
-	(proxy :sinesynth
-	   (sin-osc [440 441] 0 .2))
+```cl
+(proxy :sinesynth
+   (sin-osc [440 441] 0 .2))
 
-	(proxy :sinesynth
-	   (with-controls ((lfo-speed 4))
-          (sin-osc (* [440 441] (range (lf-pulse [lfo-speed (+ lfo-speed .2)]) 0 1)) 0 .2))
-	   :fade-time 8.0)
-
-	(ctrl (proxy :sinesynth) :lfo-speed 8)
-	(ctrl (proxy :sinesynth) :gate 0)
-
+(proxy :sinesynth
+   (with-controls ((lfo-speed 4))
+         (sin-osc (* [440 441] (range (lf-pulse [lfo-speed (+ lfo-speed .2)]) 0 1)) 0 .2))
+   :fade-time 8.0)
+(ctrl (proxy :sinesynth) :lfo-speed 8)
+(ctrl (proxy :sinesynth) :gate 0)
+```
 ### Make musical Sequence
+```cl
+(defsynth saw-synth (&key (note 60) (dur 4.0))
+   (let* ((env (env-gen.kr (env [0 .2 0] [(* dur .2) (* dur .8)]) :act :free))
+             (freq (midicps note))
+    		 (sig (lpf (saw freq env) (* freq 2))))
+	  (out 0 [sig sig])))
 
-	(defsynth saw-synth (&key (note 60) (dur 4.0))
-	   (let* ((env (env-gen.kr (env [0 .2 0] [(* dur .2) (* dur .8)]) :act :free))
-	             (freq (midicps note))
-	    		 (sig (lpf (saw freq env) (* freq 2))))
-		  (out 0 [sig sig])))
+(defun make-melody (time n &optional (offset 0))
+   (when (> n 0)
+         (at time (saw-synth :note (+ offset (alexandria:random-elt '(62 65 69 72)))))
+         (let ((next-time (+ time (alexandria:random-elt '(0 1 2 1.5)))))
+           (callback next-time #'make-melody next-time (- n 1) offset))))
 
-	(defun make-melody (time n &optional (offset 0))
-	   (when (> n 0)
-          (at time (saw-synth :note (+ offset (alexandria:random-elt '(62 65 69 72)))))
-          (let ((next-time (+ time (alexandria:random-elt '(0 1 2 1.5)))))
-            (callback next-time #'make-melody next-time (- n 1) offset))))
-
-	(make-melody (quant 4) 16)
-	(make-melody (+ 4 (quant 4)) 16 12)
-
+(make-melody (quant 4) 16)
+(make-melody (+ 4 (quant 4)) 16 12)
+```
 ### Make Audiofile from Your Sequence
 	(setf *synth-definition-mode* :load)
 
