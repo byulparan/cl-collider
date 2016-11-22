@@ -33,16 +33,16 @@ please check version of dependency library.
 	(server-quit *s*)
 
 ### Synth Definition
-	
-	(defsynth sine-wave (&key (note 60))
-	  (let* ((freq (midicps note))
-	            (sig (sin-osc [freq (+ freq 2)] 0 .2)))
-        (out 0 sig)))
+```cl	
+(defsynth sine-wave (&key (note 60))
+  (let* ((freq (midicps note))
+         (sig (sin-osc [freq (+ freq 2)] 0 .2)))
+     (out 0 sig)))
 
-	(defparameter *synth* (sine-wave))
-	(ctrl *synth* :note 72)
-	(bye *synth*)
-
+(defparameter *synth* (sine-wave))
+(ctrl *synth* :note 72)
+(bye *synth*)
+```
 ### Proxy
 	(proxy :sinesynth
 	   (sin-osc [440 441] 0 .2))
