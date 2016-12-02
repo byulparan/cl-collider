@@ -1,43 +1,93 @@
 # cl-collider
-SuperCollider client for CommonLisp.  
-It support ClozureCL and SBCL.  
+A <a href="http://supercollider.github.io/">SuperCollider</a> client for CommonLisp.  
+It supports the <a href="http://sbcl.org/">SBCL</a> & <a href="http://ccl.clozure.com/">ClozureCL</a> compilers.  
+It is an experimental project, so changes to the API are possible.
+## Videos
+### <a href="https://www.youtube.com/watch?v=JivNMDUqNQ">Tutorial</a>   
+**Due to API changes, this video is deprecated. A new tutorial video is coming soon.**
 
-tutorial video: <http://youtu.be/JivNMDUqNQc>   
-**This video deprecated. because some API Changed. I will reproduce to tutorial video asap**     
+### <a href="https://www.youtube.com/watch?v=xzTH_ZqaFKI">Live Coding Demo</a> 
 
-live coding demo: <https://www.youtube.com/watch?v=xzTH_ZqaFKI>  
+### <a href="https://www.youtube.com/watch?v=pZyuHjztARY">Live Coding Demo 2</a>
 
-### Status:
-cl-collider is my experimental project. so It possible to change API
-
-### require:
-
-please check version of dependency library.
-
-- [SuperCollider](http://supercollider.sourceforge.net) - I tested on latest stable version(3.6.5)
-- [Quicklisp](http://www.quicklisp.org)
-- [ClozureCL](http://www.clozure.com/clozurecl.html) or [SBCL](http://www.sbcl.org)
-- [Scheduler-0.1.5](http://github.com/byulparan/scheduler) - The time based task scheduler
-- [Simple-Utils](http://github.com/byulparan/Simple-Utils) - The Collection of simple-functions
-
-### package: sc
+## Dependencies:
+- [SuperCollider](http://supercollider.github.io)
+- [Quicklisp](https://www.quicklisp.org/beta/)
+- [Scheduler](https://github.com/byulparan/scheduler)
+- [Simple-Utils](https://github.com/byulparan/Simple-Utils)
+- [SBCL](http://www.sbcl.org) **or** [ClozureCL](http://ccl.clozure.com/)
 
 ## Usage:
 ### Server
+#### GNU/Linux
 ```cl
 (in-package :sc)
-(setf *sc-synth-program* "...")  ;; scsynth program path.
-(push "..." *sc-plugin-paths*)   ;; scx file's path.
-(push "..." *sc-plugin-paths*)   ;; it support extensions
-(setf *sc-synthdefs-path* "...") ;; your synthdef file will write here
-	
-(defparameter *s* (make-external-server "localhost" :port ... :just-connect-p nil))
+
+;; Scsynth executable path
+(setf *sc-synth-program* "/usr/local/bin/scsynth")
+
+;; SuperCollider plugins path
+(push "/usr/local/lib/SuperCollider/plugins/" *sc-plugin-paths*)
+
+;; Import extensions to *sc-plugins-paths*
+;; (eg. SC3 Plugins)
+(push "/usr/local/share/SuperCollider/Extensions/SC3plugins/" *sc-plugin-paths*) 
+
+;; Local synthdef directory
+(setf *sc-synthdefs-path* "~/.local/share/SuperCollider/synthdefs/")
+
+;; Start external server on a port
+;; (eg. port 57999)
+(defparameter *s* (make-external-server "localhost" :port 57999))
+
+;; Boot SuperCollider server
 (server-boot *s*)
-;;....hack music.....
+
+;; Hack music
+(play (sin-osc [320 321] 0 .2))
+
+;; Stop music
+(bye *)
+
+;; Quit SuperCollider server
 (server-quit *s*)
 ```
-### Synth Definition
-```cl	
+#### OSX
+```cl
+(in-package :sc)
+
+;; Scsynth executable path
+(setf *sc-synth-program* "/Applications/SuperCollider/SuperCollider.app/Contents/Resources/scsynth")
+
+;; SuperCollider plugins path
+(push "/Applications/SuperCollider/SuperCollider.app/Contents/Resources/plugins/" *sc-plugin-paths*)
+
+;; Import extensions to *sc-plugins-paths*
+;; (eg. SC3 Plugins)
+(push "~/Library/Application Support/SuperCollider/Extensions/SC3plugins/" *sc-plugin-paths*)
+
+;; Local synthdef directory
+(setf *sc-synthdefs-path* "~/Library/Application Support/SuperCollider/synthdefs/")
+
+;; Start external server on a port
+;; (eg. port 57999)
+(defparameter *s* (make-external-server "localhost" :port 57999))
+
+;; Boot SuperCollider server
+(server-boot *s*)
+
+;; Hack music
+(play (sin-osc [320 321] 0 .2))
+
+;; Stop music
+(bye *)
+
+;; Quit SuperCollider server
+(server-quit *s*)
+```
+
+### Create SynthDef
+```cl
 (defsynth sine-wave (&key (note 60))
   (let* ((freq (midicps note))
          (sig (sin-osc [freq (+ freq 2)] 0 .2)))
@@ -47,7 +97,8 @@ please check version of dependency library.
 (ctrl *synth* :note 72)
 (bye *synth*)
 ```
-### Proxy
+
+### Create Proxy
 ```cl
 (proxy :sinesynth
    (sin-osc [440 441] 0 .2))
@@ -60,7 +111,7 @@ please check version of dependency library.
 (ctrl (proxy :sinesynth) :lfo-speed 8)
 (ctrl (proxy :sinesynth) :gate 0)
 ```
-### Make musical Sequence
+### Create Musical Sequence
 ```cl
 (defsynth saw-synth (&key (note 60) (dur 4.0))
    (let* ((env (env-gen.kr (env [0 .2 0] [(* dur .2) (* dur .8)]) :act :free))
@@ -77,18 +128,19 @@ please check version of dependency library.
 (make-melody (quant 4) 16)
 (make-melody (+ 4 (quant 4)) 16 12)
 ```
-### Make Audiofile from Your Sequence
+### Record Audio Output
 ```cl
 (setf *synth-definition-mode* :load)
 
-;; re-define saw-synth. it's synthdef file write to *sc-synthdefs-path*.
+;; Re-define the saw-synth ugen
+;; The SynthDef file will be written to the *sc-synthdefs-path*
 (defsynth saw-synth (&key (note 60) (dur 4.0))
    (let* ((env (env-gen.kr (env [0 .2 0] [(* dur .2) (* dur .8)]) :act :free))
              (freq (midicps note))
                 (sig (lpf (saw freq env) (* freq 2))))
 	  (out 0 [sig sig])))
 
-;; redering audio-file.
+;; Render audio file
 (with-rendering ("~/Desktop/foo.aiff" :pad 60)
   (make-melody 0.0d0 32)
      (make-melody 8.0d0 32 12)
