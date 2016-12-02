@@ -3,7 +3,7 @@ A <a href="http://supercollider.github.io/">SuperCollider</a> client for <a href
 It supports the <a href="http://sbcl.org/">SBCL</a> & <a href="http://ccl.clozure.com/">ClozureCL</a> compilers.  
 It is an experimental project, so changes to the API are possible.
 ## Videos
-### <a href="https://www.youtube.com/watch?v=JivNMDUqNQ">Tutorial</a>   
+### <a href="https://www.youtube.com/watch?v=JivNMDUqNQc">Tutorial</a>   
 **Due to API changes, this video is deprecated. A new tutorial video is coming soon.**
 
 ### <a href="https://www.youtube.com/watch?v=xzTH_ZqaFKI">Live Coding Demo 1</a> 
