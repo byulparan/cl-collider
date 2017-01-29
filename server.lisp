@@ -91,7 +91,7 @@
 (defgeneric node-watcher (rt-server))
 (defgeneric (setf node-watcher) (value rt-server))
 
-
+(defvar *cleanup-functions* nil)
 (defvar *all-rt-servers* nil)
 
 (defclass rt-server (server)
@@ -157,7 +157,6 @@
 (defmethod server-boot ((rt-server rt-server))
   (when (boot-p rt-server) (error "already supercollider server running"))
   (bootup-server-process rt-server)
-  
   (initialize-server-responder rt-server)
   (labels ((bootup ()
 	     (let* ((try-count 0))
@@ -181,6 +180,8 @@
 
 (defmethod server-quit ((rt-server rt-server))
   (unless (boot-p rt-server) (error "supercollider not running"))
+  (dolist (f *cleanup-functions*)
+    (funcall f))
   (send-message rt-server "/quit")
   (thread-wait (lambda () (not (boot-p rt-server))))
   (cb:sched-stop (scheduler rt-server))
