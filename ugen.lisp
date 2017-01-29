@@ -6,8 +6,10 @@
 (defvar *synthdef* nil)
 
 (defconstant +inf+
-  #+ccl 1E++0
-  #+sbcl sb-ext:single-float-positive-infinity)
+  #+ccl 1E++0 
+  #+sbcl sb-ext:single-float-positive-infinity
+  #+ecl ;; ext:single-float-positive-infinity // this is right value. but it signal #<a FLOATING-POINT-OVERFLOW>. maybe It ecl's bug
+  ext::most-positive-single-float)
 
 (defgeneric new1 (ugen &rest inputs))
 

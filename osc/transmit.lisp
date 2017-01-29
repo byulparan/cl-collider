@@ -79,7 +79,9 @@
    (lambda ()
      (let ((buffer (make-array 2048 :element-type '(unsigned-byte 8))))
        (loop
-	 do (multiple-value-bind (buffer length host port)
+	 do #+ecl
+	    (setf buffer (make-array 2048 :element-type '(unsigned-byte 8))) ;; maybe This is ECL/USocket bug 
+	    (multiple-value-bind (buffer length host port)
 		(usocket:socket-receive (socket osc-device) buffer (length buffer))
 	      (declare (ignore host port length))
 	      (let* ((message (osc:decode-bundle buffer) )

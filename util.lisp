@@ -4,22 +4,22 @@
 
 (defun thread-wait (f)
   #+ccl (ccl:process-wait "wait.." f)
-  #+sbcl (or (apply f nil)
-	     (loop
-	       (when (apply f nil)
-		 (return))
-	       (sb-unix:nanosleep 0 10000000))))
+  #+(or sbcl ecl) (or (apply f nil)
+		      (loop
+			(when (apply f nil)
+			  (return))
+			(sleep .01))))
 
 (defun thread-wait-with-timeout (f timeout)
   #+ccl (ccl:process-wait-with-timeout "wait.." timeout f)
-  #+sbcl (let ((target-time (+ (get-internal-real-time) (* 10 timeout))))
-	   (cond ((apply f nil) t)
-		 (t (loop
-		      (alexandria:when-let ((val (apply f nil)))
-			(return-from thread-wait-with-timeout val))
-		      (when (> (get-internal-real-time) target-time)
-			(return))
-		      (sb-unix:nanosleep 0 10000000))))))
+  #+(or sbcl ecl) (let ((target-time (+ (get-internal-real-time) (* 10 timeout))))
+		    (cond ((apply f nil) t)
+			  (t (loop
+			       (alexandria:when-let ((val (apply f nil)))
+				 (return-from thread-wait-with-timeout val))
+			       (when (> (get-internal-real-time) target-time)
+				 (return))
+			       (sleep .01))))))
 
 
 ;;; [1 2 3] == (list 1 2 3)

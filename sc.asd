@@ -12,7 +12,7 @@
 	       #:split-sequence)
   :serial t
   :components ((:file "package")
-	       #+sbcl (:file "id-map")
+	       #+(or sbcl ecl) (:file "id-map")
 	       (:file "util")
 	       (:file "server-options")
 	       (:file "server")

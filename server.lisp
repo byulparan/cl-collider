@@ -24,20 +24,25 @@
 (defclass server ()
   ((name :initarg :name :initform "" :reader name)
    (buffers :initarg :buffers :initform (make-hash-table) :reader buffers)
+   #+ecl (server-lock :initform (bt:make-lock) :reader server-lock)
    (id-and-buffer-number :initarg :id-and-buffer-number
-			 :initform #+ccl (cons 999 -1) #+sbcl (cons (make-counter :count 1000)
-								    (make-counter :count 0))
+			 :initform #+(or ccl ecl) (cons 999 -1) #+sbcl (cons (make-counter :count 1000)
+								       (make-counter :count 0))
 			 :accessor id-and-buffer-number))
   (:documentation "This is base server class of scsynth server. This library include realtime server,NRT server,
  internal server(yet..)"))
 
 (defmethod get-next-id ((server server))
   #+ccl (ccl::%atomic-incf-car (id-and-buffer-number server))
-  #+sbcl (sb-ext:atomic-incf (counter-count (car (id-and-buffer-number server)))))
+  #+sbcl (sb-ext:atomic-incf (counter-count (car (id-and-buffer-number server))))
+  #+ecl (bt:with-lock-held ((server-lock server))
+	  (incf (car (id-and-buffer-number server)))))
 
 (defmethod get-next-buffer-number ((server server))
   #+ccl (ccl::%atomic-incf-cdr (id-and-buffer-number server))
-  #+sbcl (sb-ext:atomic-incf (counter-count (cdr (id-and-buffer-number server)))))
+  #+sbcl (sb-ext:atomic-incf (counter-count (cdr (id-and-buffer-number server))))
+  #+ecl (bt:with-lock-held ((server-lock server))
+	  (incf (cdr (id-and-buffer-number server)))))
 
 
 ;;; declare generic function for realtime server
@@ -141,7 +146,8 @@
     (let* ((semaphore (gethash (bt:current-thread) semaphore-table)))
       (unless semaphore
 	(let ((new-semaphore #+ccl (ccl:make-semaphore)
-			     #+sbcl (sb-thread:make-semaphore)))
+			     #+sbcl (sb-thread:make-semaphore)
+			     #+ecl (mp:make-semaphore)))
 	  (setf (gethash (bt:current-thread) semaphore-table) new-semaphore
 		semaphore new-semaphore)))
       semaphore)))
@@ -152,7 +158,8 @@
 	   (id (assign-id-map-id (sync-id-map rt-server) semaphore)))
       (send-message rt-server "/sync" id)
       #+ccl (ccl:wait-on-semaphore semaphore)
-      #+sbcl (sb-thread:wait-on-semaphore semaphore))))
+      #+sbcl (sb-thread:wait-on-semaphore semaphore)
+      #+ecl (mp:wait-on-semaphore semaphore))))
 
 (defmethod server-boot ((rt-server rt-server))
   (when (boot-p rt-server) (error "already supercollider server running"))
@@ -212,7 +219,8 @@
 	 (-1  (setf (boot-p rt-server) t))
 	 (otherwise (let ((semaphore (id-map-free-object (sync-id-map rt-server) id)))
 		      #+ccl (ccl:signal-semaphore semaphore)
-		      #+sbcl (sb-thread:signal-semaphore semaphore))))))
+		      #+sbcl (sb-thread:signal-semaphore semaphore)
+		      #+ecl (mp:signal-semaphore semaphore))))))
     (add-reply-responder
      "/c_set"
      (lambda (bus value)
@@ -358,7 +366,8 @@
 	   (dolist (server (all-running-servers))
 	     (server-quit server))))
   #+ccl (push #'clean-up-server ccl::*lisp-cleanup-functions*)
-  #+sbcl (push #'clean-up-server sb-ext:*exit-hooks*))
+  #+sbcl (push #'clean-up-server sb-ext:*exit-hooks*)
+  #+ecl (push #'clean-up-server si:*exit-hooks*))
 
 
 

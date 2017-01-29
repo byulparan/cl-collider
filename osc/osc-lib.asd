@@ -4,4 +4,5 @@
   :depends-on (#:osc #:alexandria #:ieee-floats #:bordeaux-threads #:usocket)
   :components ((:file "package")
 	       (:file "osc")
-	       (:file "transmit")))
+	       (:file "transmit")
+	       #+ecl (:file "ecl-extension")))

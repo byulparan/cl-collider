@@ -1,5 +1,5 @@
 ;;; This id-map implentation code all from ClozureCL.
-;;; I want use it in SBCL....so just I was copy.(1:1)
+;;; I want use it in SBCL/ECL....so just I was copy.(1:1)
 ;;; I use id-map for sync to scsynth <---> lisp(#'sync).
 
 (in-package #:sc)
@@ -8,7 +8,7 @@
 (defstruct id-map
   (vector (make-array 1 :initial-element nil))
   (free 0)
-  (lock (sb-thread:make-mutex)))
+  (lock (bt:make-recursive-lock)))
 
 (defun id-map-grow (id-map)
   (let* ((old-vector (id-map-vector id-map))
@@ -29,7 +29,7 @@
 
 (defun assign-id-map-id (id-map object)
   (if (or (null object) (typep object 'fixnum)) (error "object must not fixnum or NIL"))
-  (sb-thread:with-mutex ((id-map-lock id-map))
+  (bt:with-recursive-lock-held ((id-map-lock id-map))
     (let* ((free (or (id-map-free id-map) (id-map-grow id-map)))
            (vector (id-map-vector id-map))
            (newfree (svref vector free)))
@@ -38,14 +38,14 @@
       free)))
 
 (defun id-map-object (id-map id)
-  (let* ((object (sb-thread:with-mutex ((id-map-lock id-map))
+  (let* ((object (bt:with-recursive-lock-held ((id-map-lock id-map))
                    (svref (id-map-vector id-map) id))))
     (if (or (null object) (typep object 'fixnum))
       (error "invalid index ~d for ~s" id id-map)
       object)))
 
 (defun id-map-free-object (id-map id)
-  (sb-thread:with-mutex ((id-map-lock id-map))
+  (bt:with-recursive-lock-held ((id-map-lock id-map))
     (let* ((vector (id-map-vector id-map))
            (object (svref vector id)))
       (if (or (null object) (typep object 'fixnum))
@@ -55,7 +55,7 @@
       object)))
 
 (defun id-map-modify-object (id-map id old-value new-value)
-  (sb-thread:with-mutex ((id-map-lock id-map))
+  (bt:with-recursive-lock-held ((id-map-lock id-map))
     (let* ((vector (id-map-vector id-map))
            (object (svref vector id)))
       (if (or (null object) (typep object 'fixnum))
