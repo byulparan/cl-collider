@@ -55,7 +55,8 @@
 	   #:group-free-all
 	   #:stop
 	   #:server-status
-	   #:set-group-free-all-hook
+	   #:*group-free-all-hook*
+	   #:*stop-hook*
 
 	   #:bufnum
 	   #:sr

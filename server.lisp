@@ -501,8 +501,6 @@
   (send-message rt-server "/g_dumpTree" 0 0))
 
 (defvar *group-free-all-hook* nil)
-(defun set-group-free-all-hook (f)
-  (setf *group-free-all-hook* f))
 
 (defun group-free-all (&optional (rt-server *s*))
   (let ((*s* rt-server))
@@ -510,14 +508,18 @@
     (send-message rt-server "/g_freeAll" 0)		
     (send-message rt-server "/clearSched")
     (make-group :id 1 :pos :head :to 0)
-    (alexandria:when-let ((hook *group-free-all-hook*))
+    (dolist (hook *group-free-all-hook*)
       (funcall hook))))
+
+(defvar *stop-hook* nil)
 
 (defun stop (&optional (group 1) &rest groups)
   (cb:sched-clear (scheduler *s*))
   (dolist (group (cons group groups))
     (send-message *s* "/g_freeAll" group)
-    (send-message *s* "/clearSched")))
+    (send-message *s* "/clearSched"))
+  (dolist (hook *stop-hook*)
+    (funcall hook)))
 
 (defun server-status (&optional (rt-server *s*))
   (send-message rt-server "/status"))
