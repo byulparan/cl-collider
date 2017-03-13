@@ -105,7 +105,7 @@
     :reader server-options)
    (server-time-stamp
     :initarg :server-time-stamp
-    :initform #'cb:unix-time
+    :initform #'scheduler:unix-time
     :accessor server-time-stamp)
    (scheduler
     :accessor scheduler)
@@ -137,8 +137,9 @@
 
 (defmethod initialize-instance :after ((self rt-server) &key)
   (push self *all-rt-servers*)
-  (setf (scheduler self) (make-instance 'cb:scheduler :name (name self)
-						      :timestamp (server-time-stamp self))))
+  (setf (scheduler self) (make-instance 'scheduler:scheduler
+			   :name (name self)
+			   :timestamp (server-time-stamp self))))
 
 (let ((semaphore-table (make-hash-table)))
   (defun get-semaphore-by-thread ()
@@ -180,7 +181,7 @@
     (error "Failed Server Boot"))
   (when (boot-p rt-server)
     (send-message rt-server "/notify" 1)
-    (cb:sched-run (scheduler rt-server))
+    (scheduler:sched-run (scheduler rt-server))
     (group-free-all rt-server)
     (setf (node-proxy-table rt-server) (make-hash-table)))
   rt-server)
@@ -191,7 +192,7 @@
     (funcall f))
   (send-message rt-server "/quit")
   (thread-wait (lambda () (not (boot-p rt-server))))
-  (cb:sched-stop (scheduler rt-server))
+  (scheduler:sched-stop (scheduler rt-server))
   (cleanup-server rt-server))
 
 (defun add-reply-responder (cmd handler)
@@ -275,13 +276,13 @@
 
 ;;; scheduler
 (defun callback (time f &rest args)
-  (apply #'cb:sched-add (scheduler *s*) time f args))
+  (apply #'scheduler:sched-add (scheduler *s*) time f args))
 
 (defun now ()
-  (cb:sched-time (scheduler *s*)))
+  (scheduler:sched-time (scheduler *s*)))
 
 (defun quant (next-time &optional (offset .5))
-  (cb:sched-quant (scheduler *s*) next-time offset))
+  (scheduler:sched-quant (scheduler *s*) next-time offset))
 
 ;;; --------------------------------------------------------------------------------------------
 ;;; external server
@@ -506,7 +507,7 @@
 
 (defun group-free-all (&optional (rt-server *s*))
   (let ((*s* rt-server))
-    (cb:sched-clear (scheduler rt-server))
+    (scheduler:sched-clear (scheduler rt-server))
     (send-message rt-server "/g_freeAll" 0)		
     (send-message rt-server "/clearSched")
     (make-group :id 1 :pos :head :to 0)
@@ -516,7 +517,7 @@
 (defvar *stop-hook* nil)
 
 (defun stop (&optional (group 1) &rest groups)
-  (cb:sched-clear (scheduler *s*))
+  (scheduler:sched-clear (scheduler *s*))
   (dolist (group (cons group groups))
     (send-message *s* "/g_freeAll" group)
     (send-message *s* "/clearSched"))
