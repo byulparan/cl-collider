@@ -44,7 +44,7 @@
    (:kr (multinew new 'pure-ugen freq root exp)))
   :check-fn #'when-audio-check-first-input )
 
-(defugen (amp-comp-a "AmpCombA") (&optional (freq 1000) (root 0.0) (min-amp 0.32) (root-amp 1.0))
+(defugen (amp-comp-a "AmpCompA") (&optional (freq 1000) (root 0.0) (min-amp 0.32) (root-amp 1.0))
   ((:ir (multinew new 'pure-ugen freq root min-amp root-amp))
    (:ar (multinew new 'pure-ugen freq root min-amp root-amp))
    (:kr (multinew new 'pure-ugen freq root min-amp root-amp)))
