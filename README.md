@@ -17,8 +17,7 @@ please check version of dependency library.
 - [SuperCollider](http://supercollider.sourceforge.net) - I tested on latest stable version(3.6.5)
 - [Quicklisp](http://www.quicklisp.org)
 - [ClozureCL](http://www.clozure.com/clozurecl.html) or [SBCL](http://www.sbcl.org)
-- [Scheduler-0.1.5](http://github.com/byulparan/scheduler) - The time based task scheduler
-- [Simple-Utils](http://github.com/byulparan/Simple-Utils) - The Collection of simple-functions
+- [Scheduler-2017.3.14](http://github.com/byulparan/scheduler) - The time based task scheduler
 
 ### package: sc
 
@@ -30,8 +29,14 @@ please check version of dependency library.
 (push "..." *sc-plugin-paths*)   ;; scx file's path.
 (push "..." *sc-plugin-paths*)   ;; it support extensions
 (setf *sc-synthdefs-path* "...") ;; your synthdef file will write here
-	
-(defparameter *s* (make-external-server "localhost" :port ... :just-connect-p nil))
+
+(setf *s* (make-external-server "localhost"
+				:server-options
+				(make-server-options
+				 :realtime-mem-size (expt 2 14) ;; set your server option
+				 :ugen-plugins-path (mapcar #'full-pathname *sc-plugin-paths*))
+				:port 48800))
+				
 (server-boot *s*)
 ;;....hack music.....
 (server-quit *s*)
