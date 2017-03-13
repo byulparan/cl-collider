@@ -21,13 +21,13 @@
 (defugen (splay "Splay") (in-array &optional (spread 1) (level 1) (center 0.0) (level-comp t))
   ((:ar
     (declare (ignore new))
-    (apply #'multinew #'splay-new :audio spread level center level-comp (su:mklist in-array)))
+    (apply #'multinew #'splay-new :audio spread level center level-comp (alexandria:ensure-list in-array)))
    (:kr
     (declare (ignore new))
-    (apply #'multinew #'splay-new :control spread level center level-comp (su:mklist in-array)))))
+    (apply #'multinew #'splay-new :control spread level center level-comp (alexandria:ensure-list in-array)))))
 
 (defun splay-fill (n function &optional (spread 1) (level 1) (center 0.0) (level-comp t))
-  (splay (su:dup function n) spread level center level-comp))
+  (splay (dup function n) spread level center level-comp))
 
 (export 'splay-fill)
 

@@ -263,7 +263,7 @@
 
 (defun control-get (index &optional action)
   (let ((result nil))
-    (setf (gethash index (control-get-handlers *s*)) (if action action #!(setf result %)))
+    (setf (gethash index (control-get-handlers *s*)) (if action action (lambda (value) (setf result value))))
     (message-distribute nil (list "/c_get" index) *s*)
     (unless action
       (sync)
@@ -305,7 +305,7 @@
 	  (name self) (host self) (port self)))
 
 (defun all-running-servers ()
-  (remove-if-not #!(boot-p %) *all-rt-servers*))
+  (remove-if-not #'(lambda (server) (boot-p server)) *all-rt-servers*))
 
 (defmethod is-local-p ((rt-server external-server))
   (string= (host rt-server) "127.0.0.1"))
@@ -316,12 +316,13 @@
   (unless (just-connect-p rt-server)
     (setf (sc-thread rt-server)
       (bt:make-thread
-       (lambda () (su:run-program
-		   (format nil "~a -u ~a ~a"
-			   (su:full-pathname *sc-synth-program*)
-			   (port rt-server)
-			   (build-server-options (server-options rt-server))) 
-		   :output t :wait t))
+       (lambda () (run-program 
+	       (format nil "~a -u ~a ~a"
+		       (full-pathname *sc-synth-program*)
+		       (port rt-server)
+		       (build-server-options (server-options rt-server)))
+	       :wait t
+	       :output t))
        :name "scsynth"))))
 
 (defmethod cleanup-server ((rt-server external-server))
@@ -386,8 +387,8 @@
 
 (defmacro with-rendering ((output-files &key (pad nil) (keep-osc-file nil) (format :int24) (sr 44100)) &body body)
   (alexandria:with-gensyms (osc-file file-name non-realtime-stream message)
-    `(let* ((,file-name (su:full-pathname ,output-files))
-	    (,osc-file (su:cat (subseq ,file-name 0 (position #\. ,file-name)) ".osc"))
+    `(let* ((,file-name (full-pathname ,output-files))
+	    (,osc-file (cat (subseq ,file-name 0 (position #\. ,file-name)) ".osc"))
 	    (scheduler::*scheduling-mode* :step)
 	    (*s* (make-instance 'nrt-server :name "NRTSynth" :streams nil)))
        (make-group 1 :pos :head :to 0)
@@ -400,10 +401,10 @@
 	   (let ((,message (osc::encode-bundle (second ,message) (car ,message))))
 	     (write-sequence (osc::encode-int32 (length ,message)) ,non-realtime-stream)
 	     (write-sequence ,message ,non-realtime-stream))))
-       (su:run-program
+       (run-program
 	(format nil "~a -U \"~{~a~^:~}\" -N ~a _ ~a ~a ~a ~a -o 2"
-		(su:full-pathname *sc-synth-program*)
-		(mapcar #'su:full-pathname *sc-plugin-paths*)
+		(full-pathname *sc-synth-program*)
+		(mapcar #'full-pathname *sc-plugin-paths*)
 		,osc-file ,file-name ,sr
 		(string-upcase (pathname-type ,file-name))
 		(ecase ,format
@@ -411,7 +412,8 @@
 		  (:int24 "int24")
 		  (:float "float")
 		  (:double "double")))
-	:output t :wait t)
+	:wait t
+	:output t)
        (unless ,keep-osc-file
 	 (delete-file ,osc-file))
        (values))))
@@ -466,8 +468,8 @@
 
 (defun ctrl (node &rest param &key &allow-other-keys)
   (with-node (node id server)          ;; /n_set == 15
-    (message-distribute node (cons 15 (cons id (mapcar #!(cond ((symbolp %) (string-downcase %)) ;key
-							       (t (floatfy %))) ;value
+    (message-distribute node (cons 15 (cons id (mapcar #'(lambda (p) (cond ((symbolp p) (string-downcase p)) ;key
+								       (t (floatfy p)))) ;value
 						       param))) server)))
 
 (defun bye (node)

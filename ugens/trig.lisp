@@ -20,22 +20,22 @@
 (defugen (send-reply "SendReply")
     (&optional (trig 0.0) (cmd "/reply") values (reply-id -1))
   ((:kr
-    (let ((values (su:mklist values)))
+    (let ((values (alexandria:ensure-list values)))
       (unless (find-if #'listp values) (setf values (bubble values)))
       (dolist (args (flop (list trig cmd values reply-id)))
 	(destructuring-bind (trig cmd value rep-id) args
 	  (let ((arg (list trig rep-id (length cmd))))
 	    (apply #'multinew new 'nooutput-ugen
-		   (append arg (map 'list #'char-code cmd) (su:mklist value))))))
+		   (append arg (map 'list #'char-code cmd) (alexandria:ensure-list value))))))
       0.0))
    (:ar
-    (let ((values (su:mklist values)))
+    (let ((values (alexandria:ensure-list values)))
       (unless (find-if #'listp values) (setf values (bubble values)))
       (dolist (args (flop (list trig cmd values reply-id)))
 	(destructuring-bind (trig cmd value rep-id) args
 	  (let ((arg (list trig rep-id (length cmd))))
 	    (apply #'multinew new 'nooutput-ugen
-		   (append arg (map 'list #'char-code cmd) (su:mklist value))))))
+		   (append arg (map 'list #'char-code cmd) (alexandria:ensure-list value))))))
       0.0))))
 
 
@@ -215,10 +215,10 @@
 
 (defugen (send-peak-rms "SendPeakRMS")
     (sig &optional (reply-rate 20.0) (peak-lag 3) (cmd-name "/reply") (reply-id -1))
-  ((:ar (progn (apply new 'send-peak-rms reply-rate peak-lag reply-id (length (su:mklist sig))
-		      (append (su:mklist sig) (list (length cmd-name)) (map 'list #'char-code cmd-name)))
+  ((:ar (progn (apply new 'send-peak-rms reply-rate peak-lag reply-id (length (alexandria:ensure-list sig))
+		      (append (alexandria:ensure-list sig) (list (length cmd-name)) (map 'list #'char-code cmd-name)))
 	       0))
-   (:kr (progn (apply new 'send-peak-rms reply-rate peak-lag reply-id (length (su:mklist sig))
-		      (append (su:mklist sig) (list (length cmd-name)) (map 'list #'char-code cmd-name)))
+   (:kr (progn (apply new 'send-peak-rms reply-rate peak-lag reply-id (length (alexandria:ensure-list sig))
+		      (append (alexandria:ensure-list sig) (list (length cmd-name)) (map 'list #'char-code cmd-name)))
 	       0))))
 

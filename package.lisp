@@ -99,6 +99,7 @@
 	   #:clump
 	   #:mean
 	   #:product
+	   #:dup
 	   #:==
 	   #:clip2
 	   

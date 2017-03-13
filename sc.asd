@@ -3,8 +3,7 @@
   :author "Park Sungmin. byulparan@icloud.com"
   :description "SuperCollider client for CommonLisp"
   :version "0.1.5"
-  :depends-on (#:simple-utils
-	       #:scheduler
+  :depends-on (#:scheduler
 	       #:osc-lib
 	       #:alexandria
 	       #:bordeaux-threads

@@ -59,46 +59,46 @@
     (&optional (mul 1.0) (add 0.0))
   ((:ar
     (if (listp mul) (madd
-		     (su:dup (lambda (i) (declare (ignore i)) (multinew new 'ugen)) (length mul)) mul add)
+		     (dup (lambda (i) (declare (ignore i)) (multinew new 'ugen)) (length mul)) mul add)
 	(madd (multinew new 'ugen) mul add)))
    (:kr
-    (if (listp mul) (madd (su:dup (lambda (i) (declare (ignore i)) (multinew new 'ugen)) (length mul)) mul add)
+    (if (listp mul) (madd (dup (lambda (i) (declare (ignore i)) (multinew new 'ugen)) (length mul)) mul add)
 	(madd (multinew new 'ugen) mul add)))))
 
 (defugen (brown-noise "BrownNoise")
     (&optional (mul 1.0) (add 0.0))
   ((:ar
-    (if (listp mul) (madd (su:dup (lambda (i) (declare (ignore i)) (multinew new 'ugen)) (length mul)) mul add)
+    (if (listp mul) (madd (dup (lambda (i) (declare (ignore i)) (multinew new 'ugen)) (length mul)) mul add)
 	(madd (multinew new 'ugen) mul add)))
    (:kr
-    (if (listp mul) (madd (su:dup (lambda (i) (declare (ignore i)) (multinew new 'ugen)) (length mul)) mul add)
+    (if (listp mul) (madd (dup (lambda (i) (declare (ignore i)) (multinew new 'ugen)) (length mul)) mul add)
 	(madd (multinew new 'ugen) mul add)))))
 
 (defugen (pink-noise "PinkNoise")
     (&optional (mul 1.0) (add 0.0))
   ((:ar
-    (if (listp mul) (madd (su:dup (lambda (i) (declare (ignore i)) (multinew new 'ugen)) (length mul)) mul add)
+    (if (listp mul) (madd (dup (lambda (i) (declare (ignore i)) (multinew new 'ugen)) (length mul)) mul add)
 	(madd (multinew new 'ugen) mul add)))
    (:kr
-    (if (listp mul) (madd (su:dup (lambda (i) (declare (ignore i)) (multinew new 'ugen)) (length mul)) mul add)
+    (if (listp mul) (madd (dup (lambda (i) (declare (ignore i)) (multinew new 'ugen)) (length mul)) mul add)
 	(madd (multinew new 'ugen) mul add)))))
 
 (defugen (clip-noise "ClipNoise")
     (&optional (mul 1.0) (add 0.0))
   ((:ar
-    (if (listp mul) (madd (su:dup (lambda (i) (declare (ignore i)) (multinew new 'ugen)) (length mul)) mul add)
+    (if (listp mul) (madd (dup (lambda (i) (declare (ignore i)) (multinew new 'ugen)) (length mul)) mul add)
 	(madd (multinew new 'ugen) mul add)))
    (:kr
-    (if (listp mul) (madd (su:dup (lambda (i) (declare (ignore i)) (multinew new 'ugen)) (length mul)) mul add)
+    (if (listp mul) (madd (dup (lambda (i) (declare (ignore i)) (multinew new 'ugen)) (length mul)) mul add)
 	(madd (multinew new 'ugen) mul add)))))
 
 (defugen (gray-noise "GrayNoise")
     (&optional (mul 1.0) (add 0.0))
   ((:ar
-    (if (listp mul) (madd (su:dup (lambda (i) (declare (ignore i)) (multinew new 'ugen)) (length mul)) mul add)
+    (if (listp mul) (madd (dup (lambda (i) (declare (ignore i)) (multinew new 'ugen)) (length mul)) mul add)
 	(madd (multinew new 'ugen) mul add)))
    (:kr
-    (if (listp mul) (madd (su:dup (lambda (i) (declare (ignore i)) (multinew new 'ugen)) (length mul)) mul add)
+    (if (listp mul) (madd (dup (lambda (i) (declare (ignore i)) (multinew new 'ugen)) (length mul)) mul add)
 	(madd (multinew new 'ugen) mul add)))))
 
 (defugen (crackle "Crackle")

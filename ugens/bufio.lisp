@@ -37,8 +37,8 @@
 
 (defugen (buf-wr "BufWr")
     (input-array &optional (bufnum 0) (phase 0.0) (loop 1.0))
-  ((:ar (multinew-list new 'ugen (append (list bufnum phase loop) (su:mklist input-array))))
-   (:kr (multinew-list new 'ugen (append (list bufnum phase loop) (su:mklist input-array)))))
+  ((:ar (multinew-list new 'ugen (append (list bufnum phase loop) (alexandria:ensure-list input-array))))
+   (:kr (multinew-list new 'ugen (append (list bufnum phase loop) (alexandria:ensure-list input-array)))))
   :check-fn #'check-when-audio)
 
 
@@ -46,19 +46,19 @@
     (input-array &optional (bufnum 0) &key (offset 0.0) (rec-level 1.0) (pre-level 0.0)
 		 (run 1.0) (loop 1.0) (trig 1.0) (act :no-action))
   ((:ar (multinew-list new 'ugen (append (list bufnum offset rec-level pre-level run loop trig (act act))
-					 (su:mklist input-array))))
+					 (alexandria:ensure-list input-array))))
    (:kr (multinew-list new 'ugen (append (list bufnum offset rec-level pre-level run loop trig (act act))
-					 (su:mklist input-array))))))
+					 (alexandria:ensure-list input-array))))))
 
 (defugen (scope-out "ScopeOut") (input-array &optional (bufnum 0))
-  ((:ar (progn (multinew-list new 'ugen (cons bufnum (su:mklist input-array))) 0))
-   (:kr (progn (multinew-list new 'ugen (cons bufnum (su:mklist input-array))) 0))))
+  ((:ar (progn (multinew-list new 'ugen (cons bufnum (alexandria:ensure-list input-array))) 0))
+   (:kr (progn (multinew-list new 'ugen (cons bufnum (alexandria:ensure-list input-array))) 0))))
 
 (defugen (scope-out2 "ScopeOut2") (input-array &optional (scope-num 0) (max-frames 4096) scope-frames)
   ((:ar (progn (multinew-list new 'ugen (append (list scope-num max-frames (if scope-frames scope-frames max-frames))
-					      (su:mklist input-array))) 0))
+					      (alexandria:ensure-list input-array))) 0))
    (:kr (progn (multinew-list new 'ugen (append (list scope-num max-frames (if scope-frames scope-frames max-frames))
-					      (su:mklist input-array))) 0))))
+					      (alexandria:ensure-list input-array))) 0))))
 
 (defun tap (&optional (bufnum 0) (chanls 1) (delay 0.2))
   (let ((n (mul delay (neg (sample-rate.ir)))))

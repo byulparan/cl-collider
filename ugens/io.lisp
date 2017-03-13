@@ -37,7 +37,7 @@
   (let* ((pos 0)
 	 (num-zeros (count 0 channel-array :test #'equalp)))
     (when (zerop num-zeros) (return-from replace-zeroes-with-silence channel-array))
-    (let ((silent-ch (su:mklist (silent num-zeros))))
+    (let ((silent-ch (alexandria:ensure-list (silent num-zeros))))
       (loop for item in channel-array
 	    for i from 0
 	    do (let (res)
@@ -50,25 +50,25 @@
 
 
 (defugen (out "Out") (bus channels-array)
-  ((:ar (let ((channels (replace-zeroes-with-silence (su:mklist channels-array))))
+  ((:ar (let ((channels (replace-zeroes-with-silence (alexandria:ensure-list channels-array))))
 	  (apply #'multinew new 'abstract-out (cons bus channels))
 	  0))
    (:kr (progn
-	  (apply #'multinew new 'abstract-out (cons bus (su:mklist channels-array)))
+	  (apply #'multinew new 'abstract-out (cons bus (alexandria:ensure-list channels-array)))
 	  0)))
   :check-fn (lambda (ugen) (abstract-out-check ugen 1)))
 
 (defugen (replace-out "ReplaceOut") (bus channels-array)
-  ((:ar (let ((channels (replace-zeroes-with-silence (su:mklist channels-array))))
+  ((:ar (let ((channels (replace-zeroes-with-silence (alexandria:ensure-list channels-array))))
 	  (apply #'multinew new 'abstract-out (cons bus channels))
 	  0))
    (:kr (progn
-	  (apply #'multinew new 'abstract-out (cons bus (su:mklist channels-array)))
+	  (apply #'multinew new 'abstract-out (cons bus (alexandria:ensure-list channels-array)))
 	  0)))
   :check-fn (lambda (ugen) (abstract-out-check ugen 1)))
 
 (defugen (offset-out "OffsetOut") (bus channels-array)
-  ((:ar (let ((channels (replace-zeroes-with-silence (su:mklist channels-array))))
+  ((:ar (let ((channels (replace-zeroes-with-silence (alexandria:ensure-list channels-array))))
 	  (apply #'multinew new 'abstract-out (cons bus channels))
 	  0))
    (:kr  (progn new (error "Not Implements ~a ~a" bus channels-array))))
@@ -79,20 +79,20 @@
 
 
 (defugen (local-out "LocalOut") (channels-array)
-  ((:ar (let ((channels (replace-zeroes-with-silence (su:mklist channels-array))))
+  ((:ar (let ((channels (replace-zeroes-with-silence (alexandria:ensure-list channels-array))))
 	  (apply #'multinew new 'abstract-out channels)
 	  0))
-   (:kr (progn (apply #'multinew new 'abstract-out (su:mklist channels-array))
+   (:kr (progn (apply #'multinew new 'abstract-out (alexandria:ensure-list channels-array))
 	  0)))
   :check-fn (lambda (ugen) (abstract-out-check ugen 0)))
 
 
 
 (defugen (x-out "XOut") (bus xfade channels-array)
-  ((:ar (let ((channels (replace-zeroes-with-silence (su:mklist channels-array))))
+  ((:ar (let ((channels (replace-zeroes-with-silence (alexandria:ensure-list channels-array))))
 	  (apply #'multinew new 'abstract-out (cons bus (cons xfade channels)))
 	  0))
-   (:kr (progn (apply #'multinew new 'abstract-out (cons bus (cons xfade (su:mklist channels-array)))) 0)))
+   (:kr (progn (apply #'multinew new 'abstract-out (cons bus (cons xfade (alexandria:ensure-list channels-array)))) 0)))
   :check-fn (lambda (ugen) (abstract-out-check ugen 2)))
 
 

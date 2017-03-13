@@ -88,7 +88,7 @@
   :scalar)
 
 (defmethod rate ((ugen list))
-  (let ((rate-lst (mapcar #!(string (rate %)) (alexandria:flatten ugen))))
+  (let ((rate-lst (mapcar #'(lambda (u) (string (rate u))) (alexandria:flatten ugen))))
     (let ((ret (intern (first (sort rate-lst #'string-lessp)) :keyword)))
       ret)))
 
@@ -312,7 +312,7 @@
 		 collect
 		 (let* ((ugen-name (intern
 				    (if (eql (car func) :ar) (string-upcase (car name))
-					(su:cat (string-upcase (car name)) "." (string-upcase (car func)))))))
+					(cat (string-upcase (car name)) "." (string-upcase (car func)))))))
 		   `(progn
 		      (defun ,ugen-name ,args
 			(let ((new (lambda (,cls &rest ,inputs)

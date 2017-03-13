@@ -106,7 +106,7 @@
 (defmethod make-env-array-from-env ((env env))
   (with-slots (levels times curve-number curve-value release-node loop-node) env
     (let* ((env-segs (mapcar #'sc::lst-operation
-			     (mapcar #'su:mklist (list levels times curve-number curve-value)))))
+			     (mapcar #'alexandria:ensure-list (list levels times curve-number curve-value)))))
       (flet ((mk-deep-lst (x)
 	       (if (every #'atom x) (list x) x)))
 	(let ((deep-lst (mapcar #'mk-deep-lst env-segs)))
@@ -139,7 +139,7 @@
 			env-arrays)))))))))
 
 (defun env (levels times &optional (curve :lin) (release-node -99) (loop-node -99))
-  (let* ((curves (su:mklist curve))
+  (let* ((curves (alexandria:ensure-list curve))
 	 (curve-value
 	   (loop for curve in curves
 		 collect

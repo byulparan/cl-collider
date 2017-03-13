@@ -462,7 +462,7 @@
 (defun flop (lists)
   (labels ((this-nth (n list)
 	     (nth (mod n (length list)) list)))
-    (let* ((lists (mapcar #'su:mklist lists))
+    (let* ((lists (mapcar #'alexandria:ensure-list lists))
 	   (len (apply #'max (mapcar #'length lists))))
       (loop repeat len
 	    for i from 0
@@ -476,7 +476,7 @@
 		      (setf result (append result (if val (list val) val))))))))
 
 (defun mix (array)
-  (let* ((reduce-col (clump (su:mklist array) 4))
+  (let* ((reduce-col (clump (alexandria:ensure-list array) 4))
 	 (mixed-col (loop for a in reduce-col
 			  collect (cond ((= (length a) 4) (apply #'sum4 a))
 					((= (length a) 3) (apply #'sum3 a))
@@ -496,4 +496,18 @@
 	(loop for elem in list
 	      do (setf product (*~ product elem))))
     product))
+
+(defun dup (object &optional (n 2))
+  (duplicate object n))
+
+(defmethod duplicate (self (n integer))
+  (if (not (listp self)) (make-list n :initial-element self)
+      (loop for i from 0 below n
+	 collect (copy-list self))))
+
+(defmethod duplicate ((self function) (n integer))
+  (loop for i from 0 below n collect (funcall self i)))
+
+(defmethod duplicate ((self function) (n list))
+  (loop for i in n collect (funcall self i)))
 

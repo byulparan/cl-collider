@@ -2,9 +2,9 @@
 (in-package #:sc)
 
 (defugen (demand "Demand") (trig reset demand-ugens)
-  ((:ar (let ((demand-ugens (su:mklist demand-ugens)))
+  ((:ar (let ((demand-ugens (alexandria:ensure-list demand-ugens)))
 	  (apply #'multinew new 'multiout-ugen (length demand-ugens)  trig reset demand-ugens)))
-   (:kr (let ((demand-ugens (su:mklist demand-ugens)))
+   (:kr (let ((demand-ugens (alexandria:ensure-list demand-ugens)))
 	  (apply #'multinew new 'multiout-ugen (length demand-ugens)  trig reset demand-ugens)) ))
   :check-fn #'check-same-rate-as-first-input)
 

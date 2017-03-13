@@ -30,7 +30,7 @@
       new-buffer)))
 
 (defun buffer-read (path &key bufnum (server *s*))
-  (let ((file-path (su:full-pathname path)))
+  (let ((file-path (full-pathname path)))
     (assert (probe-file file-path) (path) "not have file< ~a >" file-path)
     (let* ((bufnum (if bufnum bufnum (get-next-buffer-number server)))
 	   (new-buffer (make-instance 'buffer :path file-path
@@ -52,7 +52,7 @@
   "Make audio-file from Buffer."
   (let ((bufnum (bufnum buffer))
 	(server (server buffer))
-	(file-path (su:full-pathname path)))
+	(file-path (full-pathname path)))
     (when action
       (setf (gethash (list "/b_write" bufnum) (buffer-get-handlers server)) action))
     (send-message server "/b_write" bufnum file-path (pathname-type file-path) (ecase format
@@ -71,7 +71,8 @@
   (let ((bufnum (bufnum buffer))
 	(server (server buffer)))
     (let ((result nil))
-      (setf (gethash (list "/b_set" bufnum index) (buffer-get-handlers server)) (if action action #!(setf result %)))
+      (setf (gethash (list "/b_set" bufnum index) (buffer-get-handlers server))
+	(if action action (lambda (value) (setf result value))))
       (send-message server "/b_get" bufnum index)
       (unless action
 	(sync (server buffer))
@@ -82,7 +83,8 @@
   (let ((bufnum (bufnum buffer))
 	(server (server buffer)))
     (let ((result nil))
-      (setf (gethash (list "/b_setn" bufnum start frames) (buffer-get-handlers server)) (if action action #!(setf result %)))
+      (setf (gethash (list "/b_setn" bufnum start frames) (buffer-get-handlers server))
+	(if action action (lambda (value) (setf result value))))
       (send-message server "/b_getn" bufnum start frames)
       (unless action
 	(sync (server buffer))

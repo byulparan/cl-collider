@@ -71,4 +71,4 @@
 (defugen (silent "Silent") (&optional (chanls 1))
   ((:ar (let ((sig (dc 0)))
 	  new
-	  (if (= chanls 1) sig (su:dup sig chanls))))))
+	  (if (= chanls 1) sig (dup sig chanls))))))
