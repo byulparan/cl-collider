@@ -189,24 +189,25 @@
 (defugen (select-x "SelectX") (which array &optional (wrap 1.0))
   ((:ar (progn
 	  new wrap
-	  (x-fade2 (select (round~ which 2) array)
-			   (select (add (trunc which 2) 1) array)
-			   (fold2 (minus (mul which 2) 1) 1))))
-   (:kr (progn new wrap
-	       (x-fade2.kr (select.kr (round~ which 2) array)
-			   (select.kr (add (trunc which 2) 1) array)
-			   (fold2 (minus (mul which 2) 1) 1))))))
+	  (x-fade2.ar (select.ar (round~ which 2) array)
+		      (select.ar (add (trunc which 2) 1) array)
+		      (fold2 (minus (mul which 2) 1) 1))))
+   (:kr (progn
+	  new wrap
+	  (x-fade2.kr (select.kr (round~ which 2) array)
+		      (select.kr (add (trunc which 2) 1) array)
+		      (fold2 (minus (mul which 2) 1) 1))))))
 
 (defugen (lin-select-x "LinSelectX") (which array &optional (wrap 1.0))
   ((:ar (progn
 	  new wrap
-	  (lin-x-fade2 (select (round~ which 2) array)
-			   (select (add (trunc which 2) 1) array)
-			   (fold2 (minus (mul which 2) 1) 1))))
+	  (lin-x-fade2.ar (select.ar (round~ which 2) array)
+			  (select.ar (add (trunc which 2) 1) array)
+			  (fold2 (minus (mul which 2) 1) 1))))
    (:kr (progn new wrap
 	       (lin-x-fade2.kr (select.kr (round~ which 2) array)
-			   (select.kr (add (trunc which 2) 1) array)
-			   (fold2 (minus (mul which 2) 1) 1))))))
+			       (select.kr (add (trunc which 2) 1) array)
+			       (fold2 (minus (mul which 2) 1) 1))))))
 
 (defugen (select-x-focus "SelectXFocus") (which array &optional (focus 1.0))
   ((:ar (progn new
@@ -226,11 +227,11 @@
 
 
 (defugen (t-choose "TChoose") (trig array)
-  ((:ar (progn new (select (ti-rand.kr 0 (1- (length array)) trig) array)))
+  ((:ar (progn new (select.ar (ti-rand.kr 0 (1- (length array)) trig) array)))
    (:kr (progn new (select.kr (ti-rand.kr 0 (1- (length array)) trig) array)))))
 
 (defugen (tw-choose "TWChoose") (trig array weights &optional (normalize 0))
-  ((:ar (progn new (select (tw-index trig weights normalize) array)))
+  ((:ar (progn new (select.ar (tw-index.ar trig weights normalize) array)))
    (:kr (progn new (select.kr (tw-index.kr trig weights normalize) array)))))
 
 
@@ -330,10 +331,10 @@
   (destructuring-bind (array-ref freq-scale freq-offset) inputs
     (let ((array-ref (map 'list #'identity array-ref)))
       (ecase (rate ugen)
-	(:audio (sum (sin-osc (alexandria:if-let ((spec (nth 0 array-ref))) spec
-				(add (mul (list 440.0) freq-scale) freq-offset))
-			      (alexandria:if-let ((spec (nth 2 array-ref))) spec (list 0.0))
-			      (alexandria:if-let ((spec (nth 1 array-ref))) spec (list 1.0)))))
+	(:audio (sum (sin-osc.ar (alexandria:if-let ((spec (nth 0 array-ref))) spec
+				   (add (mul (list 440.0) freq-scale) freq-offset))
+				 (alexandria:if-let ((spec (nth 2 array-ref))) spec (list 0.0))
+				 (alexandria:if-let ((spec (nth 1 array-ref))) spec (list 1.0)))))
 	(:control (sum (sin-osc.kr (alexandria:if-let ((spec (nth 0 array-ref))) spec
 				     (add (mul (list 440.0) freq-scale) freq-offset))
 				   (alexandria:if-let ((spec (nth 2 array-ref))) spec (list 0.0))

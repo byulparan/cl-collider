@@ -165,7 +165,7 @@
 
 (defugen (changed "Changed")
     (&optional (in 0.0) (threshold 0.0))
-  ((:ar (progn new (>~ (abs~ (hpz-1 in)) threshold)))
+  ((:ar (progn new (>~ (abs~ (hpz-1.ar in)) threshold)))
    (:kr (progn new (>~ (abs~ (hpz-1.kr in)) threshold))))
   :check-fn #'check-same-rate-as-first-input)
 
@@ -257,11 +257,11 @@
 	  (loop for e in env-arrays
 		do (setf (aref e 6) curve
 			 (aref e 7) curvature))
-	  (let ((trig (if (eql rate :audio) (+~ (changed in) (impulse 0))
+	  (let ((trig (if (eql rate :audio) (+~ (changed.ar in) (impulse.ar 0))
 			  (+~ (changed.kr in) (impulse.kr 0)))))
 	    (unless (eql (rate time) :scalar)
 	      (setf trig (+~ trig (changed.kr time))))
-	    (if (eql rate :audio) (env-gen env-arrays :gate trig)
+	    (if (eql rate :audio) (env-gen.ar env-arrays :gate trig)
 		(env-gen.kr env-arrays :gate trig))))
 	(funcall new 'pure-ugen in time start))))
 

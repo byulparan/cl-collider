@@ -60,9 +60,9 @@
    (:kr (progn (multinew-list new 'ugen (append (list scope-num max-frames (if scope-frames scope-frames max-frames))
 					      (alexandria:ensure-list input-array))) 0))))
 
-(defun tap (&optional (bufnum 0) (chanls 1) (delay 0.2))
+(defun tap.ar (&optional (bufnum 0) (chanls 1) (delay 0.2))
   (let ((n (mul delay (neg (sample-rate.ir)))))
-    (play-buf chanls bufnum 1 :trig 0 :start-pos n :loop 1)))
+    (play-buf.ar chanls bufnum 1 :trig 0 :start-pos n :loop 1)))
 
 
 

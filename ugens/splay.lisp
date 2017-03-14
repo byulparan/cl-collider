@@ -15,7 +15,7 @@
 	  (setf level (*~ level (sqrt~ (reciprocal n))))
 	  (setf level (/~ level n))))
     (if (eql rate :audio)
-	(*~ (sum (pan2 in-array position)) level)
+	(*~ (sum (pan2.ar in-array position)) level)
 	(*~ (sum (pan2.kr in-array position)) level))))
 
 (defugen (splay "Splay") (in-array &optional (spread 1) (level 1) (center 0.0) (level-comp t))

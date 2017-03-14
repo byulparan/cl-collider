@@ -34,9 +34,9 @@
 	  (when (or (eql (rate gate) :audio)
 		    (eql (rate reset) :audio))
 	    (when (not (eql (rate gate) :audio))
-	      (setf gate (k2a gate)))
+	      (setf gate (k2a.ar gate)))
 	    (when (not (eql (rate reset) :audio))
-	      (setf reset (k2a reset))))
+	      (setf reset (k2a.ar reset))))
 	  (multinew new 'ugen level dur shape curve gate reset level-scale level-bias time-scale (act act))))))
 
 

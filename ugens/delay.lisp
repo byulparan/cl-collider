@@ -6,7 +6,7 @@
   (let ((op (lambda (cls in)
 	      (declare (ignore cls))
 	      (if (eql :audio (rate in)) in
-		  (k2a in)))))
+		  (k2a.ar in)))))
     (multinew op nil input)))
 
 (defugen (Delay-1 "Delay1") (&optional (in 0.0) (mul 1.0) (add 0.0))

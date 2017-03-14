@@ -28,10 +28,10 @@
 	  (add (mul in scale) offset)))))
 
 (defun lin-lin (ugen in-min in-max out-min out-max &optional (clip :minmax))
-  (if (eql (rate ugen) :audio) (lin-lin-ugen (prune ugen in-min in-max clip) in-min in-max out-min out-max)
+  (if (eql (rate ugen) :audio) (lin-lin-ugen.ar (prune ugen in-min in-max clip) in-min in-max out-min out-max)
       (lin-lin-ugen.kr (prune ugen in-min in-max clip) in-min in-max out-min out-max)))
 
-(unexport '(lin-lin-ugen lin-lin-ugen.kr))
+(unexport '(lin-lin-ugen.ar lin-lin-ugen.kr))
 
 
 (defun when-audio-check-first-input (ugen)

@@ -311,7 +311,7 @@
 	 ,@(loop for func in function
 		 collect
 		 (let* ((ugen-name (intern
-				    (if (eql (car func) :ar) (string-upcase (car name))
+				    (if (eql (car func) :ar) (cat (string-upcase (car name)) "." (string-upcase (car func)))
 					(cat (string-upcase (car name)) "." (string-upcase (car func)))))))
 		   `(progn
 		      (defun ,ugen-name ,args
