@@ -1,4 +1,7 @@
 
+(named-readtables:defreadtable :sc
+  (:merge :common-lisp))
+
 (defpackage #:sc
   (:use #:cl)
   #+ccl (:import-from :ccl #:make-id-map #:assign-id-map-id #:id-map-free-object)

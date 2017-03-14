@@ -8,7 +8,8 @@
 	       #:alexandria
 	       #:bordeaux-threads
 	       #:flexi-streams
-	       #:split-sequence)
+	       #:split-sequence
+	       #:named-readtables)
   :serial t
   :components ((:file "package")
 	       #+(or sbcl ecl) (:file "id-map")

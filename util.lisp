@@ -1,6 +1,8 @@
 ;;; simple utillity and wrap ccl & sbcl's function.
 
 (in-package #:sc)
+(named-readtables:in-readtable :sc)
+
 
 ;;; [1 2 3] == (list 1 2 3)
 (let ((rpar (get-macro-character #\))))
