@@ -1,6 +1,7 @@
 
-(named-readtables:defreadtable :sc
-  (:merge :common-lisp))
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (named-readtables:defreadtable :sc
+    (:merge :common-lisp)))
 
 (defpackage #:sc
   (:use #:cl)
@@ -123,3 +124,8 @@
 	   #:pvcalc2
 	   #:pv-collect))
 
+(defpackage #:sc-user
+  (:use #:cl #:sc))
+
+(in-package :sc-user)
+(named-readtables:in-readtable :sc)
