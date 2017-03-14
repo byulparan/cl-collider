@@ -22,6 +22,7 @@ please check version of dependency library.
 - [Scheduler](http://github.com/byulparan/scheduler)(above 2017.3.14) - The time based task scheduler
 
 ### package: sc
+### named-readtable: sc
 
 ## Usage:
 ### Server
