@@ -30,7 +30,7 @@
   (when (eql (rate ugen) :audio)
     (loop for i from fixed-args below (length (inputs ugen))
 	  do (unless (eql (rate (nth i (inputs ugen))) :audio)
-	       (error (format nil "input at index ~a ~a is not audio rate"
+	       (error (format nil "Input at index ~a (~a) is not audio rate."
 			      i (nth i (inputs ugen))))))))
 
 (defun replace-zeroes-with-silence (channel-array)
@@ -71,7 +71,7 @@
   ((:ar (let ((channels (replace-zeroes-with-silence (alexandria:ensure-list channels-array))))
 	  (apply #'multinew new 'abstract-out (cons bus channels))
 	  0))
-   (:kr  (progn new (error "Not Implements ~a ~a" bus channels-array))))
+   (:kr (progn new (error "Control rate OffsetOut is not implemented (bus: ~a channels-array: ~a)." bus channels-array))))
   :check-fn (lambda (ugen) (abstract-out-check ugen 1)))
 
 

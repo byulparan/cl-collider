@@ -88,7 +88,7 @@
 
 (defmethod env-shape-number ((self symbol))
   (let ((value (gethash self +env-shape-table+)))
-    (if value value (error (format nil "~s is Not Curves Value" self)))))
+    (if value value (error (format nil "~s is not a valid type of envelope curve." self)))))
 
 (defmethod env-shape-number ((self ugen))
   5)

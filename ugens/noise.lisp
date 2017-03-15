@@ -130,7 +130,7 @@
   ((:ar (madd (multinew new 'ugen freq) mul add))
    (:kr (madd (multinew new 'ugen freq) mul add))))
 
-(defugen (lf-clicp-noise "LFClipNoise")
+(defugen (lf-clip-noise "LFClipNoise")
     (&optional (freq 500.0) (mul 1.0) (add 0.0))
   ((:ar (madd (multinew new 'ugen freq) mul add))
    (:kr (madd (multinew new 'ugen freq) mul add))))

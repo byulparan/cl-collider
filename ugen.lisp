@@ -8,7 +8,7 @@
 (defconstant +inf+
   #+ccl 1E++0 
   #+sbcl sb-ext:single-float-positive-infinity
-  #+ecl ;; ext:single-float-positive-infinity // this is right value. but it signal #<a FLOATING-POINT-OVERFLOW>. maybe It ecl's bug
+  #+ecl ;; ext:single-float-positive-infinity // this is right value. but it signal a #<FLOATING-POINT-OVERFLOW>. maybe it's ecl's bug
   ext::most-positive-single-float)
 
 (defgeneric new1 (ugen &rest inputs))
@@ -235,16 +235,16 @@
   (when (eql (rate ugen) :audio)
     (dotimes (i n)
       (unless (eql (rate (nth i (inputs ugen))) :audio)
-	(error  "~a input ~a is not audio rate ~a ~a" ugen i (nth i (inputs ugen))
-		(rate (nth i (inputs ugen))))))))
+        (error "~a's input ~a is not audio rate (input: ~a rate: ~a)." ugen i (nth i (inputs ugen))
+               (rate (nth i (inputs ugen))))))))
 
 (defun check-when-audio (ugen)
   (when (and (eql (rate ugen) :audio) (not (eql (rate (nth 1 (inputs ugen))) :audio)))
-    (error  "~a check-when-audio rate: ~a ~a" ugen (nth 1 (inputs ugen)) (rate (nth 1 (inputs ugen))))))
+    (error "~a's input is not audio rate (input: ~a rate: ~a)." ugen (nth 1 (inputs ugen)) (rate (nth 1 (inputs ugen))))))
 
 (defun check-same-rate-as-first-input (ugen)
   (unless (eql (rate ugen) (rate (car (inputs ugen))))
-    (error "~a not match rate: ~a" ugen (car (inputs ugen)))))
+    (error "~a's rate does not match ~a's rate." ugen (car (inputs ugen)))))
 
 
 ;;; UGEN CLASS   ----------------------------------------------------------------------------
