@@ -12,7 +12,7 @@
 (defvar *sc-plugin-paths* nil)
 
 (defvar *sc-synthdefs-path* ""
-  "The directory where the scsyndef file for synthdefs are saved.")
+  "The directory where the scsyndef files for synthdefs are saved.")
 
 ;;; -------------------------------------------------------
 ;;; Server - base class
