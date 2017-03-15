@@ -69,6 +69,7 @@
 	   #:chanls
 	   #:buffer-read
 	   #:buffer-alloc
+	   #:buffer-free
 	   #:buffer-save
 	   #:buffer-get
 	   #:buffer-get-list

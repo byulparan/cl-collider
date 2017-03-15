@@ -41,6 +41,24 @@
       (sync server)
       new-buffer)))
 
+(defmethod buffer-free ((buffer fixnum) &key (server *s*))
+  (bt:with-lock-held ((server-lock server))
+    (assert (elt (buffer-numbers server) buffer) nil "bufnum ~d already free." buffer)
+    (let* ((free-buffer (gethash buffer (buffers server))))
+      (setf (server free-buffer) nil
+	    (path free-buffer) nil
+	    (chanls free-buffer) nil
+	    (sr free-buffer) nil
+	    (frames free-buffer) nil
+	    (bufnum free-buffer) nil)
+      (setf (elt (buffer-numbers server) buffer) nil)
+      (remhash buffer (buffers server))
+      (send-message server "/b_free" buffer)
+      (sync server)
+      free-buffer)))
+
+(defmethod buffer-free ((buffer buffer) &key (server *s*))
+  (buffer-free (bufnum buffer) :server server))
 
 (defun buffer-normalize (buffer &optional (new-max 1.0) wavetable-p)
   (send-message (server buffer) "/b_gen" (floatfy buffer) (if wavetable-p "wnormalize" "normalize") new-max)

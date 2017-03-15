@@ -17,30 +17,28 @@
 ;;; Server - base class
 ;;; -------------------------------------------------------
 
-#+sbcl
-(defstruct counter (count 0 :type sb-vm::word))
-
 (defclass server ()
   ((name :initarg :name :initform "" :reader name)
-   (buffers :initarg :buffers :initform (make-hash-table) :reader buffers)
-   #+ecl (server-lock :initform (bt:make-lock) :reader server-lock)
-   (id-and-buffer-number :initarg :id-and-buffer-number
-			 :initform #+(or ccl ecl) (cons 999 -1) #+sbcl (cons (make-counter :count 1000)
-									     (make-counter :count 0))
-			 :accessor id-and-buffer-number))
+   (server-lock :initform (bt:make-lock) :reader server-lock)
+   (id :initform (list #-sbcl 999 #+sbcl 1000)
+       :reader id)
+   (buffers :initform (make-hash-table)
+	    :reader buffers)
+   (buffer-numbers :initform (make-array 1024 :initial-element nil)
+		  :reader buffer-numbers))
   (:documentation "This is base class for the scsynth server. This library includes realtime server, NRT server, and internal server (not yet implemented)."))
 
-(defmethod get-next-id ((server server))
-  #+ccl (ccl::%atomic-incf-car (id-and-buffer-number server))
-  #+sbcl (sb-ext:atomic-incf (counter-count (car (id-and-buffer-number server))))
+(defun get-next-id (server)
+  #+ccl (ccl::atomic-incf (car (id server)))
+  #+sbcl (sb-ext:atomic-incf (car (id server)))
   #+ecl (bt:with-lock-held ((server-lock server))
-	  (incf (car (id-and-buffer-number server)))))
+	  (incf (car (id server)))))
 
-(defmethod get-next-buffer-number ((server server))
-  #+ccl (ccl::%atomic-incf-cdr (id-and-buffer-number server))
-  #+sbcl (sb-ext:atomic-incf (counter-count (cdr (id-and-buffer-number server))))
-  #+ecl (bt:with-lock-held ((server-lock server))
-	  (incf (cdr (id-and-buffer-number server)))))
+(defun get-next-buffer-number (server)
+  (bt:with-lock-held ((server-lock server))
+    (let* ((bufnum (position nil (buffer-numbers server))))
+      (setf (elt (buffer-numbers server) bufnum) t)
+      bufnum)))
 
 
 ;;; declare generic function for realtime server
