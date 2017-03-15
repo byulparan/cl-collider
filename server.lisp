@@ -476,7 +476,7 @@
     (message-distribute node (list 11 id) server))) ;; /n_free == 11
 
 (defun free (node)
-  (with-node (id id server)
+  (with-node (node id server)
     (message-distribute node (list 11 id) server))) ;; /n_free == 11
 
 (defun is-playing-p (node)
