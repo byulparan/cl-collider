@@ -8,9 +8,15 @@
   #+linux "/usr/bin/scsynth"
   "The path to the scsynth binary.")
 
-(defvar *sc-plugin-paths* nil)
+(setf *sc-plugin-paths*
+  #+darwin (list "/Applications/SuperCollider/SuperCollider.app/Contents/Resources/plugins/"
+		 "~/Library/Application\ Support/SuperCollider/Extensions/")
+  #+linux (list "/usr/lib/SuperCollider/plugins/"
+		"/usr/share/SuperCollider/Extensions/SC3plugins/"))
 
-(defvar *sc-synthdefs-path* ""
+(defvar *sc-synthdefs-path*
+  #+darwin "~/Library/Application Support/SuperCollider/synthdefs"
+  #+linux "~/.local/share/SuperCollider/synthdefs/"
   "The directory where the scsyndef files for synthdefs are saved.")
 
 ;;; -------------------------------------------------------
