@@ -24,7 +24,7 @@
   ugen)
 
 (defmethod replace-ugen ((synthdef synthdef) (a ugen) (b ugen))
-  (unless (typep b 'ugen) (error "replaceUgen assumes a UGen"))
+  (unless (typep b 'ugen) (error "REPLACE-UGEN requires a UGen."))
   (setf (width-first-antecedents b) (width-first-antecedents a))
   (setf (descendants b) (descendants a))
   (setf (synth-index b) (synth-index a))
@@ -98,16 +98,16 @@
 
 
 (defmethod load-synthdef ((synthdef synthdef) node &optional (completion-message 0))
-  (assert (is-local-p *s*) nil "server ~a is not in local-machine. load-synthdef is only can do it in localhost server." *s*)
+  (assert (is-local-p *s*) nil "Server ~a is not a local server, so it cannot load synthdefs from a file." *s*)
   (message-distribute node (list "/d_load" (write-synthdef-file (name synthdef) (encode-synthdef synthdef)) completion-message) *s*))
 
 (defmethod recv-synthdef ((synthdef synthdef) node &optional (completion-message 0))
   (let* ((name (name synthdef))
 	 (data (encode-synthdef synthdef)))
     (cond ((>= usocket:+max-datagram-packet-size+ (length data)) (message-distribute node (list "/d_recv" data completion-message) *s*))
-    	  ((is-local-p *s*) (progn (format t "~&~a too big for sending.  Retrying via synthdef file~%" name)
+    	  ((is-local-p *s*) (progn (format t "~&~a too big for sending. Retrying via synthdef file.~%" name)
 				   (load-synthdef synthdef node completion-message)))
-    	  (t (error "~a too big for sending" name)))))
+    	  (t (error "Synthdef ~a is too big to send." name)))))
 
 (defclass control (multiout-ugen) ())
 
@@ -134,9 +134,9 @@
 			 (let ((lag-value (alexandria:if-let ((value (getf ctrl :lag))) value 0))
 			       (ctrl-value (second ctrl)))
 			   (when (and (consp lag-value) (numberp ctrl-value))
-			     (error "single-control with multi-lag not support"))
+			     (error "Single control with multiple lag values is not supported."))
 			   (when (and (consp lag-value) (consp ctrl-value) (/= (length lag-value) (length ctrl-value)))
-			     (error "control-value != lag-value length"))
+			     (error "Number of control values does not match the number of lag values."))
 			   (when (and (consp ctrl-value) (atom lag-value))
 			     (setf lag-value (make-list (length ctrl-value) :initial-element lag-value)))
 			   lag-value))
@@ -159,7 +159,7 @@
 				for controls in (append trig-controls audio-controls controls)
 				and index = (control-ugen-count *synthdef*) then (incf index (length (alexandria:ensure-list (second controls))))
 				do (when (find (first controls) control-names :test #'string=)
-				     (error "duplicate control name ~s" (first controls)))
+				     (error "Duplicate control name: ~s" (first controls)))
 				collect (list (first controls) index)))
       (make-ctrl trig-controls) (make-ctrl audio-controls) (make-ctrl controls)
       (append
@@ -293,7 +293,7 @@
 		 (setf ,result (*~ ,env ,result))
 		 (cond ((eql :audio (rate ,result)) (,outlets 'out.ar ,out-bus ,result ,gain-sym ,lag-sym))
 		       ((eql :control (rate ,result)) (,outlets 'out.kr ,out-bus ,result ,gain-sym ,lag-sym))
-		       (t (error "not ugen ~a in play" ,result))))))))
+		       (t (error "Play: ~a is not a UGen." ,result))))))))
        (build-synthdef ,synthdef)
        (let* ((,node-id (get-next-id *s*))
 	      (,node (make-instance 'node :server *s* :id ,node-id :name *temp-synth-name* :pos ,pos :to ,to :meta (list :is-signal-p ,is-signal-p))))

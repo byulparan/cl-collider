@@ -2,17 +2,17 @@
 (in-package #:sc)
 
 (defvar *s* nil
-  "It's special symbol bind to default scsynth server. If functions that are not specified target server,
- that message send to *s*")
+  "Special symbol bound to the default scsynth server. If functions do not specify a target server, that message is sent to the *s* server.")
 
 (defvar *sc-synth-program*
   #+darwin "/Applications/SuperCollider/SuperCollider.app/Contents/Resources/scsynth"
-  "scsynth program's path. If wrong path is given, scsynth is can't run.")
+  #+linux "/usr/bin/scsynth"
+  "The path to the scsynth binary.")
 
 (defvar *sc-plugin-paths* nil)
 
 (defvar *sc-synthdefs-path* ""
-  "This path is where the scsyndef file is saved.")
+  "The directory where the scsyndef file for synthdefs are saved.")
 
 ;;; -------------------------------------------------------
 ;;; Server - base class
@@ -29,8 +29,7 @@
 			 :initform #+(or ccl ecl) (cons 999 -1) #+sbcl (cons (make-counter :count 1000)
 								       (make-counter :count 0))
 			 :accessor id-and-buffer-number))
-  (:documentation "This is base server class of scsynth server. This library include realtime server,NRT server,
- internal server(yet..)"))
+  (:documentation "This is base class for the scsynth server. This library includes realtime server, NRT server, and internal server (not yet implemented)."))
 
 (defmethod get-next-id ((server server))
   #+ccl (ccl::%atomic-incf-car (id-and-buffer-number server))
@@ -47,8 +46,7 @@
 
 ;;; declare generic function for realtime server
 (defgeneric floatfy (object)
-  (:documentation "All data that is sent to sc-synth server must be Float32. This function is
- make Float32 for lisp object"))
+  (:documentation "All data that is sent to the server must be in Float32 format. This function converts lisp objects to Float32."))
 
 (defmethod floatfy ((object t))
   object)
@@ -60,8 +58,8 @@
   (coerce number 'single-float))
 
 (defgeneric is-local-p (server)
-  (:documentation "scsynth server can run everywhere in Network.
- If server in local-machine return T, otherwise NIL"))
+  (:documentation "The scsynth server can run across the network.
+ If the server is running on the local machine, return T, otherwise NIL."))
  
 (defgeneric sr (buffer))
 (defgeneric (setf sr) (sr buffer))
@@ -143,7 +141,7 @@
 
 (let ((semaphore-table (make-hash-table)))
   (defun get-semaphore-by-thread ()
-    "Returns a one semaphore per thread."
+    "Return one semaphore per thread."
     (let* ((semaphore (gethash (bt:current-thread) semaphore-table)))
       (unless semaphore
 	(let ((new-semaphore #+ccl (ccl:make-semaphore)
@@ -163,7 +161,7 @@
       #+ecl (mp:wait-on-semaphore semaphore))))
 
 (defmethod server-boot ((rt-server rt-server))
-  (when (boot-p rt-server) (error "already supercollider server running"))
+  (when (boot-p rt-server) (error "SuperCollider server already running."))
   (bootup-server-process rt-server)
   (initialize-server-responder rt-server)
   (labels ((bootup ()
@@ -178,7 +176,7 @@
     (bootup))
   (unless (boot-p rt-server)
     (cleanup-server rt-server)
-    (error "Failed Server Boot"))
+    (error "Server failed to boot."))
   (when (boot-p rt-server)
     (send-message rt-server "/notify" 1)
     (scheduler:sched-run (scheduler rt-server))
@@ -187,7 +185,7 @@
   rt-server)
 
 (defmethod server-quit ((rt-server rt-server))
-  (unless (boot-p rt-server) (error "supercollider not running"))
+  (unless (boot-p rt-server) (error "SuperCollider server is not running."))
   (dolist (f *cleanup-functions*)
     (funcall f))
   (send-message rt-server "/quit")
@@ -212,7 +210,7 @@
     (add-reply-responder
      "/status.reply"
      (lambda (&rest args)
-       (apply #'format t "~&UGens    : ~4d~&Synths   : ~4d~&Groups   : ~4d~&SynthDefs: ~4d~&% CPU (Averate): ~a~&% CPU (Peak)   : ~a~&SampleRate (Nominal): ~a~&SampleRate (Actual) : ~a~%" (cdr args))))
+       (apply #'format t "~&UGens    : ~4d~&Synths   : ~4d~&Groups   : ~4d~&SynthDefs: ~4d~&% CPU (Average): ~a~&% CPU (Peak)   : ~a~&SampleRate (Nominal): ~a~&SampleRate (Actual) : ~a~%" (cdr args))))
     (add-reply-responder
      "/synced"
      (lambda (id)
@@ -244,7 +242,7 @@
 	   (setf (frames buffer) frames (chanls buffer) chanls (sr buffer) sr))))
     (add-reply-responder
      "/fail"
-     (lambda (&rest args) (format t "FAIL in Server! ~{~a ~}~%" args)))
+     (lambda (&rest args) (format t "FAILURE in server: ~{~a ~}~%" args)))
     (add-reply-responder
      "/n_go"
      (lambda (id &rest args)
@@ -355,7 +353,7 @@
 				    (host "127.0.0.1")
 				    port
 				    just-connect-p)
-  (assert port nil "server port should be specified")
+  (assert port nil "Server port must be specified.")
   (make-instance 'external-server :name name
 				  :server-options server-options
 				  :host host
@@ -464,7 +462,7 @@
 
 (defun make-synth-msg (rt-server name id to pos &rest args)
   (with-node (to target server)
-    (assert (eql rt-server server) nil "target server != synth's server.(/= ~a ~a)" server rt-server)
+    (assert (eql rt-server server) nil "Target server is not synth's server. (/= ~a ~a)" server rt-server)
     (apply #'list 9 name id (node-to-pos pos) target (mapcar #'floatfy args))))
 
 (defun ctrl (node &rest param &key &allow-other-keys)
@@ -493,7 +491,7 @@
   (defun make-group (&key id (server *s*) (pos :after) (to 1))
     (with-node (to target-id rt-server)
       (unless (numberp to)
-	(assert (eql rt-server server) nil "target's server != group's server.(/= ~a ~a)" rt-server server))
+	(assert (eql rt-server server) nil "Target server is not group's server. (/= ~a ~a)" rt-server server))
       (let* ((group-id (if id id (incf new-group-id)))
 	     (group (make-instance 'group :server server :id group-id :pos pos :to target-id)))
 	(message-distribute group (list "/g_new" group-id (node-to-pos pos) target-id) server)
@@ -508,7 +506,7 @@
 (defun group-free-all (&optional (rt-server *s*))
   (let ((*s* rt-server))
     (scheduler:sched-clear (scheduler rt-server))
-    (send-message rt-server "/g_freeAll" 0)		
+    (send-message rt-server "/g_freeAll" 0)
     (send-message rt-server "/clearSched")
     (make-group :id 1 :pos :head :to 0)
     (dolist (hook *group-free-all-hook*)

@@ -12,7 +12,7 @@
 (defun check-duty (ugen)
   (when (eql (rate (nth 0 (inputs ugen))) :demand)
       (unless (find (rate (nth 1 (inputs ugen))) (list :demand :scalar (rate ugen)))
-	(error (format nil "reset input is not ~a rate : ~a ~a"
+        (error (format nil "Reset input cannot be ~a rate (input: ~a rate: ~a)."
 		       (rate ugen) (nth 1 (inputs ugen)) (rate (nth 1 (inputs ugen))))))))
 
 (defugen (duty "Duty") (&optional (dur 1.0) &key (reset 0.0) (level 1.0) (act :no-action))

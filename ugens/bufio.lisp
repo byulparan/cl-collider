@@ -11,20 +11,20 @@
 (defugen (tgrains "TGrains")
     (chanls &optional (trigger 0) (bufnum 0) (rate 1) (center-pos 0)
 		  (dur 0.1) (pan 0.0) (amp 0.1) (interp 4))
-  ((:ar (progn (when (< chanls 2) (error "TGrains needs at least two channels"))
+  ((:ar (progn (when (< chanls 2) (error "TGrains needs at least two channels."))
 	       (multinew new 'multiout-ugen chanls trigger bufnum rate center-pos dur pan amp interp)))))
 
 (defugen (tgrains2 "TGrains2")
     (chanls &optional (trigger 0) (bufnum 0) (rate 1) (center-pos 0)
 	    (dur .1) (pan 0) (amp .1) (attk .5) (dec .5) (interp 4))
-  ((:ar (progn (when (< chanls 2) (error "TGrains needs at least tow channels"))
+  ((:ar (progn (when (< chanls 2) (error "TGrains needs at least two channels."))
 	       (multinew new 'multiout-ugen chanls trigger bufnum rate center-pos dur pan amp
 			 attk dec interp)))))
 
 (defugen (tgrains3 "TGrains3")
     (chanls &optional (trigger 0) (bufnum 0) (rate 1) (center-pos 0)
 	    (dur .1) (pan 0.0) (amp .1) (attk .5) (dec .5) (window 1) (interp 4))
-  ((:ar (progn (when (< chanls 2) (error "TGrains needs at least tow channels"))
+  ((:ar (progn (when (< chanls 2) (error "TGrains needs at least two channels."))
 	       (multinew new 'multiout-ugen chanls trigger bufnum rate center-pos dur pan amp
 			 attk dec window interp)))))
 
@@ -108,7 +108,7 @@
 
 (defun set-buf (local-buf values &optional (offset 0))
   (unless (every 'numberp (cons offset values))
-    (error "values + offset must be all number"))
+    (error "VALUES and OFFSET must all be numbers."))
   (multinew-list (lambda (cls &rest inputs) (apply #'ugen-new "SetBuf" :scalar cls #'identity :bipolar inputs))
 		 'width-first-ugen
 		 (append (list local-buf offset (length values)) values)))
@@ -120,7 +120,7 @@
 			      (apply #'= (mapcar (lambda (obj) (length obj)) list))
 			      (every #'identity
 				     (mapcar (lambda (obj) (every 'numberp obj)) list))))
-	       (error "invalid shape in local-buf-by-list"))
+	       (error "Invalid shape in local-buf-list."))
 	     (if (every 'numberp list) (list (length list) 1)
 		 (list (length (car list)) (length list)))))
     (let ((buf (apply 'local-buf (shape values))))

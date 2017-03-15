@@ -161,7 +161,7 @@
 
 (defmethod clip (in &optional (lo 0.0) (hi 1.0))
   (when (and (numberp in) (not (every #'numberp (list lo hi))))
-    (error "wrong type in clip"))
+    (error "Wrong type in clip."))
   (if (every #'numberp (list in lo hi)) (max~ lo (min~ hi in))
       (let ((op (lambda (cls in lo hi)
 		  (declare (ignore cls))
@@ -175,7 +175,7 @@
    (:kr (multinew new 'ugen in lo hi))))
 
 (defun wrap (ugen &optional (lo 0.0) (hi 1.0))
-  (when (every #'numberp (list ugen lo hi)) (error "not yet implemented"))
+  (when (every #'numberp (list ugen lo hi)) (error "Wrap is not yet implemented for numbers."))
   (let ((op (lambda (cls ugen lo hi)
 	      (declare (ignore cls))
 	      (ecase (rate ugen)

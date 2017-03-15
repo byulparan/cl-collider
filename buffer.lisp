@@ -31,7 +31,7 @@
 
 (defun buffer-read (path &key bufnum (server *s*))
   (let ((file-path (full-pathname path)))
-    (assert (probe-file file-path) (path) "not have file< ~a >" file-path)
+    (assert (probe-file file-path) (path) "File does not exist: ~a" file-path)
     (let* ((bufnum (if bufnum bufnum (get-next-buffer-number server)))
 	   (new-buffer (make-instance 'buffer :path file-path
 					      :bufnum bufnum
@@ -79,7 +79,7 @@
 	result))))
 
 (defun buffer-get-list (buffer start frames &optional action)
-  (assert (>= (frames buffer) (+ start frames)) nil "index out of range(~a) : ~a" (frames buffer) (+ start frames))
+  (assert (>= (frames buffer) (+ start frames)) nil "Buffer index ~a out of range (buffer size: ~a)" (+ start frames) (frames buffer))
   (let ((bufnum (bufnum buffer))
 	(server (server buffer)))
     (let ((result nil))
