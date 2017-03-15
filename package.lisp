@@ -51,6 +51,7 @@
 	   
 	   #:at
 	   #:bye
+	   #:free
 	   #:ctrl
 	   #:is-playing-p
 

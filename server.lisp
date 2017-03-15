@@ -1,4 +1,3 @@
-
 (in-package #:sc)
 
 (defvar *s* nil
@@ -27,7 +26,7 @@
    #+ecl (server-lock :initform (bt:make-lock) :reader server-lock)
    (id-and-buffer-number :initarg :id-and-buffer-number
 			 :initform #+(or ccl ecl) (cons 999 -1) #+sbcl (cons (make-counter :count 1000)
-								       (make-counter :count 0))
+									     (make-counter :count 0))
 			 :accessor id-and-buffer-number))
   (:documentation "This is base class for the scsynth server. This library includes realtime server, NRT server, and internal server (not yet implemented)."))
 
@@ -60,7 +59,7 @@
 (defgeneric is-local-p (server)
   (:documentation "The scsynth server can run across the network.
  If the server is running on the local machine, return T, otherwise NIL."))
- 
+
 (defgeneric sr (buffer))
 (defgeneric (setf sr) (sr buffer))
 (defgeneric chanls (buffer))
@@ -472,7 +471,12 @@
 						       param))) server)))
 
 (defun bye (node)
+  "It was deprecated. It will remove!"
   (with-node (node id server)
+    (message-distribute node (list 11 id) server))) ;; /n_free == 11
+
+(defun free (node)
+  (with-node (id id server)
     (message-distribute node (list 11 id) server))) ;; /n_free == 11
 
 (defun is-playing-p (node)
