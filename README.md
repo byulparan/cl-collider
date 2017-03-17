@@ -1,31 +1,29 @@
 # cl-collider
-SuperCollider client for CommonLisp.  
-It support ClozureCL / SBCL / ECL.  
 
-tutorial video: <http://youtu.be/JivNMDUqNQc>   
-**This video deprecated. because some API Changed. I will reproduce to tutorial video asap**     
+A <a href="http://supercollider.github.io/">SuperCollider</a> client for <a href="https://www.common-lisp.net/">CommonLisp</a>.  
+It supports the <a href="http://sbcl.org/">SBCL</a> & <a href="http://ccl.clozure.com/">ClozureCL</a> compilers.  
+It is an experimental project, so changes to the API are possible.
+## Videos
+### <a href="https://www.youtube.com/watch?v=JivNMDUqNQc">Tutorial</a>   
+**Due to API changes, this video is deprecated. A new tutorial video is coming soon.**
 
-live coding demo: <https://www.youtube.com/watch?v=xzTH_ZqaFKI>  
 
-### Status:
-cl-collider is my experimental project. so It possible to change API
+### <a href="https://www.youtube.com/watch?v=xzTH_ZqaFKI">Live Coding Demo 1</a> 
+### <a href="https://www.youtube.com/watch?v=pZyuHjztARY">Live Coding Demo 2</a>
 
-### version: 2017.3.15
-
-### require:
-
-please check version of dependency library.
+## Dependencies:
 
 - [SuperCollider](http://supercollider.sourceforge.net) - I tested on latest stable version(3.8.0)
 - [Quicklisp](http://www.quicklisp.org)
 - [ClozureCL](http://www.clozure.com/clozurecl.html) or [SBCL](http://www.sbcl.org) or [ECL](https://common-lisp.net/project/ecl/)
 - [Scheduler](http://github.com/byulparan/scheduler)(above 2017.3.14) - The time based task scheduler
 
+### version: 2017.3.15
+
 ### package: sc, sc-user(use this package)
 ### named-readtable: sc
 
-## Usage:
-### Server
+### usage:
 ```cl
 (in-package :sc-user)
 
@@ -37,14 +35,21 @@ please check version of dependency library.
 ;; (setf *sc-synthdefs-path* "/path/to/synthdefs_path")
 
 (setf *s* (make-external-server "localhost" :port 48800))
-				
 (server-boot *s*)
-;;....hack music.....
+
+;; Hack music
+(play (sin-osc [320 321] 0 .2))
+
+;; Stop music
+(bye *)
+
+;; Quit SuperCollider server
 (server-quit *s*)
 ```
 
-### Synth Definition
-```cl	
+### Create SynthDef
+```cl
+>>>>>>> 98163f8f7ddf36e70069e486658dbca77a6e3a8e
 (defsynth sine-wave (&key (note 60))
   (let* ((freq (midicps note))
          (sig (sin-osc.ar [freq (+ freq 2)] 0 .2)))
@@ -54,7 +59,8 @@ please check version of dependency library.
 (ctrl *synth* :note 72)
 (free *synth*)
 ```
-### Proxy
+
+### Create Proxy
 ```cl
 (proxy :sinesynth
   (sin-osc.ar [440 441] 0 .2))
@@ -67,7 +73,7 @@ please check version of dependency library.
 (ctrl :sinesynth :lfo-speed 8)
 (ctrl :sinesynth :gate 0)
 ```
-### Make musical Sequence
+### Create Musical Sequence
 ```cl
 (defsynth saw-synth (&key (note 60) (dur 4.0))
   (let* ((env (env-gen.kr (env [0 .2 0] [(* dur .2) (* dur .8)]) :act :free))
@@ -84,18 +90,19 @@ please check version of dependency library.
 (make-melody (quant 4) 16)
 (make-melody (+ 4 (quant 4)) 16 12)
 ```
-### Make Audiofile from Your Sequence
+### Record Audio Output
 ```cl
 (setf *synth-definition-mode* :load)
 
-;; re-define saw-synth. it's synthdef file write to *sc-synthdefs-path*.
+;; Re-define the saw-synth ugen
+;; The SynthDef file will be written to the *sc-synthdefs-path*
 (defsynth saw-synth (&key (note 60) (dur 4.0))
   (let* ((env (env-gen.kr (env [0 .2 0] [(* dur .2) (* dur .8)]) :act :free))
          (freq (midicps note))
          (sig (lpf.ar (saw.ar freq env) (* freq 2))))
     (out 0 [sig sig])))
 
-;; redering audio-file.
+;; Render audio file
 (with-rendering ("~/Desktop/foo.aiff" :pad 60)
   (make-melody 0.0d0 32)
   (make-melody 8.0d0 32 12)
