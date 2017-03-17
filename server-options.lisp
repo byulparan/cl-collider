@@ -20,7 +20,7 @@
   (publish-to-rendezvous-p 1)
   (max-logins 64)
   (verbosity 0)
-  (ugen-plugins-path *sc-plugin-paths*))
+  (ugen-plugins-path (mapcar #'full-pathname *sc-plugin-paths*)))
 
 (defun build-server-options (server-options)
   (format nil "-c ~a -a ~a -i ~a -o ~a -z ~a ~@[-Z ~a~] -S ~a -b ~a -n ~a -d ~a -m ~a -w ~a -r ~a -D ~a -R ~a -l ~a -V ~a  ~@[-U \"~{~a~^:~}\"~]"
@@ -41,4 +41,4 @@
   	  (server-options-publish-to-rendezvous-p server-options)
   	  (server-options-max-logins server-options)
   	  (server-options-verbosity server-options)
-  	  (mapcar #'full-pathname (server-options-ugen-plugins-path server-options))))
+	  (server-options-ugen-plugins-path server-options)))

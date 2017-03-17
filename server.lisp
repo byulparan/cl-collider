@@ -15,8 +15,8 @@
 		"/usr/share/SuperCollider/Extensions/SC3plugins/"))
 
 (defvar *sc-synthdefs-path*
-  #+darwin "~/Library/Application Support/SuperCollider/synthdefs"
-  #+linux "~/.local/share/SuperCollider/synthdefs/"
+  #+darwin (full-pathname "~/Library/Application Support/SuperCollider/synthdefs")
+  #+linux (full-pathname "~/.local/share/SuperCollider/synthdefs/")
   "The directory where the scsyndef files for synthdefs are saved.")
 
 ;;; -------------------------------------------------------
