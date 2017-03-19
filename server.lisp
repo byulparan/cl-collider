@@ -259,9 +259,7 @@
 	 (funcall handle))
        (alexandria:removef (node-watcher rt-server) id)))
     (add-reply-responder
-     "/d_removed" (lambda (&rest args) (declare (ignore args))))
-    (add-reply-responder
-     "/tr" (lambda (id label value) (format t "Poll (~a ~a): ~a~%" id label value)))))
+     "/d_removed" (lambda (&rest args) (declare (ignore args))))))
 
 
 
