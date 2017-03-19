@@ -57,7 +57,7 @@
 
 (defun run-program (command &key output wait)
   #+ccl (ccl:run-program "/bin/sh" (list "-c" command) :output output :wait wait)
-  #+sbcl (sb-ext:run-program "/bin/sh" (list "-c" command) :output output :wait wait)
+  #+sbcl (sb-ext:run-program "/bin/sh" (list "-c" command) :output (if (eql output t) *standard-output* output) :wait wait)
   #+clisp (ext:run-program "/bin/sh" :arguments (list "-c" command) :output (if (eql output t) :terminal output) :wait wait)
   #+abcl (progn
 	   wait
