@@ -45,6 +45,8 @@
 	       (:file "ugens/freeverb")
 	       (:file "ugens/math")
 	       (:file "ugens/grains")
+	       (:file "ugens/poll")
+	       (:file "ugens/extras/envfollow")
 	       (:file "ugens/extras/mdapiano")
 	       (:file "ugens/extras/joshpv")
 	       (:file "ugens/extras/pitchdetection")))
