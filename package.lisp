@@ -94,6 +94,7 @@
 	   #:dbamp
 	   #:ampdb
 	   #:distort
+       #:softclip
 	   #:trunc
 	   #:fold2
 	   #:madd

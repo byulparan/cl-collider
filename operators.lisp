@@ -93,6 +93,10 @@
 (def-unary-op distort (lambda (x) (/ x (+ 1.0d0 (abs x))))
   :special-index 42)
 
+(def-unary-op softclip (lambda (x) (let ((abs-x (abs x)))
+                                     (if (<= abs-x 0.5) x (/ (- abs-x 0.25) x))))
+  :special-index 43)
+
 ;;; binary-operator
 
 (defclass binary-operator (pure-ugen) ())
