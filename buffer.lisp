@@ -14,45 +14,42 @@
 	  (server self) (bufnum self) (frames self) (chanls self) (sr self) (path self)))
 
 (defmethod initialize-instance :after ((self buffer) &key)
-  (setf (gethash (bufnum self) (buffers (server self))) self))
+  (setf (elt (buffers (server self)) (bufnum self)) self))
 
 (defmethod floatfy ((buffer buffer))
   (floatfy (bufnum buffer)))
 
 
+(defun get-next-buffer (server &optional bufnum)
+  (bt:with-lock-held ((server-lock server))
+    (let* ((bufnum (or bufnum (position nil (buffers server)))))
+      (setf (elt (buffers server) bufnum) (make-instance 'buffer :bufnum bufnum :server server)))))
+
 (defun buffer-alloc (frames &key (chanls 1) bufnum (server *s*))
-  (let* ((bufnum (if bufnum bufnum (get-next-buffer-number server)))
-	 (new-buffer (make-instance 'buffer :bufnum bufnum :frames frames :chanls chanls :server server)))
-    (let ((msg (list "/b_alloc" bufnum (floor frames) (floor chanls)
-		     (osc:encode-message "/b_query" bufnum))))
-      (apply #'send-message server msg)
-      (sync server)
-      new-buffer)))
+  (let ((buffer (get-next-buffer server bufnum)))
+    (setf (slot-value buffer 'frames) frames
+          (slot-value buffer 'chanls) chanls
+          (slot-value buffer 'server) server)
+    (apply #'send-message server (list "/b_alloc" (slot-value buffer 'bufnum) (floor frames) (floor chanls)
+                                       (osc:encode-message "/b_query" bufnum)))
+    (sync server)
+    new-buffer))
 
 (defun buffer-read (path &key bufnum (server *s*))
   (let ((file-path (full-pathname path)))
     (assert (probe-file file-path) (path) "File does not exist: ~a" file-path)
-    (let* ((bufnum (if bufnum bufnum (get-next-buffer-number server)))
-	   (new-buffer (make-instance 'buffer :path file-path
-					      :bufnum bufnum
-					      :server server))
-	   (msg (list "/b_allocRead" bufnum file-path 0 -1 (osc:encode-message "/b_query" bufnum))))
-      (apply #'send-message server msg)
+    (let ((buffer (get-next-buffer server bufnum)))
+      (setf (slot-value buffer 'path) file-path
+            (slot-value buffer 'server) server)
+      (apply #'send-message server (list "/b_allocRead" (slot-value buffer 'bufnum) file-path 0 -1 (osc:encode-message "/b_query" 0)))
       (sync server)
-      new-buffer)))
+      buffer)))
 
 (defmethod buffer-free ((buffer fixnum) &key (server *s*))
   (bt:with-lock-held ((server-lock server))
-    (assert (elt (buffer-numbers server) buffer) nil "bufnum ~d already free." buffer)
-    (let* ((free-buffer (gethash buffer (buffers server))))
-      (setf (server free-buffer) nil
-	    (path free-buffer) nil
-	    (chanls free-buffer) nil
-	    (sr free-buffer) nil
-	    (frames free-buffer) nil
-	    (bufnum free-buffer) nil)
-      (setf (elt (buffer-numbers server) buffer) nil)
-      (remhash buffer (buffers server))
+    (assert (elt (buffers server) buffer) nil "bufnum ~d already free." buffer)
+    (let* ((free-buffer (elt (buffers server) buffer)))
+      (setf (elt (buffers server) buffer) nil)
       (send-message server "/b_free" buffer)
       (sync server)
       free-buffer)))

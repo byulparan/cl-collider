@@ -28,10 +28,7 @@
    (server-lock :initform (bt:make-lock) :reader server-lock)
    (id :initform (list #-sbcl 999 #+sbcl 1000)
        :reader id)
-   (buffers :initform (make-hash-table)
-	    :reader buffers)
-   (buffer-numbers :initform (make-array 1024 :initial-element nil)
-		  :reader buffer-numbers))
+   (buffers :initarg :buffers :initform (make-array 1024 :initial-element nil) :reader buffers))
   (:documentation "This is base class for the scsynth server. This library includes realtime server, NRT server, and internal server (not yet implemented)."))
 
 (defun get-next-id (server)
@@ -39,12 +36,6 @@
   #+sbcl (sb-ext:atomic-incf (car (id server)))
   #+ecl (bt:with-lock-held ((server-lock server))
 	  (incf (car (id server)))))
-
-(defun get-next-buffer-number (server)
-  (bt:with-lock-held ((server-lock server))
-    (let* ((bufnum (position nil (buffer-numbers server))))
-      (setf (elt (buffer-numbers server) bufnum) t)
-      bufnum)))
 
 
 ;;; declare generic function for realtime server
@@ -209,7 +200,7 @@
      (lambda (path &optional bufnum)
        (cond ((string= path "/quit") (setf (boot-p rt-server) nil))
 	     ((string= path "/b_write") (alexandria:when-let ((f (gethash (list path bufnum) (buffer-get-handlers rt-server))))
-					  (funcall f (gethash bufnum (buffers rt-server))))))))
+					  (funcall f (elt (buffers rt-server) bufnum)))))))
     (add-reply-responder
      "/status.reply"
      (lambda (&rest args)
@@ -241,7 +232,7 @@
     (add-reply-responder
      "/b_info"
      (lambda (bufnum frames chanls sr)
-       (let ((buffer (gethash bufnum (buffers rt-server))))
+       (let ((buffer (elt (buffers rt-server) bufnum)))
 	   (setf (frames buffer) frames (chanls buffer) chanls (sr buffer) sr))))
     (add-reply-responder
      "/fail"
@@ -318,7 +309,7 @@
   (unless (just-connect-p rt-server)
     (setf (sc-thread rt-server)
       (bt:make-thread
-       (lambda () (run-program 
+       (lambda () (run-program
 	       (format nil "~a -u ~a ~a"
 		       (full-pathname *sc-synth-program*)
 		       (port rt-server)
@@ -361,6 +352,7 @@
 				  :server-options server-options
 				  :host host
 				  :port port
+                  :buffers (make-array (server-options-num-sample-buffers server-options) :initial-element nil)
 				  :just-connect-p just-connect-p))
 
 
