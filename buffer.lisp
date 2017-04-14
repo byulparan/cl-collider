@@ -26,14 +26,15 @@
       (setf (elt (buffers server) bufnum) (make-instance 'buffer :bufnum bufnum :server server)))))
 
 (defun buffer-alloc (frames &key (chanls 1) bufnum (server *s*))
-  (let ((buffer (get-next-buffer server bufnum)))
+  (let* ((buffer (get-next-buffer server bufnum))
+	 (bufnum (slot-value buffer 'bufnum)))
     (setf (slot-value buffer 'frames) frames
           (slot-value buffer 'chanls) chanls
           (slot-value buffer 'server) server)
-    (apply #'send-message server (list "/b_alloc" (slot-value buffer 'bufnum) (floor frames) (floor chanls)
+    (apply #'send-message server (list "/b_alloc" bufnum  (floor frames) (floor chanls)
                                        (osc:encode-message "/b_query" bufnum)))
     (sync server)
-    new-buffer))
+    buffer))
 
 (defun buffer-read (path &key bufnum (server *s*))
   (let ((file-path (full-pathname path)))
