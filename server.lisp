@@ -28,8 +28,10 @@
    (server-lock :initform (bt:make-lock) :reader server-lock)
    (id :initform (list #-sbcl 999 #+sbcl 1000)
        :reader id)
-   (buffers :initarg :buffers :initform (make-array 1024 :initial-element nil) :reader buffers))
+   (buffers :initarg :buffers :accessor buffers))
   (:documentation "This is base class for the scsynth server. This library includes realtime server, NRT server, and internal server (not yet implemented)."))
+
+
 
 (defun get-next-id (server)
   #+ccl (ccl::atomic-incf (car (id server)))
@@ -175,7 +177,8 @@
     (send-message rt-server "/notify" 1)
     (scheduler:sched-run (scheduler rt-server))
     (group-free-all rt-server)
-    (setf (node-proxy-table rt-server) (make-hash-table)))
+    (setf (node-proxy-table rt-server) (make-hash-table)
+	  (buffers rt-server) (make-array 1024 :initial-element nil)))
   rt-server)
 
 (defmethod server-quit ((rt-server rt-server))
@@ -233,7 +236,7 @@
      "/b_info"
      (lambda (bufnum frames chanls sr)
        (let ((buffer (elt (buffers rt-server) bufnum)))
-	   (setf (frames buffer) frames (chanls buffer) chanls (sr buffer) sr))))
+	 (setf (frames buffer) frames (chanls buffer) chanls (sr buffer) sr))))
     (add-reply-responder
      "/fail"
      (lambda (&rest args) (format t "FAILURE in server: ~{~a ~}~%" args)))

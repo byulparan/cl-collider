@@ -39,10 +39,11 @@
 (defun buffer-read (path &key bufnum (server *s*))
   (let ((file-path (full-pathname path)))
     (assert (probe-file file-path) (path) "File does not exist: ~a" file-path)
-    (let ((buffer (get-next-buffer server bufnum)))
+    (let* ((buffer (get-next-buffer server bufnum))
+	   (bufnum (slot-value buffer 'bufnum)))
       (setf (slot-value buffer 'path) file-path
             (slot-value buffer 'server) server)
-      (apply #'send-message server (list "/b_allocRead" (slot-value buffer 'bufnum) file-path 0 -1 (osc:encode-message "/b_query" 0)))
+      (apply #'send-message server (list "/b_allocRead" bufnum  file-path 0 -1 (osc:encode-message "/b_query" bufnum)))
       (sync server)
       buffer)))
 
