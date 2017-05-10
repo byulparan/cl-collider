@@ -69,6 +69,6 @@
    (:kr (multinew new 'multiout-ugen 1 in))))
 
 (defugen (silent "Silent") (&optional (chanls 1))
-  ((:ar (let ((sig (dc 0)))
+  ((:ar (let ((sig (dc.ar 0)))
 	  new
 	  (if (= chanls 1) sig (dup sig chanls))))))

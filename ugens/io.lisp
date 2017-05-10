@@ -37,7 +37,7 @@
   (let* ((pos 0)
 	 (num-zeros (count 0 channel-array :test #'equalp)))
     (when (zerop num-zeros) (return-from replace-zeroes-with-silence channel-array))
-    (let ((silent-ch (alexandria:ensure-list (silent num-zeros))))
+    (let ((silent-ch (alexandria:ensure-list (silent.ar num-zeros))))
       (loop for item in channel-array
 	    for i from 0
 	    do (let (res)
