@@ -220,11 +220,13 @@
     (ash 'sc::ash~)
     (t atom)))
 
-(defun convert-code (form)
+(defun convert-code (form &optional head)
   (cond ((null form) nil)
-	((atom form) (convert-code-table form))
-	(t (cons (convert-code (car form))
-		 (convert-code (cdr form))))))
+	((atom form) (if head
+		(convert-code-table form)
+		form))
+	(t (cons (convert-code (car form) t)
+		 (mapcar #'convert-code (cdr form))))))
 
 
 (defmacro synth-funcall-definition (name args)
