@@ -38,7 +38,7 @@ It is an experimental project, so changes to the API are possible.
 (server-boot *s*)
 
 ;; Hack music
-(play (sin-osc [320 321] 0 .2))
+(play (sin-osc.ar [320 321] 0 .2))
 
 ;; Stop music
 (bye *)
