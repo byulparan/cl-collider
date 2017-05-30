@@ -26,6 +26,7 @@ It is an experimental project, so changes to the API are possible.
 ### usage:
 ```cl
 (in-package :sc-user)
+(named-readtables:in-readtable :sc)
 
 ;; please check   *sc-synth-program*, *sc-plugin-paths*, *sc-synthdefs-path*
 ;; if you have different path then set to
