@@ -75,6 +75,7 @@
 	   #:buffer-get-list
 	   #:buffer-set
 	   #:buffer-set-list
+	   #:buffer-zero
 	   #:wavetable
 	   #:calc-pv-recsize
 	   #:local-buf

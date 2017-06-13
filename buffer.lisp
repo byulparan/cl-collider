@@ -1,4 +1,3 @@
-
 (in-package #:sc)
 
 (defclass buffer ()
@@ -125,6 +124,8 @@
     (sync (server buffer))
     buffer))
 
+(defun buffer-zero (buffer)
+  (send-message (server buffer) "/b_zero" (bufnum buffer) 0))
 
 ;;; wavetable
 (defun wavetable (buffer wave data &optional (normalize t) (as-wavetable t) (clear-first t))
