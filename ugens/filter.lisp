@@ -232,6 +232,56 @@
    (:kr (madd (multinew new 'pure-ugen in freq attack decay) mul add)))
   :check-fn #'check-same-rate-as-first-input)
 
+
+(defugen (b-lowpass "BLowPass")
+    (&optional (in 0.0) (freq 1200.0) (rq 1.0) (mul 1.0) (add 0.0))
+  ((:ar (madd (multinew new 'pure-ugen in freq rq) mul add))
+   (:kr (madd (multinew new 'pure-ugen in freq rq) mul add)))
+  :check-fn #'check-same-rate-as-first-input)
+
+(defugen (b-hipass "BHiPass")
+    (&optional (in 0.0) (freq 1200.0) (rq 1.0) (mul 1.0) (add 0.0))
+  ((:ar (madd (multinew new 'pure-ugen in freq rq) mul add))
+   (:kr (madd (multinew new 'pure-ugen in freq rq) mul add)))
+  :check-fn #'check-same-rate-as-first-input)
+
+(defugen (b-bandpass "BBandPass")
+    (&optional (in 0.0) (freq 1200.0) (bw 1.0) (mul 1.0) (add 0.0))
+  ((:ar (madd (multinew new 'pure-ugen in freq bw) mul add))
+   (:kr (madd (multinew new 'pure-ugen in freq bw) mul add)))
+  :check-fn #'check-same-rate-as-first-input)
+
+(defugen (b-bandstop "BBandStop")
+    (&optional (in 0.0) (freq 1200.0) (bw 1.0) (mul 1.0) (add 0.0))
+  ((:ar (madd (multinew new 'pure-ugen in freq bw) mul add))
+   (:kr (madd (multinew new 'pure-ugen in freq bw) mul add)))
+  :check-fn #'check-same-rate-as-first-input)
+
+(defugen (b-allpass "BAllPass")
+    (&optional (in 0.0) (freq 1200.0) (rq 1.0) (mul 1.0) (add 0.0))
+  ((:ar (madd (multinew new 'pure-ugen in freq rq) mul add))
+   (:kr (madd (multinew new 'pure-ugen in freq rq) mul add)))
+  :check-fn #'check-same-rate-as-first-input)
+
+(defugen (b-peak-eq "BPeakEQ")
+    (&optional (in 0.0) (freq 1200.0) (rq 1.0) (db 0.0) (mul 1.0) (add 0.0))
+  ((:ar (madd (multinew new 'pure-ugen in freq rq db) mul add))
+   (:kr (madd (multinew new 'pure-ugen in freq rq db) mul add)))
+  :check-fn #'check-same-rate-as-first-input)
+
+(defugen (b-lowshelf "BLowShelf")
+    (&optional (in 0.0) (freq 1200.0) (rq 1.0) (db 0.0) (mul 1.0) (add 0.0))
+  ((:ar (madd (multinew new 'pure-ugen in freq rq db) mul add))
+   (:kr (madd (multinew new 'pure-ugen in freq rq db) mul add)))
+  :check-fn #'check-same-rate-as-first-input)
+
+(defugen (b-hishelf "BHiShelf")
+    (&optional (in 0.0) (freq 1200.0) (rq 1.0) (db 0.0) (mul 1.0) (add 0.0))
+  ((:ar (madd (multinew new 'pure-ugen in freq rq db) mul add))
+   (:kr (madd (multinew new 'pure-ugen in freq rq db) mul add)))
+  :check-fn #'check-same-rate-as-first-input)
+
+
 (defugen (detect-silence "DetectSilence")
     (&optional (in 0.0) (amp 0.0001) &key (time 0.1) (act :no-action))
   ((:ar (multinew new 'ugen in amp time (act act)))
