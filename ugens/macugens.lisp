@@ -6,7 +6,8 @@
                                             (:linear 0)
                                             (:lin 0)
                                             (:exponential 1)
-                                            (:exp 1)) lag)))
+                                            (:exp 1))
+                  lag)))
   :signal-range :unipolar)
 
 (defugen (mouse-y "MouseY") (&optional (minval 0) (maxval 1) (warp :linear) (lag 0.2))
@@ -14,7 +15,8 @@
                                             (:linear 0)
                                             (:lin 0)
                                             (:exponential 1)
-                                            (:exp 1)) lag)))
+                                            (:exp 1))
+                  lag)))
   :signal-range :unipolar)
 
 (defugen (mouse-button "MouseButton") (&optional (minval 0) (maxval 1) (lag 0.2))
