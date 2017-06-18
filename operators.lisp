@@ -427,6 +427,14 @@
 (defun range (ugen &optional (lo 0.0) (hi 1.0))
   (multinew #'_range nil ugen lo hi))
 
+(defmethod _exp-range (cls (ugen ugen) &optional (lo 1.0) (hi 2.0))
+  (declare (ignore cls))
+  (let ((range (signal-range ugen)))
+    (lin-exp ugen (if (eq range :bipolar) -1 0) 1 lo hi)))
+
+(defun exp-range (ugen &optional (lo 1.0) (hi 2.0))
+  (multinew #'_exp-range nil ugen lo hi))
+
 (defun unipolar (ugen &optional (mul 1))
   (range ugen 0 mul))
 
