@@ -29,6 +29,9 @@
 	   #:fold
 	   #:range
 	   #:lin-lin
+       #:lin-exp
+       #:exp-lin
+       #:exp-exp
 	   #:wrap
 
 	   #:with-rendering
