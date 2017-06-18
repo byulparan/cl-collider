@@ -2,17 +2,19 @@
 (in-package #:sc)
 
 (defugen (mouse-x "MouseX") (&optional (minval 0) (maxval 1) (warp :linear) (lag 0.2))
-  ((:kr (progn (ecase warp
-		 (:linear (setf warp 0))
-		 (:exponential (setf warp 1)))
-	       (multinew new 'ugen minval maxval warp lag))))
+  ((:kr (multinew new 'ugen minval maxval (ecase warp
+                                            (:linear 0)
+                                            (:lin 0)
+                                            (:exponential 1)
+                                            (:exp 1)) lag)))
   :signal-range :unipolar)
 
 (defugen (mouse-y "MouseY") (&optional (minval 0) (maxval 1) (warp :linear) (lag 0.2))
-  ((:kr (progn (ecase warp
-		 (:linear (setf warp 0))
-		 (:exponential (setf warp 1)))
-	       (multinew new 'ugen minval maxval warp lag))))
+  ((:kr (multinew new 'ugen minval maxval (ecase warp
+                                            (:linear 0)
+                                            (:lin 0)
+                                            (:exponential 1)
+                                            (:exp 1)) lag)))
   :signal-range :unipolar)
 
 (defugen (mouse-button "MouseButton") (&optional (minval 0) (maxval 1) (lag 0.2))
