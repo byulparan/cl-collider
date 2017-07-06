@@ -11,27 +11,79 @@
   ((:ar (madd (multinew new 'ugen start end dur (act act)) mul add))
    (:kr (madd (multinew new 'ugen start end dur (act act)) mul add))))
 
-(defugen (lin-exp "LinExp")
-    (&optional (in 0.0) (src-lo 0.0) (src-hi 1.0) (dst-lo 1.0) (dst-hi 2.0))
-  ((:ar (multinew new 'pure-ugen in src-lo src-hi dst-lo dst-hi))
-   (:kr (multinew new 'pure-ugen in src-lo src-hi dst-lo dst-hi)))
+(defugen (lin-lin-ugen "LinLin")
+    (&optional (in 0.0) (in-min 0.0) (in-max 1.0) (out-min 1.0) (out-max 2.0))
+  ((:ir (+~ (*~ (/~ (-~ in in-min) (-~ in-max in-min)) (-~ out-max out-min)) out-min))
+   (:ar (multinew new 'pure-ugen in in-min in-max out-min out-max))
+   (:kr (multinew new 'pure-ugen in in-min in-max out-min out-max)))
   :check-fn #'check-same-rate-as-first-input)
 
-(defugen (lin-lin-ugen "LinLin") (&optional (in 0.0) (src-lo 0.0) (src-hi 1.0) (dst-lo 1.0) (dst-hi 2.0))
-  ((:ar  (let* ((scale (divide (minus dst-hi dst-lo) (minus src-hi src-lo)))
-	       (offset (minus dst-lo (mul scale src-lo))))
-	   new
-	  (madd in scale offset)))
-   (:kr (let* ((scale (divide (minus dst-hi dst-lo) (minus src-hi src-lo)))
-	       (offset (minus dst-lo (mul scale src-lo))))
-	  new
-	  (add (mul in scale) offset)))))
+(defun lin-lin (in in-min in-max out-min out-max &optional (clip :minmax))
+  (let ((in (prune in in-min in-max clip)))
+    (funcall (case (rate (list in in-min in-max out-min out-max))
+               (:scalar #'lin-lin-ugen.ir)
+               (:audio #'lin-lin-ugen.ar)
+               (:control #'lin-lin-ugen.kr))
+             in in-min in-max out-min out-max)))
 
-(defun lin-lin (ugen in-min in-max out-min out-max &optional (clip :minmax))
-  (if (eql (rate ugen) :audio) (lin-lin-ugen.ar (prune ugen in-min in-max clip) in-min in-max out-min out-max)
-      (lin-lin-ugen.kr (prune ugen in-min in-max clip) in-min in-max out-min out-max)))
+(unexport '(lin-lin-ugen.ar lin-lin-ugen.kr lin-lin-ugen.ir))
 
-(unexport '(lin-lin-ugen.ar lin-lin-ugen.kr))
+
+(defugen (lin-exp-ugen "LinExp")
+    (&optional (in 0.0) (in-min 0.0) (in-max 1.0) (out-min 1.0) (out-max 2.0))
+  ((:ir (*~ (expt~ (/~ out-max out-min) (/~ (-~ in in-min) (-~ in-max in-min))) out-min))
+   (:ar (multinew new 'pure-ugen in in-min in-max out-min out-max))
+   (:kr (multinew new 'pure-ugen in in-min in-max out-min out-max)))
+  :check-fn #'check-same-rate-as-first-input)
+
+(defun lin-exp (in in-min in-max out-min out-max &optional (clip :minmax))
+  (let* ((in (prune in in-min in-max clip))
+         (rate (rate (list in in-min in-max out-min out-max))))
+    (funcall (case rate
+               (:audio #'lin-exp-ugen.ar)
+               (:control #'lin-exp-ugen.kr)
+               (:scalar #'lin-exp-ugen.ir))
+             in in-min in-max out-min out-max)))
+
+(unexport '(lin-exp-ugen.ar lin-exp-ugen.kr lin-exp-ugen.ir))
+
+
+(defugen (exp-lin-ugen "ExpLin")
+    (&optional (in 0.0) (in-min 1.0) (in-max 2.0) (out-min 0.0) (out-max 1.0))
+  ((:ir (+~ (*~ (/~ (log~ (/~ in in-min)) (log~ (/~ in-max in-min))) (-~ out-max out-min)) out-min))
+   (:ar (multinew new 'pure-ugen in in-min in-max out-min out-max))
+   (:kr (multinew new 'pure-ugen in in-min in-max out-min out-max)))
+  :check-fn #'check-same-rate-as-first-input)
+
+(defun exp-lin (in in-min in-max out-min out-max &optional (clip :minmax))
+  (let* ((in (prune in in-min in-max clip))
+         (rate (rate (list in in-min in-max out-min out-max))))
+    (funcall (case rate
+               (:audio #'exp-lin-ugen.ar)
+               (:control #'exp-lin-ugen.kr)
+               (:scalar #'exp-lin-ugen.ir))
+             in in-min in-max out-min out-max)))
+
+(unexport '(exp-lin-ugen.ar exp-lin-ugen.kr exp-lin-ugen.ir))
+
+
+(defugen (exp-exp-ugen "ExpExp")
+    (&optional (in 0.0) (in-min 1.0) (in-max 2.0) (out-min 1.0) (out-max 2.0))
+  ((:ir (*~ (expt~ (/~ out-max out-min) (/~ (log~ (/~ in in-min)) (log~ (/~ in-max in-min)))) out-min))
+   (:ar (multinew new 'pure-ugen in in-min in-max out-min out-max))
+   (:kr (multinew new 'pure-ugen in in-min in-max out-min out-max)))
+  :check-fn #'check-same-rate-as-first-input)
+
+(defun exp-exp (in in-min in-max out-min out-max &optional (clip :minmax))
+  (let* ((in (prune in in-min in-max clip))
+         (rate (rate (list in in-min in-max out-min out-max))))
+    (funcall (case rate
+               (:audio #'exp-exp-ugen.ar)
+               (:control #'exp-exp-ugen.kr)
+               (:scalar #'exp-exp-ugen.ir))
+             in in-min in-max out-min out-max)))
+
+(unexport '(exp-exp-ugen.ar exp-exp-ugen.kr exp-exp-ugen.ir))
 
 
 (defun when-audio-check-first-input (ugen)

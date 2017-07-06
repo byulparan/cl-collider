@@ -27,9 +27,13 @@
 	   #:proxy
 	   #:clip
 	   #:fold
+       #:wrap
 	   #:range
+       #:exp-range
 	   #:lin-lin
-	   #:wrap
+       #:lin-exp
+       #:exp-lin
+       #:exp-exp
 
 	   #:with-rendering
 

@@ -78,6 +78,15 @@
 (def-unary-op ampdb (lambda (amp) (* (log amp 10.0d0) 20))
   :special-index 22)
 
+(def-unary-op log~ (lambda (number) (log number))
+  :special-index 25)
+
+(def-unary-op log2~ (lambda (number) (log number 2))
+  :special-index 26)
+
+(def-unary-op log10~ (lambda (number) (log number 10))
+  :special-index 27)
+
 (def-unary-op sin~ #'sin
   :special-index 28)
 
@@ -238,26 +247,11 @@
 (def-binary-op <=~ #'<=
     (:special-index 10))
 
+(def-binary-op >=~ #'>=
+    (:special-index 11))
+
 (def-binary-op fold2 (lambda (a b)
-		       (labels ((sc-fold (in lo hi)
-				  (let (x c range range2)
-				    (setf x (- in lo))
-				    (cond ((>= in hi) (progn (setf in (- (+ hi hi) in))
-							     (when (>= in lo)
-							       (return-from sc-fold in))))
-					  ((< in lo) (progn (setf in (- (+ lo lo) in))
-							    (when (< in hi)
-							      (return-from sc-fold in))))
-					  (t (return-from sc-fold in)))
-				    (when (= hi lo)
-				      (return-from sc-fold lo))
-				    (setf range (- hi lo))
-				    (setf range2 (+ range range))
-				    (setf c (- x (* range2 (floor (* 1.0 (/ x range2))))))
-				    (when (>= c range)
-				      (setf c (- range2 c)))
-				    (+ c lo))))
-			 (sc-fold a (* b -1) b)))
+                       (fold.ir a (*~ b -1) b))
     (:special-index 44))
 
 (def-binary-op min~ #'min
@@ -433,6 +427,14 @@
 (defun range (ugen &optional (lo 0.0) (hi 1.0))
   (multinew #'_range nil ugen lo hi))
 
+(defmethod _exp-range (cls (ugen ugen) &optional (lo 1.0) (hi 2.0))
+  (declare (ignore cls))
+  (let ((range (signal-range ugen)))
+    (lin-exp ugen (if (eq range :bipolar) -1 0) 1 lo hi)))
+
+(defun exp-range (ugen &optional (lo 1.0) (hi 2.0))
+  (multinew #'_exp-range nil ugen lo hi))
+
 (defun unipolar (ugen &optional (mul 1))
   (range ugen 0 mul))
 
@@ -440,6 +442,9 @@
   (range ugen (neg mul) mul))
 
 (defgeneric clip (in &optional lo hi))
+
+(defun clip~ (in &optional lo hi)
+  (clip.ir in lo hi))
 
 (defun prune (ugen min max type)
   (let ((op (lambda (cls ugen min max type)
