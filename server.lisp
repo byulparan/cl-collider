@@ -47,7 +47,10 @@
   (:documentation "All data that is sent to the server must be in Float32 format. This function converts lisp objects to Float32."))
 
 (defmethod floatfy ((object t))
-  object)
+  (cond
+    ((null object) 0.0)
+    ((eq t object) 1.0)
+    (t object)))
 
 (defmethod floatfy ((number number))
   (float number))
