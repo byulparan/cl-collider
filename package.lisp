@@ -56,6 +56,7 @@
 	   #:at
 	   #:bye
 	   #:free
+       #:release
 	   #:ctrl
 	   #:is-playing-p
 

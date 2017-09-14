@@ -487,6 +487,10 @@
   (with-node (node id server)
     (message-distribute node (list 11 id) server))) ;; /n_free == 11
 
+(defun release (node)
+  "Set the gate argument of NODE to 0, releasing the node."
+  (ctrl node :gate 0))
+
 (defun is-playing-p (node)
   (with-node (node id server)
     (when (find id (node-watcher server))
