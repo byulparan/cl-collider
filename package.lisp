@@ -86,6 +86,11 @@
 	   #:clear-buf
 	   #:local-buf-list
 
+       #:bus-audio
+       #:bus-control
+       #:bus-free
+       #:busnum
+
 	   #:neg
 	   #:reciprocal
 	   #:frac

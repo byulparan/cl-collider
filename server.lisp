@@ -28,7 +28,9 @@
    (server-lock :initform (bt:make-lock) :reader server-lock)
    (id :initform (list #-sbcl 999 #+sbcl 1000)
        :reader id)
-   (buffers :initarg :buffers :accessor buffers))
+   (buffers :initarg :buffers :accessor buffers)
+   (audio-buses :initarg :audio-buses :accessor audio-buses)
+   (control-buses :initarg :control-buses :accessor control-buses))
   (:documentation "This is base class for the scsynth server. This library includes realtime server, NRT server, and internal server (not yet implemented)."))
 
 
@@ -177,8 +179,15 @@
     (send-message rt-server "/notify" 1)
     (scheduler:sched-run (scheduler rt-server))
     (group-free-all rt-server)
-    (setf (node-proxy-table rt-server) (make-hash-table)
-	  (buffers rt-server) (make-array 1024 :initial-element nil)))
+    (let ((options (server-options rt-server)))
+      (setf (node-proxy-table rt-server) (make-hash-table)
+            (buffers rt-server) (make-array (server-options-num-sample-buffers options) :initial-element nil)
+            (audio-buses rt-server) (make-array (server-options-num-audio-bus options) :initial-element nil)
+            (control-buses rt-server) (make-array (server-options-num-control-bus options) :initial-element nil))
+      (loop :for i :upto (server-options-num-output-bus options)
+         :do (get-next-bus rt-server :audio 1 i))
+      (loop :for i :upto (server-options-num-input-bus options)
+         :do (get-next-bus rt-server :audio 1 (+ i (server-options-num-output-bus options))))))
   rt-server)
 
 (defmethod server-quit ((rt-server rt-server))
