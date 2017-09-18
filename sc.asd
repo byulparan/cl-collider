@@ -17,6 +17,7 @@
 	       (:file "server-options")
 	       (:file "server")
 	       (:file "buffer")
+	       (:file "bus")
 	       (:file "ugen")
 	       (:file "synthdef")
 	       (:file "operators")

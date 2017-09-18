@@ -28,7 +28,9 @@
    (server-lock :initform (bt:make-lock) :reader server-lock)
    (id :initform (list #-sbcl 999 #+sbcl 1000)
        :reader id)
-   (buffers :initarg :buffers :accessor buffers))
+   (buffers :initarg :buffers :accessor buffers)
+   (audio-buses :initarg :audio-buses :accessor audio-buses)
+   (control-buses :initarg :control-buses :accessor control-buses))
   (:documentation "This is base class for the scsynth server. This library includes realtime server, NRT server, and internal server (not yet implemented)."))
 
 
@@ -45,7 +47,10 @@
   (:documentation "All data that is sent to the server must be in Float32 format. This function converts lisp objects to Float32."))
 
 (defmethod floatfy ((object t))
-  object)
+  (cond
+    ((null object) 0.0)
+    ((eq t object) 1.0)
+    (t object)))
 
 (defmethod floatfy ((number number))
   (float number))
@@ -177,8 +182,15 @@
     (send-message rt-server "/notify" 1)
     (scheduler:sched-run (scheduler rt-server))
     (group-free-all rt-server)
-    (setf (node-proxy-table rt-server) (make-hash-table)
-	  (buffers rt-server) (make-array 1024 :initial-element nil)))
+    (let ((options (server-options rt-server)))
+      (setf (node-proxy-table rt-server) (make-hash-table)
+            (buffers rt-server) (make-array (server-options-num-sample-buffers options) :initial-element nil)
+            (audio-buses rt-server) (make-array (server-options-num-audio-bus options) :initial-element nil)
+            (control-buses rt-server) (make-array (server-options-num-control-bus options) :initial-element nil))
+      (loop :for i :upto (server-options-num-output-bus options)
+         :do (get-next-bus rt-server :audio 1 i))
+      (loop :for i :upto (server-options-num-input-bus options)
+         :do (get-next-bus rt-server :audio 1 (+ i (server-options-num-output-bus options))))))
   rt-server)
 
 (defmethod server-quit ((rt-server rt-server))
@@ -477,6 +489,10 @@
 (defun free (node)
   (with-node (node id server)
     (message-distribute node (list 11 id) server))) ;; /n_free == 11
+
+(defun release (node)
+  "Set the gate argument of NODE to 0, releasing the node."
+  (ctrl node :gate 0))
 
 (defun is-playing-p (node)
   (with-node (node id server)

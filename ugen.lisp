@@ -88,9 +88,14 @@
   :scalar)
 
 (defmethod rate ((ugen list))
-  (let ((rate-lst (mapcar #'(lambda (u) (string (rate u))) (alexandria:flatten ugen))))
-    (let ((ret (intern (first (sort rate-lst #'string-lessp)) :keyword)))
-      ret)))
+  (if (null ugen)
+      :scalar
+      (let ((rate-lst (mapcar #'(lambda (u) (string (rate u))) (alexandria:flatten ugen))))
+        (let ((ret (intern (first (sort rate-lst #'string-lessp)) :keyword)))
+          ret))))
+
+(defmethod rate ((ugen t))
+  (if (eq ugen t) :scalar))
 
 
 (defun act (act)
@@ -156,6 +161,10 @@
   (dolist (input (inputs ugen))
     (unless (typep input 'ugen)
       (add-constant (synthdef ugen) (floatfy input)))))
+
+(defmethod collect-constants ((ugen t))
+  (add-constant (synthdef ugen) (cond ((null ugen) 0.0)
+                                      ((eq t ugen) 1.0))))
 
 (defmethod optimize-graph ((ugen ugen)))
 
