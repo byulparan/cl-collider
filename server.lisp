@@ -326,8 +326,11 @@
   (osc:close-device (osc-device rt-server)))
 
 (defmethod server-quit ((rt-server external-server))
-  (if (just-connect-p rt-server) (progn (setf (boot-p rt-server) nil)
-					(cleanup-server rt-server))
+  (if (just-connect-p rt-server) (progn
+				   (assert (boot-p rt-server) nil "SuperCollider server is not running.")
+				   (setf (boot-p rt-server) nil)
+				   (osc:close-device (osc-device rt-server))
+				   (scheduler:sched-stop (scheduler rt-server)))
       (call-next-method)))
 
 
