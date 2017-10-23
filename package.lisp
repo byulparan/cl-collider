@@ -56,6 +56,7 @@
 	   #:at
 	   #:bye
 	   #:free
+       #:release
 	   #:ctrl
 	   #:is-playing-p
 
@@ -86,6 +87,11 @@
 	   #:set-buf
 	   #:clear-buf
 	   #:local-buf-list
+
+       #:bus-audio
+       #:bus-control
+       #:bus-free
+       #:busnum
 
 	   #:neg
 	   #:reciprocal
