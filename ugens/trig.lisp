@@ -135,6 +135,10 @@
   ((:kr (multinew new 'multiout-ugen 2 in init-freq min-freq max-freq exec-freq max-bins-per-octave
 		  median amp-threshold peak-threshold down-sample clar))))
 
+(defugen (coyote "Coyote")
+    (&optional (in 0.0) (track-fall 0.2) (slow-lag 0.2) (fast-lag 0.01) (fast-mul 0.5) (thresh 0.05) (min-dur 0.1))
+  ((:kr (multinew new 'ugen in track-fall slow-lag fast-lag fast-mul thresh min-dur))))
+
 (defugen (in-range "InRange")
     (&optional (in 0.0) (lo 0.0) (hi 1.0))
   ((:ar (multinew new 'ugen in lo hi))
