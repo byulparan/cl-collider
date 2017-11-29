@@ -229,7 +229,7 @@
      `(,(car form) ,(mapcar (lambda (item)
                               (if (atom item)
                                   item
-                                  `(,(car item) ,(convert-code (cdr item)))))
+                                  `(,(car item) ,@(convert-code (cdr item)))))
                             (cadr form))
         ,@(cddr form)))
 	(t (cons (convert-code (car form) t)
