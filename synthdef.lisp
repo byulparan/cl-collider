@@ -225,6 +225,13 @@
 	((atom form) (if head
 		(convert-code-table form)
 		form))
+     ((position (car form) (list 'let 'let*)) ;; avoid converting names of local bindings
+      `(,(car form) ,(mapcar (lambda (item)
+                               (if (atom item)
+                                   item
+                                   `(,(car item) ,@(convert-code (cdr item)))))
+                             (cadr form))
+        ,@(convert-code (cddr form))))
 	(t (cons (convert-code (car form) t)
 		 (mapcar #'convert-code (cdr form))))))
 
