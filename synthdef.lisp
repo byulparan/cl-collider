@@ -231,7 +231,7 @@
                                   item
                                   `(,(car item) ,@(convert-code (cdr item)))))
                             (cadr form))
-        ,@(cddr form)))
+        ,@(convert-code (cddr form))))
 	(t (cons (convert-code (car form) t)
 		 (mapcar #'convert-code (cdr form))))))
 
