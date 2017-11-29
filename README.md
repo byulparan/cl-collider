@@ -42,7 +42,7 @@ It is an experimental project, so changes to the API are possible.
 (play (sin-osc.ar [320 321] 0 .2))
 
 ;; Stop music
-(bye *)
+(free *)
 
 ;; Quit SuperCollider server
 (server-quit *s*)
