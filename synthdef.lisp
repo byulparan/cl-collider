@@ -225,6 +225,13 @@
 	((atom form) (if head
 		(convert-code-table form)
 		form))
+    ((position (car form) (list 'let 'let*)) ;; avoid converting names of local bindings
+     `(,(car form) ,(mapcar (lambda (item)
+                              (if (atom item)
+                                  item
+                                  `(,(car item) ,@(convert-code (cdr item)))))
+                            (cadr form))
+        ,@(convert-code (cddr form))))
 	(t (cons (convert-code (car form) t)
 		 (mapcar #'convert-code (cdr form))))))
 
@@ -310,7 +317,7 @@
        (labels ((clear-node ()
 		  (when (and ,node  (is-playing-p ,node))
 		    (if (getf (meta ,node) :is-signal-p) (ctrl ,node :gate 0 :fade ,fade)
-			(bye ,node)))))
+			(free ,node)))))
 	 ,(if body `(progn
 		      (let ((*temp-synth-name* ,(string-downcase key)))
 			(prog1 (setf (gethash ,key (node-proxy-table *s*))

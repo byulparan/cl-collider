@@ -485,9 +485,9 @@
 						       param))) server)))
 
 (defun bye (node)
-  "It was deprecated. It will remove!"
-  (with-node (node id server)
-    (message-distribute node (list 11 id) server))) ;; /n_free == 11
+  "Deprecated function; use `free' instead."
+  (warn "#'bye is deprecated; please use #'free instead.")
+  (free node))
 
 (defun free (node)
   (with-node (node id server)
