@@ -310,7 +310,7 @@
        (labels ((clear-node ()
 		  (when (and ,node  (is-playing-p ,node))
 		    (if (getf (meta ,node) :is-signal-p) (ctrl ,node :gate 0 :fade ,fade)
-			(bye ,node)))))
+			(free ,node)))))
 	 ,(if body `(progn
 		      (let ((*temp-synth-name* ,(string-downcase key)))
 			(prog1 (setf (gethash ,key (node-proxy-table *s*))
