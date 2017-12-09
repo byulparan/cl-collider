@@ -42,7 +42,18 @@
 	   (bufnum (slot-value buffer 'bufnum)))
       (setf (slot-value buffer 'path) file-path
             (slot-value buffer 'server) server)
-      (apply #'send-message server (list "/b_allocRead" bufnum  file-path 0 -1 (osc:encode-message "/b_query" bufnum)))
+      (apply #'send-message server (list "/b_allocRead" bufnum file-path 0 -1 (osc:encode-message "/b_query" bufnum)))
+      (sync server)
+      buffer)))
+
+(defun buffer-read-channel (path &key (channels -1) bufnum (server *s*))
+  (let ((file-path (full-pathname path)))
+    (assert (probe-file file-path) (path) "File does not exist: ~a" file-path)
+    (let* ((buffer (get-next-buffer server bufnum))
+	   (bufnum (slot-value buffer 'bufnum)))
+      (setf (slot-value buffer 'path) file-path
+            (slot-value buffer 'server) server)
+      (apply #'send-message server `("/b_allocReadChannel" ,bufnum ,file-path 0 -1 ,@(alexandria:ensure-list channels) ,(osc:encode-message "/b_query" bufnum)))
       (sync server)
       buffer)))
 
