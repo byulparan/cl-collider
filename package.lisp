@@ -73,6 +73,7 @@
 	   #:frames
 	   #:chanls
 	   #:buffer-read
+       #:buffer-read-channel
 	   #:buffer-alloc
 	   #:buffer-free
 	   #:buffer-save
