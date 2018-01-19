@@ -276,7 +276,7 @@
   (set-synthdef-metadata name :name name)
   (set-synthdef-metadata name :controls
                          (mapcar (lambda (param) (append (list (car param)) (cdr param)))
-                                 params))
+                                 (remove '&key params)))
   (set-synthdef-metadata name :body body)
   (alexandria:with-gensyms (synthdef)
     `(let* ((,synthdef (make-instance 'synthdef :name ,(string-downcase name)))
