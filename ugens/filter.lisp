@@ -346,3 +346,11 @@
    (:kr
     (madd (multinew new 'pure-ugen in freq gain reset) mul add)))
   :check-fn #'check-same-rate-as-first-input)
+
+(defugen (rlpfd "RLPFD")
+    (in &optional (ffreq 440) (res 0) (dist 0) (mul 1) (add 0))
+  ((:ar
+    (madd (multinew new 'pure-ugen in ffreq res dist) mul add))
+   (:kr
+    (madd (multinew new 'pure-ugen in ffreq res dist) mul add)))
+  :check-fn #'check-same-rate-as-first-input)
