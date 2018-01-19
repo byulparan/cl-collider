@@ -310,6 +310,21 @@
 	 (sync)
 	 ,node))))
 
+(defun synth (name &optional args)
+  "Start a synth by name."
+  (let* ((name-string (string-downcase (symbol-name name)))
+         (next-id (get-next-id *s*))
+         (to 1)
+         (pos :head)
+         (new-synth (make-instance 'node :server *s* :id next-id :name name-string :pos pos :to to))
+         (parameter-names (get-synthdef-control-names name))
+         (args (loop :for (arg val) :on args :by #'cddr
+                  :for pos = (position arg parameter-names :test #'string-equal)
+                  :unless (null pos)
+                  :append (list (string-downcase (nth pos parameter-names)) val))))
+    (message-distribute new-synth
+                        (apply #'make-synth-msg *s* name-string next-id to pos args)
+                        *s*)))
 
 (defmacro proxy (key &optional body &key (gain 1.0) (fade 0.5) (pos :head) (to 1) (out-bus 0))
   (alexandria:with-gensyms (node)
