@@ -68,5 +68,9 @@
 	  output wait
 	  (ext:system (format nil "/bin/sh -c \"~a\"" command))))
 
-
+(defun as-keyword (object)
+  (alexandria:make-keyword
+   (etypecase object
+     (symbol object)
+     (string (string-upcase object)))))
 
