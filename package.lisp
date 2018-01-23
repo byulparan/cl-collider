@@ -22,6 +22,7 @@
 	   
 	   #:*synth-definition-mode*
 	   #:defsynth
+	   #:synth
 	   #:with-controls
 	   #:play
 	   #:proxy
