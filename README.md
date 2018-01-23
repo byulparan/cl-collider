@@ -39,10 +39,11 @@ It is an experimental project, so changes to the API are possible.
 (server-boot *s*)
 
 ;; Hack music
-(play (sin-osc.ar [320 321] 0 .2))
+(defvar *synth*)
+(setf *synth* (play (sin-osc.ar [320 321] 0 .2)))
 
 ;; Stop music
-(free *)
+(free *synth*)
 
 ;; Quit SuperCollider server
 (server-quit *s*)
@@ -50,13 +51,12 @@ It is an experimental project, so changes to the API are possible.
 
 ### Create SynthDef
 ```cl
->>>>>>> 98163f8f7ddf36e70069e486658dbca77a6e3a8e
-(defsynth sine-wave (&key (note 60))
+(defsynth sine-wave ((note 60))
   (let* ((freq (midicps note))
          (sig (sin-osc.ar [freq (+ freq 2)] 0 .2)))
      (out.ar 0 sig)))
 
-(defparameter *synth* (sine-wave))
+(defparameter *synth* (synth 'sine-wave))
 (ctrl *synth* :note 72)
 (free *synth*)
 ```
@@ -76,7 +76,7 @@ It is an experimental project, so changes to the API are possible.
 ```
 ### Create Musical Sequence
 ```cl
-(defsynth saw-synth (&key (note 60) (dur 4.0))
+(defsynth saw-synth ((note 60) (dur 4.0))
   (let* ((env (env-gen.kr (env [0 .2 0] [(* dur .2) (* dur .8)]) :act :free))
          (freq (midicps note))
     	 (sig (lpf.ar (saw.ar freq env) (* freq 2))))
@@ -84,7 +84,7 @@ It is an experimental project, so changes to the API are possible.
 
 (defun make-melody (time n &optional (offset 0))
   (when (> n 0)
-    (at time (saw-synth :note (+ offset (alexandria:random-elt '(62 65 69 72)))))
+    (at time (synth 'saw-synth :note (+ offset (alexandria:random-elt '(62 65 69 72)))))
       (let ((next-time (+ time (alexandria:random-elt '(0 1 2 1.5)))))
         (callback next-time #'make-melody next-time (- n 1) offset))))
 
@@ -97,7 +97,7 @@ It is an experimental project, so changes to the API are possible.
 
 ;; Re-define the saw-synth ugen
 ;; The SynthDef file will be written to the *sc-synthdefs-path*
-(defsynth saw-synth (&key (note 60) (dur 4.0))
+(defsynth saw-synth ((note 60) (dur 4.0))
   (let* ((env (env-gen.kr (env [0 .2 0] [(* dur .2) (* dur .8)]) :act :free))
          (freq (midicps note))
          (sig (lpf.ar (saw.ar freq env) (* freq 2))))
