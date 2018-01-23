@@ -56,7 +56,7 @@ It is an experimental project, so changes to the API are possible.
          (sig (sin-osc.ar [freq (+ freq 2)] 0 .2)))
      (out.ar 0 sig)))
 
-(defparameter *synth* (synth 'sine-wave))
+(setf *synth* (synth 'sine-wave))
 (ctrl *synth* :note 72)
 (free *synth*)
 ```
