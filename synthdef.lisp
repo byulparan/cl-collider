@@ -235,27 +235,6 @@
 	(t (cons (convert-code (car form) t)
 		 (mapcar #'convert-code (cdr form))))))
 
-
-(defmacro synth-funcall-definition (name args)
-  (alexandria:with-gensyms (next-id new-synth)
-    (let ((delim (position '&key args)))
-      `(defun ,name (,@(mapcar #'(lambda (arg) (if (listp arg) (car arg) arg)) (if delim (subseq args 0 delim) args))
-		     &key ,@(cat (mapcar #'(lambda (arg) (if (listp arg) (subseq arg 0 2) (list arg 0)))
-					 (if delim (subseq args (1+ delim)) nil))
-				 (list '(pos :head) '(to 1) 'end-f)))
-	 (let* ((,next-id (get-next-id *s*))
-		(,new-synth (make-instance 'node :server *s* :id ,next-id :name ,(string-downcase name) :pos pos :to to)))
-	   (prog1
-	       (message-distribute 
-		,new-synth
-		(make-synth-msg *s* ,(string-downcase name) ,next-id to pos
-				,@(alexandria:flatten (mapcar #'(lambda (arg) (list (string-downcase arg) arg))
-							      (mapcar #'(lambda (arg) (if (listp arg) (car arg) arg))
-								      (remove '&key args)))))
-		*s*)
-	     (when end-f
-	       (setf (gethash ,next-id (end-node-handler *s*)) end-f))))))))
-
 (defparameter *synth-definition-mode* :recv)
 
 (defparameter *synthdef-metadata* (make-hash-table)
@@ -273,23 +252,23 @@
   (setf (getf (gethash (as-keyword synth) *synthdef-metadata*) (as-keyword key)) value))
 
 (defmacro defsynth (name params &body body)
+  (setf params (mapcar (lambda (param) (if (consp param) param (list param 0.0))) params))
   (set-synthdef-metadata name :name name)
   (set-synthdef-metadata name :controls
                          (mapcar (lambda (param) (append (list (car param)) (cdr param)))
-                                 (remove '&key params)))
+                                 params))
   (set-synthdef-metadata name :body body)
   (alexandria:with-gensyms (synthdef)
     `(let* ((,synthdef (make-instance 'synthdef :name ,(string-downcase name)))
 	    (*synthdef* ,synthdef))
-       (with-controls (,@(mapcar #'(lambda (p) (if (symbolp p) (list p 0) p)) (remove '&key params)))
+       (with-controls (,@params)
 	 ,@(convert-code body)
 	 (build-synthdef ,synthdef)
 	 (when (and *s* (boot-p *s*))
 	   (ecase *synth-definition-mode*
 	     (:recv (recv-synthdef ,synthdef nil))
 	     (:load (load-synthdef ,synthdef nil)))
-	   (sync)
-	   (synth-funcall-definition ,name ,params))
+	   (sync))
 	 ,synthdef))))
 
 (defvar *temp-synth-name* "temp-synth")
@@ -329,18 +308,18 @@
          (sync)
          ,node))))
 
-(defun synth (name &optional args)
+(defun synth (name &rest args)
   "Start a synth by name."
   (let* ((name-string (string-downcase (symbol-name name)))
          (next-id (get-next-id *s*))
          (to 1)
          (pos :head)
          (new-synth (make-instance 'node :server *s* :id next-id :name name-string :pos pos :to to))
-         (parameter-names (get-synthdef-control-names name))
+         (parameter-names (mapcar (lambda (param) (string-downcase (car param))) (getf (sc::get-synthdef-metadata name) :controls)))
          (args (loop :for (arg val) :on args :by #'cddr
-                  :for pos = (position arg parameter-names :test #'string-equal)
-                  :unless (null pos)
-                  :append (list (string-downcase (nth pos parameter-names)) val))))
+		  :for pos = (position (string-downcase arg) parameter-names :test #'string-equal)
+		  :unless (null pos)
+		  :append (list (string-downcase (nth pos parameter-names)) val))))
     (message-distribute new-synth
                         (apply #'make-synth-msg *s* name-string next-id to pos args)
                         *s*)))
@@ -384,7 +363,7 @@
 ;;; ======================================================================
 
 (defparameter +type-id+ (map '(vector (unsigned-byte 8)) #'char-code "SCgf"))
-(defparameter *synthdef-version* 1)
+(defparameter *synthdef-version* 2)
 
 (defun encode-synthdef (synthdef)
   (ecase *synthdef-version*
