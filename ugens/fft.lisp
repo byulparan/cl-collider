@@ -202,5 +202,5 @@
 
 (defun running-sum-rms (in &optional (num-samp 40.0))
   (sqrt
-   (mul (running-sum (squared in) num-samp)
+   (mul (running-sum.ar (squared in) num-samp)
 	(reciprocal num-samp))))

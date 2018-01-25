@@ -27,7 +27,7 @@
     (apply #'multinew #'splay-new :control spread level center level-comp (alexandria:ensure-list in-array)))))
 
 (defun splay-fill (n function &optional (spread 1) (level 1) (center 0.0) (level-comp t))
-  (splay (dup function n) spread level center level-comp))
+  (splay.ar (dup function n) spread level center level-comp))
 
 (export 'splay-fill)
 

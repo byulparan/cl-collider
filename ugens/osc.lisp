@@ -305,7 +305,7 @@
   (destructuring-bind (array-ref input freq-scale freq-offset decay-scale) inputs
     (let ((array-ref (map 'list #'identity array-ref)))
       (ecase (rate ugen)
-	(:audio (sum (ringz input (alexandria:if-let ((spec (nth 0 array-ref))) spec
+	(:audio (sum (ringz.ar input (alexandria:if-let ((spec (nth 0 array-ref))) spec
 				       (add (mul (list 440.0) freq-scale) freq-offset))
 			       (alexandria:if-let ((spec (nth 2 array-ref))) spec
 				 (mul (list 1.0) decay-scale))
