@@ -87,7 +87,7 @@
 	      (let* ((message (osc:decode-bundle buffer) )
 		     (handler (gethash (car message) (reply-handle-table osc-device))))
 		(if handler (handler-case (apply handler (cdr message))
-			     (error (c) (format t "Error ~a in OSC device receive thread~%" c)))
+			     (error (c) (format t "Error ~a on received message ~s ~%" c (car message))))
 		  (format t "Reply handler not found: ~a [ ~{~a ~}]~%" (car message) (cdr message))))))))
    :name (format nil "OSC device receive thread")))
 
