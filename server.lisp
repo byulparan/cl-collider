@@ -212,10 +212,17 @@
   (let ((*s* rt-server))
     (add-reply-responder
      "/done"
-     (lambda (path &optional bufnum)
-       (cond ((string= path "/quit") (setf (boot-p rt-server) nil))
-	     ((string= path "/b_write") (alexandria:when-let ((f (gethash (list path bufnum) (buffer-get-handlers rt-server))))
-					  (funcall f (elt (buffers rt-server) bufnum)))))))
+     (lambda (path &rest options)
+       (cond ((string= path "/notify")
+	      (destructuring-bind (notify &optional client-id)
+		  options
+		(declare (ignore notify client-id))))
+	     ((string= path "/quit") (setf (boot-p rt-server) nil))
+	     ((string= path "/b_write")
+	      (let ((bufnum (car options)))
+		(alexandria:when-let
+		    ((f (gethash (list path bufnum) (buffer-get-handlers rt-server))))
+		  (funcall f (elt (buffers rt-server) bufnum))))))))
     (add-reply-responder
      "/status.reply"
      (lambda (&rest args)
