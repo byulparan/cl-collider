@@ -1,8 +1,8 @@
 # cl-collider
 
 A <a href="http://supercollider.github.io/">SuperCollider</a> client for <a href="https://www.common-lisp.net/">CommonLisp</a>.  
-It supports the <a href="http://sbcl.org/">SBCL</a> & <a href="http://ccl.clozure.com/">ClozureCL</a> compilers.  
 It is an experimental project, so changes to the API are possible.
+
 ## Videos
 ### <a href="https://www.youtube.com/watch?v=JivNMDUqNQc">Tutorial</a>   
 **Due to API changes, this video is deprecated. A new tutorial video is coming soon.**
@@ -13,13 +13,12 @@ It is an experimental project, so changes to the API are possible.
 
 ## Dependencies:
 
-- [SuperCollider](http://supercollider.sourceforge.net) - I tested on latest stable version(3.8.0)
+- [SuperCollider](http://supercollider.github.io) - compatible with 3.9 and 3.8.
 - [Quicklisp](http://www.quicklisp.org)
 - [ClozureCL](http://www.clozure.com/clozurecl.html) or [SBCL](http://www.sbcl.org) or [ECL](https://common-lisp.net/project/ecl/)
 - [Scheduler](http://github.com/byulparan/scheduler)(above 2017.3.14) - The time based task scheduler
 
-### version: 2017.3.15
-
+### version: 2018. 1. 29
 ### package: sc, sc-user(use this package)
 ### named-readtable: sc
 
