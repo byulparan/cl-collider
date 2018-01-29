@@ -18,11 +18,10 @@ It is an experimental project, so changes to the API are possible.
 - [ClozureCL](http://www.clozure.com/clozurecl.html) or [SBCL](http://www.sbcl.org) or [ECL](https://common-lisp.net/project/ecl/)
 - [Scheduler](http://github.com/byulparan/scheduler)(above 2017.3.14) - The time based task scheduler
 
-### version: 2018. 1. 29
-### package: sc, sc-user(use this package)
-### named-readtable: sc
+## Usage:
+- package: `sc`, `sc-user(use this package)`
+- named-readtable: `sc`
 
-### usage:
 ```cl
 (in-package :sc-user)
 (named-readtables:in-readtable :sc)
