@@ -31,7 +31,7 @@
           (slot-value buffer 'chanls) chanls
           (slot-value buffer 'server) server)
     (apply #'send-message server (list "/b_alloc" bufnum  (floor frames) (floor chanls)
-                                       (osc:encode-message "/b_query" bufnum)))
+                                       (sc-osc::encode-message "/b_query" bufnum)))
     (sync server)
     buffer))
 
@@ -42,7 +42,7 @@
 	   (bufnum (slot-value buffer 'bufnum)))
       (setf (slot-value buffer 'path) file-path
             (slot-value buffer 'server) server)
-      (apply #'send-message server (list "/b_allocRead" bufnum file-path 0 -1 (osc:encode-message "/b_query" bufnum)))
+      (apply #'send-message server (list "/b_allocRead" bufnum file-path 0 -1 (sc-osc::encode-message "/b_query" bufnum)))
       (sync server)
       buffer)))
 
@@ -53,7 +53,7 @@
 	   (bufnum (slot-value buffer 'bufnum)))
       (setf (slot-value buffer 'path) file-path
             (slot-value buffer 'server) server)
-      (apply #'send-message server `("/b_allocReadChannel" ,bufnum ,file-path 0 -1 ,@(alexandria:ensure-list channels) ,(osc:encode-message "/b_query" bufnum)))
+      (apply #'send-message server `("/b_allocReadChannel" ,bufnum ,file-path 0 -1 ,@(alexandria:ensure-list channels) ,(sc-osc::encode-message "/b_query" bufnum)))
       (sync server)
       buffer)))
 

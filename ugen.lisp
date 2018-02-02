@@ -36,6 +36,8 @@
 (defgeneric rate (ugen))
 (defgeneric unbubble (list))
 
+(defgeneric optimize-graph (ugen))
+
 ;;; create UGen -------------------------------------------------------------------------
 
 (defun lst-operation (lst &optional constructor)
@@ -213,12 +215,12 @@
 (defmethod write-def-ugen-version1 ((ugen ugen) stream)
   (write-sequence (make-pstring (name ugen)) stream)
   (write-byte (rate-number ugen) stream)
-  (write-sequence (osc::encode-int16 (length (inputs ugen))) stream)
-  (write-sequence (osc::encode-int16 (num-outputs ugen)) stream)
-  (write-sequence (osc::encode-int16 (special-index ugen)) stream)
+  (write-sequence (sc-osc::encode-int16 (length (inputs ugen))) stream)
+  (write-sequence (sc-osc::encode-int16 (num-outputs ugen)) stream)
+  (write-sequence (sc-osc::encode-int16 (special-index ugen)) stream)
   (dolist (in (input-spec ugen))
-    (write-sequence (osc::encode-int16 (first in)) stream)
-    (write-sequence (osc::encode-int16 (second in)) stream))
+    (write-sequence (sc-osc::encode-int16 (first in)) stream)
+    (write-sequence (sc-osc::encode-int16 (second in)) stream))
   (write-sequence (make-array (num-outputs ugen) :element-type '(unsigned-byte 8)
 						 :initial-element (rate-number ugen))
 		  stream))
@@ -228,7 +230,7 @@
   (write-byte (rate-number ugen) stream)
   (write-sequence (osc::encode-int32 (length (inputs ugen))) stream)
   (write-sequence (osc::encode-int32 (num-outputs ugen)) stream)
-  (write-sequence (osc::encode-int16 (special-index ugen)) stream)
+  (write-sequence (sc-osc::encode-int16 (special-index ugen)) stream)
   (dolist (in (input-spec ugen))
     (write-sequence (osc::encode-int32 (first in)) stream)
     (write-sequence (osc::encode-int32 (second in)) stream))
@@ -328,5 +330,6 @@
 				     (apply #'ugen-new ,(second name) ,(get-rate (car func)) ,cls
 					    ,check-fn ,signal-range
 					    ,inputs))))
+			  (declare (ignorable new))
 			  ,@(cdr func)))
 		      (export ',ugen-name))))))))

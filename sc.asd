@@ -4,7 +4,7 @@
   :description "SuperCollider client for Common Lisp"
   :version "2017.3.15"
   :depends-on (#:scheduler
-	       #:osc-lib
+	       #:sc-osc
 	       #:alexandria
 	       #:bordeaux-threads
 	       #:flexi-streams

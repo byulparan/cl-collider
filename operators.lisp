@@ -1,8 +1,13 @@
-
 (in-package #:sc)
 
-;;; unary-operator
 
+(defgeneric optimize-sub (ugen))
+(defgeneric optimize-add-neg (ugen))
+(defgeneric optimize-to-madd (ugen))
+(defgeneric optimize-to-sum3 (ugen))
+(defgeneric optimize-to-sum4 (ugen))
+
+;;; unary-operator
 (defclass unary-operator (pure-ugen)
   ())
 
@@ -151,12 +156,6 @@
   ((equalp 1.0 in2) in1)
   ((equalp -1.0 in2) (neg in1)))
 
-(defgeneric optimize-graph (ugen))
-(defgeneric optimize-sub (ugen))
-(defgeneric optimize-add-neg (ugen))
-(defgeneric optimize-to-madd (ugen))
-(defgeneric optimize-to-sum3 (ugen))
-(defgeneric optimize-to-sum4 (ugen))
 
 (defun optimize-add (ugen)
   (let ((optimized-ugen (optimize-to-sum3 ugen)))

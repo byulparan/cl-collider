@@ -327,7 +327,7 @@
 
 (defmethod bootup-server-process ((rt-server external-server))
   (with-slots (osc-device) rt-server
-    (setf osc-device (osc:osc-device (host rt-server) (port rt-server) :local-port 0)))
+    (setf osc-device (sc-osc:osc-device (host rt-server) (port rt-server) :local-port 0)))
   (unless (just-connect-p rt-server)
     (setf (sc-thread rt-server)
       (bt:make-thread
@@ -341,29 +341,29 @@
        :name "scsynth"))))
 
 (defmethod cleanup-server ((rt-server external-server))
-  (osc::join-thread (sc-thread rt-server))
-  (osc:close-device (osc-device rt-server)))
+  (sc-osc::join-thread (sc-thread rt-server))
+  (sc-osc:close-device (osc-device rt-server)))
 
 (defmethod server-quit ((rt-server external-server))
   (if (just-connect-p rt-server) (progn
 				   (assert (boot-p rt-server) nil "SuperCollider server is not running.")
 				   (setf (boot-p rt-server) nil)
-				   (osc:close-device (osc-device rt-server))
+				   (sc-osc:close-device (osc-device rt-server))
 				   (scheduler:sched-stop (scheduler rt-server)))
       (call-next-method)))
 
 
 (defmethod install-reply-responder ((rt-server external-server) cmd-name f)
-  (osc:add-osc-responder (osc-device rt-server) cmd-name f))
+  (sc-osc:add-osc-responder (osc-device rt-server) cmd-name f))
 
 (defmethod uninstall-reply-responder ((rt-server external-server) cmd-name)
-  (osc:remove-osc-responder (osc-device rt-server) cmd-name))
+  (sc-osc:remove-osc-responder (osc-device rt-server) cmd-name))
 
 (defmethod send-message ((server external-server) &rest msg)
-  (apply #'osc:send-message (osc-device server) msg))
+  (apply #'sc-osc:send-message (osc-device server) msg))
 
 (defmethod send-bundle ((server external-server) time list-of-messages)
-  (apply #'osc:send-bundle
+  (apply #'sc-osc:send-bundle
 	 time
 	 (osc-device server)
 	 list-of-messages))
@@ -417,7 +417,7 @@
 						       :element-type '(unsigned-byte 8))
 	 (dolist (,message (sort (streams *s*)  #'<= :key #'car))
 	   (when (and ,pad (> (car ,message) ,pad)) (return))
-	   (let ((,message (osc::encode-bundle (second ,message) (car ,message))))
+	   (let ((,message (sc-osc::encode-bundle (second ,message) (car ,message))))
 	     (write-sequence (osc::encode-int32 (length ,message)) ,non-realtime-stream)
 	     (write-sequence ,message ,non-realtime-stream))))
        (run-program

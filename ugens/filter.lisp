@@ -246,6 +246,7 @@
     (list a0 a1 a0 b1 b2)))
 
 (defun b-pass4-new (low-hi new in freq rq)
+  (declare (ignorable new))
   (let ((coefs (b-pass-sc low-hi freq (sqrt rq))))
     (apply #'multinew #'sos.ar (apply #'sos.ar in coefs) coefs)))
 

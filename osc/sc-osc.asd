@@ -1,5 +1,4 @@
-
-(asdf/defsystem:defsystem :osc-lib
+(asdf/defsystem:defsystem :sc-osc
   :serial t
   :depends-on (#:osc #:alexandria #:ieee-floats #:bordeaux-threads #:usocket)
   :components ((:file "package")

@@ -1,4 +1,4 @@
-(in-package :osc)
+(in-package :sc-osc)
 
 (defun single-float-bits (x)
   (declare (type single-float x))

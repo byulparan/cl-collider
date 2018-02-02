@@ -1,4 +1,4 @@
-(in-package :osc)
+(in-package :sc-osc)
 
 (defun join-thread (thread)
   #+ccl (bt:join-thread thread)
@@ -54,14 +54,14 @@
   (remhash cmd-name (reply-handle-table osc-device)))
 
 (defun send-message (osc-device &rest message)
-  (let ((msg (apply #'osc:encode-message message)))
+  (let ((msg (apply #'encode-message message)))
     (usocket:socket-send (socket osc-device) msg (length msg)
 			 :port (port osc-device)
 			 :host (host osc-device))
     (values)))
 
 (defun send-bundle (timestamp osc-device &rest messages)
-  (let ((msg (osc:encode-bundle messages timestamp)))
+  (let ((msg (encode-bundle messages timestamp)))
     (usocket:socket-send (socket osc-device) msg (length msg)
 			 :port (port osc-device)
 			 :host (host osc-device))
@@ -84,7 +84,7 @@
 	    (multiple-value-bind (buffer length host port)
 		(usocket:socket-receive (socket osc-device) buffer (length buffer))
 	      (declare (ignore host port length))
-	      (let* ((message (osc:decode-bundle buffer) )
+	      (let* ((message (decode-bundle buffer) )
 		     (handler (gethash (car message) (reply-handle-table osc-device))))
 		(if handler (handler-case (apply handler (cdr message))
 			     (error (c) (format t "Error ~a on received message ~s ~%" c (car message))))
