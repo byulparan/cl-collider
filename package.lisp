@@ -94,6 +94,7 @@
        #:bus-audio
        #:bus-control
        #:bus-free
+       #:bus-string
        #:busnum
 
 	   #:neg
