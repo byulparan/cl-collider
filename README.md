@@ -19,7 +19,7 @@ It is an experimental project, so changes to the API are possible.
 - [Scheduler](http://github.com/byulparan/scheduler)(above 2017.3.14) - The time based task scheduler
 
 ## Usage:
-- package: `sc`, `sc-user(use this package)`
+- package: `sc`, `sc-user` (use this package)
 - named-readtable: `sc`
 
 ```cl
