@@ -311,11 +311,11 @@
 (defun synth (name &rest args)
   "Start a synth by name."
   (let* ((name-string (string-downcase (symbol-name name)))
-         (next-id (get-next-id *s*))
-         (to 1)
-         (pos :head)
+         (next-id (or (getf args :id) (get-next-id *s*)))
+         (to (or (getf args :to) 1))
+         (pos (or (getf args :pos) :head))
          (new-synth (make-instance 'node :server *s* :id next-id :name name-string :pos pos :to to))
-         (parameter-names (mapcar (lambda (param) (string-downcase (car param))) (getf (sc::get-synthdef-metadata name) :controls)))
+         (parameter-names (mapcar (lambda (param) (string-downcase (car param))) (getf (get-synthdef-metadata name) :controls)))
          (args (loop :for (arg val) :on args :by #'cddr
 		  :for pos = (position (string-downcase arg) parameter-names :test #'string-equal)
 		  :unless (null pos)
