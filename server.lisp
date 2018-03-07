@@ -316,8 +316,8 @@
     :reader just-connect-p)))
 
 (defmethod print-object ((self external-server) stream)
-  (format stream "#<SC-SYNTH ~a-~d:~d>"
-	  (name self) (host self) (port self)))
+  (format stream "#<~s ~a-~d:~d>"
+          'external-server (name self) (host self) (port self)))
 
 (defun all-running-servers ()
   (remove-if-not #'(lambda (server) (boot-p server)) *all-rt-servers*))
@@ -452,7 +452,7 @@
    (meta :initarg :meta :initform nil :reader meta)))
 
 (defmethod print-object ((node node) stream)
-  (format stream "#<Node :server ~s :id ~a :name ~s>" (server node) (id node) (name node)))
+  (format stream "#<~s :server ~s :id ~s :name ~s>" 'node (server node) (id node) (name node)))
 
 (defmacro at (time &body body)
   `(let ((*run-level* :bundle)
@@ -514,7 +514,7 @@
   ())
 
 (defmethod print-object ((node group) stream)
-  (format stream "#<Group :server ~s :id ~a>" (server node) (id node)))
+  (format stream "#<~s :server ~s :id ~s>" 'group (server node) (id node)))
 
 (let ((new-group-id 1))
   (defun make-group (&key id (server *s*) (pos :after) (to 1))

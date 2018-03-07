@@ -8,8 +8,8 @@
    (server :initarg :server :initform nil :accessor server)))
 
 (defmethod print-object ((self bus) stream)
-  (format stream "#<~a-BUS :server ~a :busnum ~a :channels ~a>"
-          (symbol-name (slot-value self 'type)) (server self) (busnum self) (chanls self)))
+  (format stream "#<~s :type ~s :server ~s :busnum ~s :channels ~s>"
+          'bus (slot-value self 'type) (server self) (busnum self) (chanls self)))
 
 (defmethod floatfy ((bus bus))
   (floatfy (busnum bus)))

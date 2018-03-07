@@ -14,7 +14,7 @@
    (rewrite-in-progress :initform nil :accessor rewrite-in-progress)))
 
 (defmethod print-object ((c synthdef) stream)
-  (format stream "#<SynthDef:~a>" (name c)))
+  (format stream "#<~s :name ~s>" 'synthdef (name c)))
 
 (defmethod add-ugen ((synthdef synthdef) (ugen ugen))
   (unless (rewrite-in-progress synthdef)
