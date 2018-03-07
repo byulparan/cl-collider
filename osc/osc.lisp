@@ -9,6 +9,8 @@
   "original function in cl-osc that return just vector type. but datagram socket is use (vector (unsigned 8))."
   (apply #'concatenate '(vector (unsigned-byte 8)) catatac))
 
+;;; encode osc ------------------------------------------------------------
+
 (defun encode-float64 (f)
   (osc::encode-int64 (ieee-floats:encode-float64 f)))
 
@@ -89,18 +91,18 @@
 	       (sc-encode-data data)))
 
 (defun encode-bundle (data &optional timetag)
-  (cat '(35 98 117 110 100 108 101 0)	
-       (if timetag
-           (sc-encode-timetag timetag)
+  (flet ((encode-bundle-elt (data)
+	   (let ((message (apply #'encode-message data)))
+	     (cat (osc::encode-int32 (length message)) message))))
+    (cat '(35 98 117 110 100 108 101 0)	
+	 (if timetag
+	     (sc-encode-timetag timetag)
            (sc-encode-timetag :now))
-       (if (listp (car data))
-	   (apply #'cat (mapcar #'osc::encode-bundle-elt data))
-	 (osc::encode-bundle-elt data))))
+	 (if (listp (car data))
+	     (apply #'cat (mapcar #'encode-bundle-elt data))
+	   (encode-bundle-elt data)))))
 
-
-
-
-
+;;; decode osc ------------------------------------------------------------
 
 (defun decode-float64 (s)
   (ieee-floats:decode-float64 (osc::decode-uint64 s)))
