@@ -138,6 +138,10 @@
 (defun buffer-zero (buffer)
   (send-message (server buffer) "/b_zero" (bufnum buffer) 0))
 
+(defmethod buffer-dur ((buffer buffer))
+  "Get the duration in seconds of BUFFER."
+  (/ (frames buffer) (sr buffer)))
+
 ;;; wavetable
 (defun wavetable (buffer wave data &optional (normalize t) (as-wavetable t) (clear-first t))
   (apply #'send-message
