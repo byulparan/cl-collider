@@ -57,3 +57,12 @@
                         (control-buses server))
                     (+ i (busnum bus)))
                nil)))))
+
+(defun bus-string (bus)
+  "Make a string representing the bus that the server can understand."
+  (with-slots (type busnum) bus
+    (format nil "~a~a"
+            (if (eq :audio type)
+                "a"
+                "c")
+            busnum)))

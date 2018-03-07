@@ -83,6 +83,7 @@
 	   #:buffer-set
 	   #:buffer-set-list
 	   #:buffer-zero
+       #:buffer-dur
 	   #:wavetable
 	   #:calc-pv-recsize
 	   #:local-buf
