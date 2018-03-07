@@ -23,6 +23,7 @@
 	   #:*synth-definition-mode*
 	   #:defsynth
 	   #:synth
+       #:get-synthdef-metadata
 	   #:with-controls
 	   #:play
 	   #:proxy
