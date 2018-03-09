@@ -60,6 +60,7 @@
 	   #:free
        #:release
 	   #:ctrl
+       #:map-bus
 	   #:is-playing-p
 
 	   #:make-group

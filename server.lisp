@@ -490,6 +490,13 @@
     (message-distribute node (cons 15 (cons id (mapcar #'(lambda (p) (cond ((symbolp p) (string-downcase p)) ;key
 								       (t (floatfy p)))) ;value
 						       param))) server)))
+(defun map-bus (node &rest param &key &allow-other-keys)
+  "Map a bus or buses onto the specified controls of a node."
+  (with-node (node id server)
+    (message-distribute node (append (list "/n_map" id) (mapcar (lambda (p) (cond ((symbolp p) (string-downcase p))
+                                                                                  (t (floatfy p))))
+                                                                param))
+                        server)))
 
 (defun bye (node)
   "Deprecated function; use `free' instead."
