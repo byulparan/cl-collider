@@ -9,8 +9,8 @@
    (server :initarg :server :initform nil :accessor server)))
 
 (defmethod print-object ((self buffer) stream)
-  (format stream "#<BUFFER :server ~a :bufnum ~a :frames ~a :channels ~a :samplerate ~a :path ~s>"
-	  (server self) (bufnum self) (frames self) (chanls self) (sr self) (path self)))
+  (format stream "#<~s :server ~s :bufnum ~s :frames ~s :channels ~s :samplerate ~s :path ~s>"
+          'buffer (server self) (bufnum self) (frames self) (chanls self) (sr self) (path self)))
 
 (defmethod initialize-instance :after ((self buffer) &key)
   (setf (elt (buffers (server self)) (bufnum self)) self))
@@ -137,6 +137,10 @@
 
 (defun buffer-zero (buffer)
   (send-message (server buffer) "/b_zero" (bufnum buffer) 0))
+
+(defmethod buffer-dur ((buffer buffer))
+  "Get the duration in seconds of BUFFER."
+  (/ (frames buffer) (sr buffer)))
 
 ;;; wavetable
 (defun wavetable (buffer wave data &optional (normalize t) (as-wavetable t) (clear-first t))

@@ -23,6 +23,7 @@
 	   #:*synth-definition-mode*
 	   #:defsynth
 	   #:synth
+       #:get-synthdef-metadata
 	   #:with-controls
 	   #:play
 	   #:proxy
@@ -59,6 +60,7 @@
 	   #:free
        #:release
 	   #:ctrl
+       #:map-bus
 	   #:is-playing-p
 
 	   #:make-group
@@ -83,6 +85,7 @@
 	   #:buffer-set
 	   #:buffer-set-list
 	   #:buffer-zero
+       #:buffer-dur
 	   #:wavetable
 	   #:calc-pv-recsize
 	   #:local-buf
@@ -93,6 +96,7 @@
        #:bus-audio
        #:bus-control
        #:bus-free
+       #:bus-string
        #:busnum
 
 	   #:neg
