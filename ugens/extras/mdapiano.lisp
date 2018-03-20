@@ -1,5 +1,4 @@
 (in-package #:sc)
-(declaim #+sbcl(sb-ext:muffle-conditions style-warning))
 
 (defugen (mda-piano "MdaPiano")
     (&optional (freq 440.0) &key (gate 1.0) (vel 100) (decay 0.8) (release 0.8)
