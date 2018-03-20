@@ -137,7 +137,10 @@
   ())
 
 (defmethod print-object ((c ugen) stream)
-  (format stream "#<~a:~a>" (name c) (string-downcase (rate c))))
+  (format stream "#<~s ~a.~a>" 'ugen (name c) (case (rate c)
+                                                (:audio "ar")
+                                                (:control "kr")
+                                                (:scalar "ar"))))
 
 (defmethod new1 ((ugen ugen) &rest inputs)
   (setf (inputs ugen) inputs)
@@ -275,7 +278,7 @@
    (output-index :initarg :output-index :reader output-index)))
 
 (defmethod print-object ((c proxy-output) stream)
-  (format stream "#<UGen.ProxyOutput ~a>" (output-index c)))
+  (format stream "#<~s :output-index ~s>" 'proxy-output (output-index c)))
 
 (defclass multiout-ugen (ugen)
   ((channels :accessor channels)))
