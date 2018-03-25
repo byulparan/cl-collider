@@ -140,7 +140,7 @@
   (format stream "#<~s ~a.~a>" 'ugen (name c) (case (rate c)
                                                 (:audio "ar")
                                                 (:control "kr")
-                                                (:scalar "ar"))))
+                                                (:scalar "ir"))))
 
 (defmethod new1 ((ugen ugen) &rest inputs)
   (setf (inputs ugen) inputs)
