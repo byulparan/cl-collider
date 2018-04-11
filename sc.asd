@@ -47,6 +47,7 @@
 	       (:file "ugens/math")
 	       (:file "ugens/grains")
 	       (:file "ugens/poll")
+	       (:file "ugens/testugens")
 	       (:file "ugens/extras/envfollow")
 	       (:file "ugens/extras/mdapiano")
 	       (:file "ugens/extras/joshpv")
