@@ -187,9 +187,9 @@
             (buffers rt-server) (make-array (server-options-num-sample-buffers options) :initial-element nil)
             (audio-buses rt-server) (make-array (server-options-num-audio-bus options) :initial-element nil)
             (control-buses rt-server) (make-array (server-options-num-control-bus options) :initial-element nil))
-      (loop :for i :upto (server-options-num-output-bus options)
+      (loop :for i :below (server-options-num-output-bus options)
          :do (get-next-bus rt-server :audio 1 i))
-      (loop :for i :upto (server-options-num-input-bus options)
+      (loop :for i :below (server-options-num-input-bus options)
          :do (get-next-bus rt-server :audio 1 (+ i (server-options-num-output-bus options))))))
   rt-server)
 
