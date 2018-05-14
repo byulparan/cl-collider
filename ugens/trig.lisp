@@ -89,7 +89,7 @@
    (:kr (multinew new 'ugen trig reset min max step (if reset-val reset-val min))))
   :check-fn #'check-same-rate-as-first-input)
 
-(defugen (pulse-divier "PulseDivider") (&optional (trig 0.0) (div 2.0) (start 0.0))
+(defugen (pulse-divider "PulseDivider") (&optional (trig 0.0) (div 2.0) (start 0.0))
   ((:ar (multinew new 'ugen trig div start))
    (:kr (multinew new 'ugen trig div start))))
 
