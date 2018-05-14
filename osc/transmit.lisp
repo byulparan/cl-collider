@@ -27,13 +27,13 @@
     :reader local-port)))
 
 
-(defun osc-device (host port &key local-port)
+(defun osc-device (host port &key (local-host "0.0.0.0") local-port)
   (let ((device (make-instance 'osc-device
 		  :host host
 		  :port port
 		  :socket (usocket:socket-connect nil nil
 						  :protocol :datagram
-						  :local-host "127.0.0.1"
+						  :local-host local-host
 						  :local-port local-port))))
     #+sbcl (setf (sb-bsd-sockets:sockopt-send-buffer (usocket:socket (socket device)))
 		 usocket:+max-datagram-packet-size+)
