@@ -75,7 +75,7 @@
 
 
 ;;; 
-(defun buffer-save (buffer path &key (num-frames -1) (start-frames 0) (format :int24) action)
+(defun buffer-write (buffer path &key (num-frames -1) (start-frames 0) (format :int24) action)
   "Make audio-file from Buffer."
   (let ((bufnum (bufnum buffer))
 	(server (server buffer))

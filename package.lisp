@@ -79,7 +79,7 @@
 	   #:buffer-read-channel
 	   #:buffer-alloc
 	   #:buffer-free
-	   #:buffer-save
+	   #:buffer-write
 	   #:buffer-get
 	   #:buffer-get-list
 	   #:buffer-set
