@@ -23,19 +23,19 @@
 	   #:*synth-definition-mode*
 	   #:defsynth
 	   #:synth
-       #:get-synthdef-metadata
+	   #:get-synthdef-metadata
 	   #:with-controls
 	   #:play
 	   #:proxy
 	   #:clip
 	   #:fold
-       #:wrap
+	   #:wrap
 	   #:range
-       #:exp-range
+	   #:exp-range
 	   #:lin-lin
-       #:lin-exp
-       #:exp-lin
-       #:exp-exp
+	   #:lin-exp
+	   #:exp-lin
+	   #:exp-exp
 
 	   #:with-rendering
 
@@ -58,9 +58,9 @@
 	   #:at
 	   #:bye
 	   #:free
-       #:release
+	   #:release
 	   #:ctrl
-       #:map-bus
+	   #:map-bus
 	   #:is-playing-p
 
 	   #:make-group
@@ -76,7 +76,7 @@
 	   #:frames
 	   #:chanls
 	   #:buffer-read
-       #:buffer-read-channel
+	   #:buffer-read-channel
 	   #:buffer-alloc
 	   #:buffer-free
 	   #:buffer-save
@@ -85,7 +85,8 @@
 	   #:buffer-set
 	   #:buffer-set-list
 	   #:buffer-zero
-       #:buffer-dur
+	   #:buffer-normalize
+	   #:buffer-dur
 	   #:wavetable
 	   #:calc-pv-recsize
 	   #:local-buf
@@ -93,11 +94,11 @@
 	   #:clear-buf
 	   #:local-buf-list
 
-       #:bus-audio
-       #:bus-control
-       #:bus-free
-       #:bus-string
-       #:busnum
+	   #:bus-audio
+	   #:bus-control
+	   #:bus-free
+	   #:bus-string
+	   #:busnum
 
 	   #:neg
 	   #:reciprocal
@@ -111,7 +112,7 @@
 	   #:dbamp
 	   #:ampdb
 	   #:distort
-       #:softclip
+	   #:softclip
 	   #:trunc
 	   #:fold2
 	   #:madd
