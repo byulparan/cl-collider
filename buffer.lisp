@@ -90,7 +90,9 @@
   "Get the duration in seconds of BUFFER."
   (/ (frames buffer) (sr buffer)))
 
-(defun buffer-write (buffer path &key (server *s*) (num-frames -1) (start-frames 0) (format :int24) complete-handler)
+
+(defun buffer-write (buffer path &key (server *s*) (frames -1) (start-frame 0) (format :int24)
+				   leave-open complete-handler)
   "Make audio-file from Buffer."
   (let ((bufnum (bufnum buffer))
 	(file-path (full-pathname path)))
@@ -100,7 +102,7 @@
 										   (:int24 "int24")
 										   (:float "float")
 										   (:double "double"))
-		    num-frames start-frames 0))))
+		    frames start-frame (if leave-open 1 0)))))
 
 
 (defun buffer-get (buffer index &optional action)
