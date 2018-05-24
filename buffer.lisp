@@ -18,22 +18,31 @@
 (defmethod floatfy ((buffer buffer))
   (floatfy (bufnum buffer)))
 
-
 (defun get-next-buffer (server &optional bufnum)
   (bt:with-lock-held ((server-lock server))
     (let* ((bufnum (or bufnum (position nil (buffers server)))))
       (setf (elt (buffers server) bufnum) (make-instance 'buffer :bufnum bufnum :server server)))))
 
-(defun buffer-alloc (frames &key (chanls 1) bufnum (server *s*))
+(defmacro with-sync-or-call-handle ((server buffer path complete-handler) &body body)
+  `(progn
+     ,@body
+     (if ,complete-handler (setf (gethash (list ,path (floor (floatfy ,buffer))) (buffer-get-handlers ,server))
+			     (lambda (buffer)
+			       (remhash (list ,path (bufnum ,buffer)) (buffer-get-handlers ,server))
+			       (funcall ,complete-handler buffer)))
+       (sync ,server))
+     ,buffer))
+
+
+(defun buffer-alloc (frames &key (chanls 1) bufnum (server *s*) complete-handler)
   (let* ((buffer (get-next-buffer server bufnum))
 	 (bufnum (slot-value buffer 'bufnum)))
     (setf (slot-value buffer 'frames) frames
           (slot-value buffer 'chanls) chanls
           (slot-value buffer 'server) server)
-    (apply #'send-message server (list "/b_alloc" bufnum  (floor frames) (floor chanls)
-                                       (sc-osc::encode-message "/b_query" bufnum)))
-    (sync server)
-    buffer))
+    (with-sync-or-call-handle (server buffer "/b_alloc" complete-handler) 
+      (apply #'send-message server (list "/b_alloc" bufnum  (floor frames) (floor chanls)
+					 (sc-osc::encode-message "/b_query" bufnum))))))
 
 (defun buffer-read (path &key bufnum (server *s*))
   (let ((file-path (full-pathname path)))
@@ -57,41 +66,40 @@
       (sync server)
       buffer)))
 
-(defmethod buffer-free ((buffer fixnum) &key (server *s*))
+(defmethod buffer-free ((buffer fixnum) &key (server *s*) complete-handler)
   (bt:with-lock-held ((server-lock server))
     (assert (elt (buffers server) buffer) nil "bufnum ~d already free." buffer)
     (let* ((free-buffer (elt (buffers server) buffer)))
       (setf (elt (buffers server) buffer) nil)
-      (send-message server "/b_free" buffer)
-      (sync server)
-      free-buffer)))
+      (with-sync-or-call-handle (server free-buffer "/b_free" complete-handler) 
+	(send-message server "/b_free" buffer)))))
 
-(defmethod buffer-free ((buffer buffer) &key (server *s*))
-  (buffer-free (bufnum buffer) :server server))
+(defmethod buffer-free ((buffer buffer) &key (server *s*) complete-handler)
+  (buffer-free (bufnum buffer) :server server :complete-handler complete-handler))
 
-(defun buffer-normalize (buffer &optional (new-max 1.0) wavetable-p)
-  (send-message (server buffer) "/b_gen" (floatfy buffer) (if wavetable-p "wnormalize" "normalize") new-max)
-  (sync (server buffer)))
+(defun buffer-normalize (buffer &key (server *s*) (new-max 1.0) wavetable-p complete-handler)
+  (with-sync-or-call-handle (server buffer "/b_gen" complete-handler)
+    (send-message server "/b_gen" (floatfy buffer) (if wavetable-p "wnormalize" "normalize") new-max)))
 
+(defun buffer-zero (buffer &key (server *s*) complete-handler)
+  (with-sync-or-call-handle (server buffer "/b_zero" complete-handler)
+    (send-message (server buffer) "/b_zero" (bufnum buffer) 0)))
 
-;;; 
-(defun buffer-write (buffer path &key (num-frames -1) (start-frames 0) (format :int24) action)
+(defmethod buffer-dur ((buffer buffer))
+  "Get the duration in seconds of BUFFER."
+  (/ (frames buffer) (sr buffer)))
+
+(defun buffer-write (buffer path &key (server *s*) (num-frames -1) (start-frames 0) (format :int24) complete-handler)
   "Make audio-file from Buffer."
   (let ((bufnum (bufnum buffer))
-	(server (server buffer))
 	(file-path (full-pathname path)))
-    (when action
-      (setf (gethash (list "/b_write" bufnum) (buffer-get-handlers server)) action))
-    (send-message server "/b_write" bufnum file-path (pathname-type file-path) (ecase format
-										 (:int16 "int16")
-										 (:int24 "int24")
-										 (:float "float")
-										 (:double "double"))
-		  num-frames start-frames 0)
-    (unless action
-      (sync (server buffer))
-      buffer)))
-
+    (with-sync-or-call-handle (server buffer "/b_write" complete-handler)
+      (send-message server "/b_write" bufnum file-path (pathname-type file-path) (ecase format
+										   (:int16 "int16")
+										   (:int24 "int24")
+										   (:float "float")
+										   (:double "double"))
+		    num-frames start-frames 0))))
 
 
 (defun buffer-get (buffer index &optional action)
@@ -135,15 +143,8 @@
     (sync (server buffer))
     buffer))
 
-(defun buffer-zero (buffer)
-  (send-message (server buffer) "/b_zero" (bufnum buffer) 0))
-
-(defmethod buffer-dur ((buffer buffer))
-  "Get the duration in seconds of BUFFER."
-  (/ (frames buffer) (sr buffer)))
-
 ;;; wavetable
-(defun wavetable (buffer wave data &optional (normalize t) (as-wavetable t) (clear-first t))
+(defun wavetable (buffer wave data &key (server *s*) (normalize t) (as-wavetable t) (clear-first t))
   (apply #'send-message
 	 (server buffer) 
 	 (append (list "/b_gen" (bufnum buffer)
@@ -153,7 +154,8 @@
 		       (+ (if normalize 1 0)
 			  (if as-wavetable 2 0)
 			  (if clear-first 4 0)))
-		 data)))
+		 data))
+  (sync server))
 
 
 

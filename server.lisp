@@ -208,6 +208,13 @@
 (defun remove-reply-responder (cmd)
   (uninstall-reply-responder *s* cmd))
 
+(defun process-buffer-complete-handle (server path bufnum)
+  (multiple-value-bind (handle find-p)
+      (gethash (list path bufnum) (buffer-get-handlers server))
+    (when find-p
+      (let* ((buffer (bt:with-lock-held ((server-lock server)) (elt (buffers server) bufnum))))
+	(funcall handle buffer)))))
+
 (defun initialize-server-responder (rt-server)
   (let ((*s* rt-server))
     (add-reply-responder
@@ -218,11 +225,7 @@
 		  options
 		(declare (ignore notify client-id))))
 	     ((string= path "/quit") (setf (boot-p rt-server) nil))
-	     ((string= path "/b_write")
-	      (let ((bufnum (car options)))
-		(alexandria:when-let
-		    ((f (gethash (list path bufnum) (buffer-get-handlers rt-server))))
-		  (funcall f (elt (buffers rt-server) bufnum))))))))
+	     ((char= (elt path 1) #\b) (process-buffer-complete-handle rt-server path (car options))))))
     (add-reply-responder
      "/status.reply"
      (lambda (&rest args)
