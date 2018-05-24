@@ -208,12 +208,12 @@
 (defun remove-reply-responder (cmd)
   (uninstall-reply-responder *s* cmd))
 
-(defun process-buffer-complete-handle (server path bufnum)
-  (multiple-value-bind (handle find-p)
-      (gethash (list path bufnum) (buffer-get-handlers server))
-    (when find-p
-      (let* ((buffer (bt:with-lock-held ((server-lock server)) (elt (buffers server) bufnum))))
-	(funcall handle buffer)))))
+(defun process-buffer-complete-handle (server key &optional values)
+  (bt:with-lock-held ((server-lock server))
+    (let* ((handlers (gethash key (buffer-get-handlers server))))
+      (when handlers
+	(funcall (car handlers) (if values values (elt (buffers server) (second key))))
+	(setf (gethash key (buffer-get-handlers server)) (cdr handlers))))))
 
 (defun initialize-server-responder (rt-server)
   (let ((*s* rt-server))
@@ -225,7 +225,7 @@
 		  options
 		(declare (ignore notify client-id))))
 	     ((string= path "/quit") (setf (boot-p rt-server) nil))
-	     ((char= (elt path 1) #\b) (process-buffer-complete-handle rt-server path (car options))))))
+	     ((char= (elt path 1) #\b) (process-buffer-complete-handle rt-server (list path (car options)))))))
     (add-reply-responder
      "/status.reply"
      (lambda (&rest args)
@@ -246,14 +246,11 @@
     (add-reply-responder
      "/b_set"
      (lambda (bufnum index value)
-       (let ((action (gethash (list "/b_set" bufnum index) (buffer-get-handlers rt-server))))
-	 (funcall action value))))
+       (process-buffer-complete-handle rt-server (list "/b_set" bufnum index) value)))
     (add-reply-responder
      "/b_setn"
      (lambda (bufnum start frames &rest values)
-       (let ((action (gethash (list "/b_setn" bufnum start frames)
-			      (buffer-get-handlers rt-server))))
-	 (funcall action values))))
+       (process-buffer-complete-handle rt-server (list "/b_setn" bufnum start frames) values)))
     (add-reply-responder
      "/b_info"
      (lambda (bufnum frames chanls sr)

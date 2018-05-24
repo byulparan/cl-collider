@@ -24,14 +24,14 @@
       (setf (elt (buffers server) bufnum) (make-instance 'buffer :bufnum bufnum :server server)))))
 
 (defmacro with-sync-or-call-handle ((server buffer path complete-handler) &body body)
-  `(progn
-     ,@body
-     (if ,complete-handler (setf (gethash (list ,path (floor (floatfy ,buffer))) (buffer-get-handlers ,server))
-			     (lambda (buffer)
-			       (remhash (list ,path (bufnum ,buffer)) (buffer-get-handlers ,server))
-			       (funcall ,complete-handler buffer)))
-       (sync ,server))
-     ,buffer))
+  `(if ,complete-handler (bt:with-lock-held ((server-lock server))
+			   (let* ((handlers (gethash (list ,path (floor (floatfy ,buffer))) (buffer-get-handlers ,server))))
+			     (setf (gethash (list ,path (floor (floatfy ,buffer))) (buffer-get-handlers ,server))
+			       (append handlers (list (lambda (buffer) (funcall ,complete-handler buffer))))))
+			   ,@body)
+     (progn
+       ,@body
+       (sync ,server))))
 
 
 (defun buffer-alloc (frames &key (chanls 1) bufnum (server *s*) complete-handler)
@@ -105,9 +105,11 @@
 (defun buffer-get (buffer index &optional action)
   (let ((bufnum (bufnum buffer))
 	(server (server buffer)))
-    (let ((result nil))
-      (setf (gethash (list "/b_set" bufnum index) (buffer-get-handlers server))
-	(if action action (lambda (value) (setf result value))))
+    (let* ((result nil)
+	   (handle (if action action (lambda (value) (setf result value)))))
+      (bt:with-lock-held ((server-lock server))
+	(let* ((handlers (gethash (list "/b_set" bufnum index) (buffer-get-handlers server))))
+	  (setf (gethash (list "/b_set" bufnum index) (buffer-get-handlers server)) (append handlers (list handle)))))
       (send-message server "/b_get" bufnum index)
       (unless action
 	(sync (server buffer))
@@ -117,9 +119,12 @@
   (assert (>= (frames buffer) (+ start frames)) nil "Buffer index ~a out of range (buffer size: ~a)" (+ start frames) (frames buffer))
   (let ((bufnum (bufnum buffer))
 	(server (server buffer)))
-    (let ((result nil))
-      (setf (gethash (list "/b_setn" bufnum start frames) (buffer-get-handlers server))
-	(if action action (lambda (value) (setf result value))))
+    (let* ((result nil)
+	   (handle (if action action (lambda (value) (setf result value)))))
+      (bt:with-lock-held ((server-lock server))
+	(let* ((handlers (gethash (list "/b_setn" bufnum start frames) (buffer-get-handlers server))))
+	  (setf (gethash (list "/b_setn" bufnum start frames) (buffer-get-handlers server))
+	    (append handlers (list handle)))))
       (send-message server "/b_getn" bufnum start frames)
       (unless action
 	(sync (server buffer))
