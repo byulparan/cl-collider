@@ -33,6 +33,7 @@
 	       (:file "ugens/trig")
 	       (:file "ugens/infougens")
 	       (:file "ugens/bufio")
+	       (:file "ugens/diskio")
 	       (:file "ugens/io")
 	       (:file "ugens/audioin")
 	       (:file "ugens/chaos")
