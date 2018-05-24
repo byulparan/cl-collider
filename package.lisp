@@ -78,6 +78,8 @@
 	   #:buffer-read
 	   #:buffer-read-channel
 	   #:buffer-alloc
+	   #:buffer-cue-soundfile
+	   #:buffer-close
 	   #:buffer-free
 	   #:buffer-write
 	   #:buffer-get

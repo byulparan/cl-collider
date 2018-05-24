@@ -68,6 +68,32 @@
       (sync server)
       buffer)))
 
+(defun buffer-cue-soundfile (path &key (server *s*) (start-frame 0) (chanls 2) (frames 32768))
+  (let* ((file-path (full-pathname path)))
+    (assert (probe-file file-path) (path) "File does not exist: ~a" file-path)
+    (let* ((buffer (buffer-alloc frames :chanls chanls :server server)))
+      (send-message server "/b_read" (bufnum buffer) file-path start-frame frames 0 1
+		    (sc-osc::encode-message "/b_query" (bufnum buffer)))
+      (sync server)
+      buffer)))
+
+(defun buffer-write (buffer path &key (server *s*) (frames -1) (start-frame 0) (format :int24)
+				   leave-open-p complete-handler)
+  "Make audio-file from Buffer."
+  (let ((bufnum (bufnum buffer))
+	(file-path (full-pathname path)))
+    (with-sync-or-call-handle (server buffer "/b_write" complete-handler)
+      (send-message server "/b_write" bufnum file-path (pathname-type file-path) (ecase format
+										   (:int16 "int16")
+										   (:int24 "int24")
+										   (:float "float")
+										   (:double "double"))
+		    frames start-frame (if leave-open-p 1 0)))))
+
+(defun buffer-close (buffer &key (server *s*) complete-handler)
+  (with-sync-or-call-handle (server buffer "/b_close" complete-handler)
+    (send-message server "/b_close" (floatfy buffer) 0)))
+
 (defmethod buffer-free ((buffer fixnum) &key (server *s*) complete-handler)
   (bt:with-lock-held ((server-lock server))
     (assert (elt (buffers server) buffer) nil "bufnum ~d already free." buffer)
@@ -91,18 +117,6 @@
   (/ (frames buffer) (sr buffer)))
 
 
-(defun buffer-write (buffer path &key (server *s*) (frames -1) (start-frame 0) (format :int24)
-				   leave-open complete-handler)
-  "Make audio-file from Buffer."
-  (let ((bufnum (bufnum buffer))
-	(file-path (full-pathname path)))
-    (with-sync-or-call-handle (server buffer "/b_write" complete-handler)
-      (send-message server "/b_write" bufnum file-path (pathname-type file-path) (ecase format
-										   (:int16 "int16")
-										   (:int24 "int24")
-										   (:float "float")
-										   (:double "double"))
-		    frames start-frame (if leave-open 1 0)))))
 
 
 (defun buffer-get (buffer index &optional action)
