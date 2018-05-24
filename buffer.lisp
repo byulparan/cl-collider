@@ -24,14 +24,16 @@
       (setf (elt (buffers server) bufnum) (make-instance 'buffer :bufnum bufnum :server server)))))
 
 (defmacro with-sync-or-call-handle ((server buffer path complete-handler) &body body)
-  `(if ,complete-handler (bt:with-lock-held ((server-lock server))
-			   (let* ((handlers (gethash (list ,path (floor (floatfy ,buffer))) (buffer-get-handlers ,server))))
-			     (setf (gethash (list ,path (floor (floatfy ,buffer))) (buffer-get-handlers ,server))
-			       (append handlers (list (lambda (buffer) (funcall ,complete-handler buffer))))))
-			   ,@body)
-     (progn
-       ,@body
-       (sync ,server))))
+  `(progn
+     (if ,complete-handler (bt:with-lock-held ((server-lock server))
+			     (let* ((handlers (gethash (list ,path (floor (floatfy ,buffer))) (buffer-get-handlers ,server))))
+			       (setf (gethash (list ,path (floor (floatfy ,buffer))) (buffer-get-handlers ,server))
+				 (append handlers (list (lambda (buffer) (funcall ,complete-handler buffer))))))
+			     ,@body)
+       (progn
+	 ,@body
+	 (sync ,server)))
+     ,buffer))
 
 
 (defun buffer-alloc (frames &key (chanls 1) bufnum (server *s*) complete-handler)
@@ -69,10 +71,9 @@
 (defmethod buffer-free ((buffer fixnum) &key (server *s*) complete-handler)
   (bt:with-lock-held ((server-lock server))
     (assert (elt (buffers server) buffer) nil "bufnum ~d already free." buffer)
-    (let* ((free-buffer (elt (buffers server) buffer)))
-      (setf (elt (buffers server) buffer) nil)
-      (with-sync-or-call-handle (server free-buffer "/b_free" complete-handler) 
-	(send-message server "/b_free" buffer)))))
+    (setf (elt (buffers server) buffer) nil))
+  (with-sync-or-call-handle (server buffer "/b_free" complete-handler) 
+    (send-message server "/b_free" buffer)))
 
 (defmethod buffer-free ((buffer buffer) &key (server *s*) complete-handler)
   (buffer-free (bufnum buffer) :server server :complete-handler complete-handler))

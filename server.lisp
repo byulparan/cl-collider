@@ -209,10 +209,10 @@
   (uninstall-reply-responder *s* cmd))
 
 (defun process-buffer-complete-handle (server key &optional values)
-  (bt:with-lock-held ((server-lock server))
-    (let* ((handlers (gethash key (buffer-get-handlers server))))
-      (when handlers
-	(funcall (car handlers) (if values values (elt (buffers server) (second key))))
+  (let* ((handlers (gethash key (buffer-get-handlers server))))
+    (when handlers
+      (funcall (car handlers) (if values values (elt (buffers server) (second key))))
+      (bt:with-lock-held ((server-lock server))
 	(setf (gethash key (buffer-get-handlers server)) (cdr handlers))))))
 
 (defun initialize-server-responder (rt-server)
