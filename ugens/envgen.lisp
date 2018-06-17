@@ -84,7 +84,8 @@
 	       :welch 4
 	       :sqr 6
 	       :cub 7
-	       :cubed 7))))
+	       :cubed 7
+	       :hold 8))))
 
 (defmethod env-shape-number ((self symbol))
   (let ((value (gethash self +env-shape-table+)))
@@ -190,6 +191,11 @@
 ;;; Interpolation formulas adapted from Overtone
 
 (defun step-interpolation (pos y1 y2)
+  (if (zerop pos)
+      y1
+      y2))
+
+(defun hold-interpolation (pos y1 y2)
   (if (< pos 1)
       y1
       y2))
@@ -263,7 +269,8 @@
 		   (3 #'sine-interpolation)
 		   (4 #'welch-interpolation)
 		   (6 #'squared-interpolation)
-		   (7 #'cubed-interpolation))))
+		   (7 #'cubed-interpolation)
+		   (8 #'hold-interpolation))))
 	(funcall fun pos y1 y2))))
 
 (defun pos (x1 x2 x)
