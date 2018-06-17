@@ -84,7 +84,8 @@
 	       :welch 4
 	       :sqr 6
 	       :cub 7
-	       :cubed 7))))
+	       :cubed 7
+	       :hold 8))))
 
 (defmethod env-shape-number ((self symbol))
   (let ((value (gethash self +env-shape-table+)))
@@ -187,5 +188,126 @@
        curve
        1))
 
+;;; Interpolation formulas adapted from Overtone
 
+(defun step-interpolation (pos y1 y2)
+  (if (zerop pos)
+      y1
+      y2))
 
+(defun hold-interpolation (pos y1 y2)
+  (if (< pos 1)
+      y1
+      y2))
+
+(defun linear-interpolation (pos y1 y2)
+  (+ y1
+     (* (- y2 y1)
+	pos)))
+
+(defun exponential-interpolation (pos y1 y2)
+  (let ((y1 (1+ y1))
+	(y2 (1+ y2)))
+    (1-
+     (* y1
+	(expt (/ y2 y1)
+	      pos)))))
+
+(defun exponential-interpolation (pos y1 y2)
+  (let ((y1 (if (zerop y1) 0.0001 y1))
+	(y2 (if (zerop y2) 0.0001 y2)))
+    (assert (or (and (plusp y1) (plusp y2))
+		(and (< y1 0) (< y2 0)))
+	    (y1 y2)
+	    "~S and ~S should have the same sign." y1 y2)
+    (* y1
+       (expt (/ y2 y1)
+	     pos))))
+
+(defun sine-interpolation (pos y1 y2)
+  (+ y1
+     (* (- y2 y1)
+	(+ (* -1 (cos (* pi pos)) 0.5) 0.5))))
+
+(defun welch-interpolation (pos y1 y2)
+  (if (< y1 y2)
+      (+ y1
+	 (* (- y2 y1)
+	    (sin (* pi 0.5 pos))))
+      (- y2
+	 (* (- y2 y1)
+	    (sin (* pi 0.5 (- 1 pos)))))))
+
+(defun curve-interpolation (pos y1 y2 &optional (curvature 0))
+  (if (< (abs curvature) 0.0001)
+      (+ (* pos (- y2 y1))
+	 y1)
+      (let ((denominator (- 1.0 (exp curvature)))
+	    (numerator (- 1.0 (exp (* pos curvature)))))
+	(+ y1
+	   (* (- y2 y1) (/ numerator denominator))))))
+
+(defun squared-interpolation (pos y1 y2)
+  (let* ((y1-s (sqrt y1))
+	 (y2-s (sqrt y2))
+	 (yp (+ y1-s (* pos (- y2-s y1-s)))))
+    (* yp yp)))
+
+(defun cubed-interpolation (pos y1 y2)
+  (let* ((y1-c (expt y1 0.3333333))
+	 (y2-c (expt y2 0.3333333))
+	 (yp (+ y1-c (* pos (- y2-c y1-c)))))
+    (* yp yp yp)))
+
+(defun interpolation (curve pos y1 y2 &optional curve-val)
+  (if (= 5 curve)
+      (curve-interpolation pos y1 y2 curve-val)
+      (let ((fun (case curve
+		   (0 #'step-interpolation)
+		   (1 #'linear-interpolation)
+		   (2 #'exponential-interpolation)
+		   (3 #'sine-interpolation)
+		   (4 #'welch-interpolation)
+		   (6 #'squared-interpolation)
+		   (7 #'cubed-interpolation)
+		   (8 #'hold-interpolation))))
+	(funcall fun pos y1 y2))))
+
+(defun pos (x1 x2 x)
+  (/ (- x x1)
+     (- x2 x1)))
+
+(defmethod env-as-signal ((env env) (frames integer))
+  "Return a list of length FRAMES created by sampling ENV at FRAMES number of intervals."
+  (with-accessors ((levels levels) (times times)
+		   (curve-number curve-number)
+		   (curve-value curve-value))
+      env
+    (let* ((times-lst (loop :for i :in (append (list 0) times)
+			    :summing i :into ir
+			    :collect ir))
+	   (curve-number-lst (if (= 1 (length curve-number))
+				 (make-list (1- (length times-lst))
+					    :initial-element (car curve-number))
+				 curve-number))
+	   (curve-value-lst (if (= 1 (length curve-value))
+				(make-list (1- (length times-lst))
+					   :initial-element (car curve-value))
+				curve-value)))
+      (loop :with max-time := (car (last times-lst))
+	    :with step := (/ max-time
+			     (1- frames))
+	    :for frame :from 0 :below frames
+	    :for pointer := 0 :then (if (> x x2)
+					(incf pointer)
+					pointer)
+	    :for x1 := (elt times-lst pointer)
+	    :for y1 := (elt levels pointer)
+	    :for x2 := (elt times-lst (1+ pointer))
+	    :for y2 := (elt levels (1+ pointer))
+	    :for x := (* frame step)
+	    :for pos := (pos x1 x2 x)
+	    :for curve := (elt curve-number-lst pointer)
+	    :for curve-val := (when (= 5 curve) (elt curve-value-lst pointer))
+	    :if (> x x2) :do (decf frame)
+	    :else :collect (interpolation curve pos y1 y2 curve-val)))))
