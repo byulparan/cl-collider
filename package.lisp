@@ -140,6 +140,7 @@
 	   #:dadsr
 	   #:adsr
 	   #:asr
+	   #:env-as-signal
 
 	   #:fft
 	   #:ifft
