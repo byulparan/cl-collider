@@ -104,7 +104,7 @@
     :reader server-options)
    (server-time-stamp
     :initarg :server-time-stamp
-    :initform #'scheduler:unix-time
+    :initform #'unix-time
     :accessor server-time-stamp)
    (scheduler
     :accessor scheduler)
@@ -136,7 +136,7 @@
 
 (defmethod initialize-instance :after ((self rt-server) &key)
   (push self *all-rt-servers*)
-  (setf (scheduler self) (make-instance 'scheduler:scheduler
+  (setf (scheduler self) (make-instance 'scheduler
 			   :name (name self)
 			   :timestamp (server-time-stamp self))))
 
@@ -180,7 +180,7 @@
     (error "Server failed to boot."))
   (when (boot-p rt-server)
     (send-message rt-server "/notify" 1)
-    (scheduler:sched-run (scheduler rt-server))
+    (sched-run (scheduler rt-server))
     (group-free-all rt-server)
     (let ((options (server-options rt-server)))
       (setf (node-proxy-table rt-server) (make-hash-table)
@@ -199,7 +199,7 @@
     (funcall f))
   (send-message rt-server "/quit")
   (thread-wait (lambda () (not (boot-p rt-server))))
-  (scheduler:sched-stop (scheduler rt-server))
+  (sched-stop (scheduler rt-server))
   (cleanup-server rt-server))
 
 (defun add-reply-responder (cmd handler)
@@ -290,13 +290,13 @@
 
 ;;; scheduler
 (defun callback (time f &rest args)
-  (apply #'scheduler:sched-add (scheduler *s*) time f args))
+  (apply #'sched-add (scheduler *s*) time f args))
 
 (defun now ()
-  (scheduler:sched-time (scheduler *s*)))
+  (sched-time (scheduler *s*)))
 
 (defun quant (next-time &optional (offset .5))
-  (scheduler:sched-quant (scheduler *s*) next-time offset))
+  (sched-quant (scheduler *s*) next-time offset))
 
 ;;; --------------------------------------------------------------------------------------------
 ;;; external server
@@ -349,7 +349,7 @@
 				   (assert (boot-p rt-server) nil "SuperCollider server is not running.")
 				   (setf (boot-p rt-server) nil)
 				   (sc-osc:close-device (osc-device rt-server))
-				   (scheduler:sched-stop (scheduler rt-server)))
+				   (sched-stop (scheduler rt-server)))
       (call-next-method)))
 
 
@@ -408,7 +408,6 @@
   (alexandria:with-gensyms (osc-file file-name non-realtime-stream message)
     `(let* ((,file-name (full-pathname ,output-files))
 	    (,osc-file (cat (subseq ,file-name 0 (position #\. ,file-name)) ".osc"))
-	    (scheduler::*scheduling-mode* :step)
 	    (*s* (make-instance 'nrt-server :name "NRTSynth" :streams nil)))
        (make-group 1 :pos :head :to 0)
        ,@body
@@ -542,7 +541,7 @@
 
 (defun group-free-all (&optional (rt-server *s*))
   (let ((*s* rt-server))
-    (scheduler:sched-clear (scheduler rt-server))
+    (sched-clear (scheduler rt-server))
     (send-message rt-server "/g_freeAll" 0)
     (send-message rt-server "/clearSched")
     (make-group :id 1 :pos :head :to 0)
@@ -552,7 +551,7 @@
 (defvar *stop-hook* nil)
 
 (defun stop (&optional (group 1) &rest groups)
-  (scheduler:sched-clear (scheduler *s*))
+  (sched-clear (scheduler *s*))
   (dolist (group (cons group groups))
     (send-message *s* "/g_freeAll" group)
     (send-message *s* "/clearSched"))

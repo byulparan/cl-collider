@@ -3,10 +3,12 @@
   :author "Park Sungmin. byulparan@icloud.com"
   :description "SuperCollider client for Common Lisp"
   :version "2017.3.15"
-  :depends-on (#:scheduler
-	       #:sc-osc
+  :depends-on (#:sc-osc
 	       #:alexandria
+	       #:cffi
 	       #:bordeaux-threads
+	       #+ecl #:bt-semaphore
+	       #:pileup
 	       #:flexi-streams
 	       #:split-sequence
 	       #:named-readtables)
@@ -15,6 +17,7 @@
 	       #+(or sbcl ecl) (:file "id-map")
 	       (:file "util")
 	       (:file "server-options")
+	       (:file "scheduler")
 	       (:file "server")
 	       (:file "buffer")
 	       (:file "bus")
