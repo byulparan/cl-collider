@@ -83,11 +83,9 @@
                        (expt 0.5 23))))
          (* sign (expt 2.0 expt) mant)))))
 
-(defun encode-float32 (f)
-  (encode-int32 (single-float-bits f)))
+(defun osc::encode-float32 (f)
+  (osc::encode-int32 (single-float-bits f)))
 
-(defun decode-float32 (s)
-  (make-single-float (decode-int32 s)))
-
-
+(defun osc::decode-float32 (s)
+  (make-single-float (osc::decode-int32 s)))
 
