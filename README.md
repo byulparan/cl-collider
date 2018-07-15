@@ -3,7 +3,7 @@
 A <a href="http://supercollider.github.io/">SuperCollider</a> client for <a href="https://www.common-lisp.net/">CommonLisp</a>.  
 It is an experimental project, so changes to the API are possible.
 
-## Videos
+## Videos:
 ### <a href="https://www.youtube.com/watch?v=JivNMDUqNQc">Tutorial</a>   
 **Due to API changes, this video is deprecated. A new tutorial video is coming soon.**
 
@@ -17,7 +17,7 @@ It is an experimental project, so changes to the API are possible.
 - [Quicklisp](http://www.quicklisp.org)
 - [ClozureCL](http://www.clozure.com/clozurecl.html) or [SBCL](http://www.sbcl.org) or [ECL](https://common-lisp.net/project/ecl/)
 
-## Contrib
+## Contrib:
 If you have your own additional libraries, please report me. I will add here.
 
 - [sc-extensions](https://github.com/byulparan/sc-extensions) - extension library
