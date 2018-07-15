@@ -17,6 +17,11 @@ It is an experimental project, so changes to the API are possible.
 - [Quicklisp](http://www.quicklisp.org)
 - [ClozureCL](http://www.clozure.com/clozurecl.html) or [SBCL](http://www.sbcl.org) or [ECL](https://common-lisp.net/project/ecl/)
 
+## Contrib
+If you have your own additional libraries, please report me. I will add here.
+
+- [sc-extensions](https://github.com/byulparan/sc-extensions) - extension library
+
 ## Usage:
 - package: `sc`, `sc-user` (use this package)
 - named-readtable: `sc`
