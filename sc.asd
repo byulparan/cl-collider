@@ -1,8 +1,8 @@
 (asdf:defsystem #:sc
   :name "cl-collider"
-  :author "Park Sungmin. byulparan@icloud.com"
+  :author "Park Sungmin. byulparan@gmail.com"
   :description "SuperCollider client for Common Lisp"
-  :version "2017.3.15"
+  :version "2018.7.15"
   :depends-on (#:sc-osc
 	       #:alexandria
 	       #:cffi

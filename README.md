@@ -16,7 +16,6 @@ It is an experimental project, so changes to the API are possible.
 - [SuperCollider](http://supercollider.github.io) - compatible with 3.9 and 3.8.
 - [Quicklisp](http://www.quicklisp.org)
 - [ClozureCL](http://www.clozure.com/clozurecl.html) or [SBCL](http://www.sbcl.org) or [ECL](https://common-lisp.net/project/ecl/)
-- [Scheduler](http://github.com/byulparan/scheduler)(above 2017.3.14) - The time based task scheduler
 
 ## Usage:
 - package: `sc`, `sc-user` (use this package)
