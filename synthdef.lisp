@@ -273,7 +273,7 @@
 
 (defvar *temp-synth-name* "temp-synth")
 
-(defmacro play (body &key (out-bus 0) (gain 1.0) (lag 1.0) (fade 0.02) (to 1) (pos :head))
+(defmacro play (body &key id (out-bus 0) (gain 1.0) (lag 1.0) (fade 0.02) (to 1) (pos :head))
   (alexandria:with-gensyms (synthdef result dt gate gain-sym lag-sym
                                      start-val env node-id name is-signal-p outlets seqs node)
     `(let* ((,name *temp-synth-name*)
@@ -302,7 +302,7 @@
                        ((eql :control (rate ,result)) (,outlets 'out.kr ,out-bus ,result ,gain-sym ,lag-sym))
                        (t (error "Play: ~a is not a UGen." ,result))))))))
        (build-synthdef ,synthdef)
-       (let* ((,node-id (get-next-id *s*))
+       (let* ((,node-id (or ,id (get-next-id *s*)))
               (,node (make-instance 'node :server *s* :id ,node-id :name *temp-synth-name* :pos ,pos :to ,to :meta (list :is-signal-p ,is-signal-p))))
          (recv-synthdef ,synthdef ,node (apply 'sc-osc::encode-message (make-synth-msg *s* ,name ,node-id ,to ,pos)))
          (sync)
@@ -336,26 +336,30 @@
                 :unless (null res)
                 :return res)))))
 
-(defmacro proxy (key body &key (gain 1.0) (fade 0.5) (pos :head) (to 1) (out-bus 0))
-  (alexandria:with-gensyms (node)
+(defmacro proxy (key body &key id (gain 1.0) (fade 0.5) (pos :head) (to 1) (out-bus 0))
+  (alexandria:with-gensyms (node d-key)
     `(let ((,node (gethash ,key (node-proxy-table *s*))))
        (labels ((clear-node ()
                   (when (and ,node (is-playing-p ,node))
                     (if (getf (meta ,node) :is-signal-p) (ctrl ,node :gate 0 :fade ,fade)
-                        (free ,node)))))
+                      (free ,node)))))
          ,(if body
-              (let ((d-key (string-downcase key)))
-                (set-synthdef-metadata d-key :name d-key)
-                (alexandria:when-let ((controls (get-controls-list body)))
-                  (set-synthdef-metadata d-key :controls
-                                         (mapcar (lambda (param) (append (list (car param)) (cdr param)))
-                                                 controls)))
-                (set-synthdef-metadata d-key :body body)
-                `(let ((*temp-synth-name* ,(string-downcase key)))
-                   (prog1 (setf (gethash ,key (node-proxy-table *s*))
-                                (play ,body :out-bus ,out-bus :fade ,fade :to ,to :pos ,pos :gain ,gain))
-                     (clear-node))))
-              `(clear-node))))))
+	      `(progn
+		 (when (and ,id (find ,id (node-watcher *s*)))
+		   (error  "already running id ~d~%" ,id))
+		 (let ((,d-key (string-downcase ,key)))
+		   (set-synthdef-metadata ,d-key :name ,d-key)
+		   (alexandria:when-let ((controls (get-controls-list ',body)))
+                     (set-synthdef-metadata ,d-key :controls
+		 			    (mapcar (lambda (param) (append (list (car param)) (cdr param)))
+		 				    controls)))
+		   (set-synthdef-metadata ,d-key :body ',body))
+		 (let ((*temp-synth-name* ,(string-downcase key)))
+		   (prog1 (setf (gethash ,key (node-proxy-table *s*))
+			    (play ,body :id ,id :out-bus ,out-bus :fade ,fade :to ,to :pos ,pos :gain ,gain))
+		     (cond ((not ,id) (clear-node))
+			   ((and ,node (/= (id ,node) ,id)) (clear-node))))))
+            `(clear-node))))))
 
 
 ;;; ======================================================================
