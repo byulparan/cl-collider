@@ -1,9 +1,5 @@
 (in-package :sc-osc)
 
-(defun join-thread (thread)
-  #+ccl (bt:join-thread thread)
-  #+sbcl (sb-thread:join-thread thread :default nil))
-
 (defclass osc-device ()
   ((reply-handle-table
     :initform (make-hash-table :test #'equal)
@@ -68,10 +64,14 @@
     (values)))
 
 (defun close-device (osc-device)
-  (when (listening-thread osc-device)
-    (bt:destroy-thread (listening-thread osc-device))
-    (join-thread (listening-thread osc-device)))
-  (usocket:socket-close (socket osc-device))
+  (let* ((socket (socket osc-device)))
+    (when (listening-thread osc-device)
+      (let* ((msg (osc:encode-message "/done" "/quit")))
+	(usocket:socket-send socket msg (length msg)
+			     :host "127.0.0.1"
+			     :port (usocket:get-local-port socket)))
+      (bt:join-thread (listening-thread osc-device)))
+    (usocket:socket-close (socket osc-device)))
   (setf (status osc-device) :not-running))
 
 (defun make-listening-thread (osc-device)
@@ -86,8 +86,14 @@
 	      (declare (ignore host port length))
 	      (let* ((message (decode-bundle buffer) )
 		     (handler (gethash (car message) (reply-handle-table osc-device))))
-		(if handler (handler-case (apply handler (cdr message))
-			     (error (c) (format t "Error ~a on received message ~s ~%" c (car message))))
-		  (format t "Reply handler not found: ~a [ ~{~a ~}]~%" (car message) (cdr message))))))))
+		(if handler (handler-case (progn (apply handler (cdr message))
+						 (when (and (string= (car message) "/done")
+							    (string= (second message) "/quit"))
+						   (return)))
+			      (error (c) (format t "Error ~a on received message ~s ~%" c (car message))))
+		  (if (and (string= (car message) "/done")
+			   (string= (second message) "/quit"))
+		      (return)
+		    (format t "Reply handler not found: ~a [ ~{~a ~}]~%" (car message) (cdr message)))))))))
    :name (format nil "OSC device receive thread")))
 

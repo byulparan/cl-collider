@@ -6,17 +6,21 @@
 (defvar *sc-synth-program*
   #+darwin "/Applications/SuperCollider/SuperCollider.app/Contents/Resources/scsynth"
   #+linux "/usr/bin/scsynth"
+  #+windows "c:/Program Files/SuperCollider-3.9.3/scsynth.exe"
   "The path to the scsynth binary.")
 
 (setf *sc-plugin-paths*
   #+darwin (list "/Applications/SuperCollider/SuperCollider.app/Contents/Resources/plugins/"
 		 "~/Library/Application\ Support/SuperCollider/Extensions/")
   #+linux (list "/usr/lib/SuperCollider/plugins/"
-		"/usr/share/SuperCollider/Extensions/SC3plugins/"))
+		"/usr/share/SuperCollider/Extensions/SC3plugins/")
+  #+windows (list "c:/Program Files/SuperCollider-3.9.3/plugins/"
+		  "~/AppData/Local/SuperCollider/Extensions/"))
 
 (defvar *sc-synthdefs-path*
   #+darwin (full-pathname "~/Library/Application Support/SuperCollider/synthdefs")
   #+linux (full-pathname "~/.local/share/SuperCollider/synthdefs/")
+  #+windows (full-pathname "~/AppData/Local/SuperCollider/synthdefs/")
   "The directory where the scsyndef files for synthdefs are saved.")
 
 ;;; -------------------------------------------------------
@@ -326,22 +330,22 @@
   (string= (host rt-server) "127.0.0.1"))
 
 (defmethod bootup-server-process ((rt-server external-server))
-  (with-slots (osc-device) rt-server
-    (setf osc-device (sc-osc:osc-device (host rt-server) (port rt-server) :local-port 0)))
   (unless (just-connect-p rt-server)
     (setf (sc-thread rt-server)
       (bt:make-thread
-       (lambda () (run-program
-	       (format nil "~a -u ~a ~a"
-		       (full-pathname *sc-synth-program*)
-		       (port rt-server)
-		       (build-server-options (server-options rt-server)))
-	       :wait t
-	       :output t))
-       :name "scsynth"))))
+       (lambda () (sc-program-run (full-pathname *sc-synth-program*)
+				  (append
+				   (list "-u" (write-to-string (port rt-server)))
+				   (build-server-options (server-options rt-server)))))
+       :name "scsynth"))
+    #+windows
+    ;;wait for running scsynth(binding socket port)
+    (sleep 3)) 
+  (with-slots (osc-device) rt-server
+    (setf osc-device (sc-osc:osc-device (host rt-server) (port rt-server) :local-port 0))))
 
 (defmethod cleanup-server ((rt-server external-server))
-  (sc-osc::join-thread (sc-thread rt-server))
+  (bt:join-thread (sc-thread rt-server))
   (sc-osc:close-device (osc-device rt-server)))
 
 (defmethod server-quit ((rt-server external-server))
@@ -419,24 +423,18 @@
 	   (let ((,message (sc-osc::encode-bundle (second ,message) (car ,message))))
 	     (write-sequence (osc::encode-int32 (length ,message)) ,non-realtime-stream)
 	     (write-sequence ,message ,non-realtime-stream))))
-       (run-program
-	(format nil "~a -U \"~{~a~^:~}\" -N ~a _ ~a ~a ~a ~a -o 2"
-		(full-pathname *sc-synth-program*)
-		(mapcar #'full-pathname *sc-plugin-paths*)
-		,osc-file ,file-name ,sr
-		(string-upcase (pathname-type ,file-name))
-		(ecase ,format
-		  (:int16 "int16")
-		  (:int24 "int24")
-		  (:float "float")
-		  (:double "double")))
-	:wait t
-	:output t)
+       (sc-program-run (full-pathname *sc-synth-program*)
+		       (list "-U" (format nil "~{\"~a\"~^:~}" (mapcar #'full-pathname *sc-plugin-paths*))
+			     "-N" ,osc-file
+			     "_" ,file-name ,sr (string-upcase (pathname-type ,file-name))
+			     (ecase ,format
+			       (:int16 "int16")
+			       (:int24 "int24")
+			       (:float "float")
+			       (:double "double"))))
        (unless ,keep-osc-file
 	 (delete-file ,osc-file))
        (values))))
-
-
 
 
 ;;; -------------------------------------------------------
