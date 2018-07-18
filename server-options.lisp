@@ -3,10 +3,10 @@
 (defvar *sc-plugin-paths*)
 
 (defstruct server-options
-  (num-control-bus 4096)
-  (num-audio-bus 128)
-  (num-input-bus 8)
-  (num-output-bus 8)
+  (num-control-bus 16384)
+  (num-audio-bus 1024)
+  (num-input-bus 2)
+  (num-output-bus 2)
   (block-size 64)
   (hardware-buffer-size 0)
   (hardware-samplerate 0)
@@ -18,7 +18,7 @@
   (num-random-seeds 64)
   (load-synthdefs-p 1)
   (publish-to-rendezvous-p 1)
-  (max-logins 64)
+  (max-logins 1)
   (verbosity 0)
   (ugen-plugins-path (mapcar #'full-pathname *sc-plugin-paths*)))
 
