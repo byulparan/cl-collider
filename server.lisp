@@ -3,17 +3,18 @@
 (defvar *s* nil
   "Special symbol bound to the default scsynth server. If functions do not specify a target server, that message is sent to the *s* server.")
 
+;; default path are which build target from source
 (defvar *sc-synth-program*
   #+darwin "/Applications/SuperCollider/SuperCollider.app/Contents/Resources/scsynth"
-  #+linux "/usr/bin/scsynth"
+  #+linux "/usr/local/bin/scsynth"
   #+windows "c:/Program Files/SuperCollider-3.9.3/scsynth.exe"
   "The path to the scsynth binary.")
 
 (setf *sc-plugin-paths*
   #+darwin (list "/Applications/SuperCollider/SuperCollider.app/Contents/Resources/plugins/"
 		 "~/Library/Application\ Support/SuperCollider/Extensions/")
-  #+linux (list "/usr/lib/SuperCollider/plugins/"
-		"/usr/share/SuperCollider/Extensions/SC3plugins/")
+  #+linux (list "/usr/local/lib/SuperCollider/plugins/"
+		"/usr/local/share/SuperCollider/Extensions/")
   #+windows (list "c:/Program Files/SuperCollider-3.9.3/plugins/"
 		  "~/AppData/Local/SuperCollider/Extensions/"))
 
