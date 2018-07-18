@@ -165,28 +165,32 @@
 (defun sched-run (scheduler)
   (when (eql (sched-status scheduler) :stop)
     (setf (sched-thread scheduler)
-	  (bt:make-thread
-	   (lambda ()
-	     (labels ((run ()
-			(handler-case
-			    (loop
-			      (loop :while (pileup:heap-empty-p (in-queue scheduler))
-				    :do (condition-wait (condition-var scheduler) (mutex scheduler)))
-			      (loop :while (not (pileup:heap-empty-p (in-queue scheduler)))
-				    :do (let ((timeout (- (sched-event-timestamp (pileup:heap-top (in-queue scheduler))) (sched-time scheduler))))
-					  (unless (plusp timeout) (return))
-					  (condition-timed-wait (condition-var scheduler) (mutex scheduler) timeout)))
-			      (loop :while (and (not (pileup:heap-empty-p (in-queue scheduler)))
-						(>= (sched-time scheduler) (sched-event-timestamp (pileup:heap-top (in-queue scheduler)))))
-				    :do (funcall (sched-event-task (pileup:heap-pop (in-queue scheduler))))))
-			  (error (c) (format t "~&Error \"~a\" in scheduler thread~%" c)
-			    (run)))))
-	       (set-thread-realtime-priority) ;thread-boost!!
-	       (bt:with-lock-held ((mutex scheduler))
-		 (setf (sched-status scheduler) :running)
-		 (sched-clear scheduler)
-		 (run))))
-	   :name (format nil "~@[~a ~]scheduler thread" (sched-name scheduler))))
+      (bt:make-thread
+       (lambda ()
+	 (labels ((run ()
+		    (handler-case
+			(let* ((run-p t))
+			  (loop while run-p do
+			    (loop :while (pileup:heap-empty-p (in-queue scheduler))
+				  :do (condition-wait (condition-var scheduler) (mutex scheduler)))
+			    (loop :while (not (pileup:heap-empty-p (in-queue scheduler)))
+				  :do (let ((timeout (- (sched-event-timestamp (pileup:heap-top (in-queue scheduler))) (sched-time scheduler))))
+					(unless (plusp timeout) (return))
+					(condition-timed-wait (condition-var scheduler) (mutex scheduler) timeout)))
+			    (loop :while (and (not (pileup:heap-empty-p (in-queue scheduler)))
+					      (>= (sched-time scheduler) (sched-event-timestamp (pileup:heap-top (in-queue scheduler)))))
+				  :do (when (eql 'ensure-scheduler-stop-quit ;; it's magic code. it seems chagne..
+						 (funcall (sched-event-task (pileup:heap-pop (in-queue scheduler)))))
+					(setf run-p nil)
+					(return)))))
+		      (error (c) (format t "~&Error \"~a\" in scheduler thread~%" c)
+			(run)))))
+	   (set-thread-realtime-priority) ;thread-boost!!
+	   (bt:with-lock-held ((mutex scheduler))
+	     (setf (sched-status scheduler) :running)
+	     (sched-clear scheduler)
+	     (run))))
+       :name (format nil "~@[~a ~]scheduler thread" (sched-name scheduler))))
     :running))
 
 (defun sched-add (scheduler time f &rest args)
@@ -210,13 +214,11 @@
     #+ecl (bt-sem:signal-semaphore (condition-var scheduler)))
   (values))
 
-
 (defun sched-stop (scheduler)
   "Stop the scheduler."
   (when (eql (sched-status scheduler) :running)
-    (bt:destroy-thread (sched-thread scheduler))
-    ;; when kill thread by destroy-thread then join-thread not work in sbcl
-    #-sbcl (bt:join-thread (sched-thread scheduler))
+    (sched-add scheduler -1 (lambda () 'ensure-scheduler-stop-quit))
+    (bt:join-thread (sched-thread scheduler))
     (setf (sched-status scheduler) :stop)))
 
 
