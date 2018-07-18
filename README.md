@@ -40,6 +40,10 @@ If you have your own additional libraries, please report me. I will add here.
 (setf *s* (make-external-server "localhost" :port 48800))
 (server-boot *s*)
 
+;; in Linux, maybe you need call this function
+#+linux
+(jack-connect)
+
 ;; Hack music
 (defvar *synth*)
 (setf *synth* (play (sin-osc.ar [320 321] 0 .2)))
