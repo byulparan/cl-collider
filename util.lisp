@@ -58,6 +58,14 @@
     (uiop:run-program command
 		      :output :interactive)))
 
+#+linux
+(defun jack-connect (&key (client-name "SuperCollider") (input-name "system:capture") (output-name "system:playback"))
+  (loop for i from 0 below (server-options-num-input-bus (server-options *s*))
+	do (uiop:run-program (format nil "jack_connect ~a_~d ~a:in_~d" input-name (+ i 1) client-name (+ i 1))
+			     :ignore-error-status t))
+  (loop for i from 0 below (server-options-num-output-bus (server-options *s*))
+	do (uiop:run-program (format nil "jack_connect ~a:out_~d ~a_~d" client-name (+ i 1) output-name (+ i 1))
+			     :ignore-error-status t)))
 
 (defun as-keyword (object)
   (alexandria:make-keyword

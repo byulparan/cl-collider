@@ -16,6 +16,8 @@
 	   #:callback
 	   #:quant
 
+	   #+linux #:jack-connect
+	   
 	   #:make-server-options
 	   #:server-options
 	   #:server-options-block-size
