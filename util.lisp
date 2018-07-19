@@ -20,14 +20,16 @@
 			  (return))
 			(sleep .01))))
 
-(defun thread-wait-with-timeout (f timeout)
-  #+ccl (ccl:process-wait-with-timeout "wait.." timeout f)
-  #+(or sbcl ecl) (let ((target-time (+ (get-internal-real-time) (* 10 timeout))))
+(defun thread-wait-with-timeout (f timeout-msec)
+  #+ccl (ccl:process-wait-with-timeout "wait.." timeout-msec f)
+  #+(or sbcl ecl) (let ((dead-time (+ (/ (get-internal-real-time) internal-time-units-per-second)
+				      (* 1e-3 timeout-msec))))
 		    (cond ((apply f nil) t)
 			  (t (loop
 			       (alexandria:when-let ((val (apply f nil)))
 				 (return-from thread-wait-with-timeout val))
-			       (when (> (get-internal-real-time) target-time)
+			       (when (> (/ (get-internal-real-time) internal-time-units-per-second)
+					dead-time)
 				 (return))
 			       (sleep .01))))))
 
