@@ -341,7 +341,8 @@
        :name "scsynth"))
     #+windows
     ;;wait for running scsynth(binding socket port)
-    (sleep 3)) 
+    (unless (find-port (sc-thread rt-server) (port rt-server))
+      (error "fail bootup"))) 
   (with-slots (osc-device) rt-server
     (setf osc-device (sc-osc:osc-device (host rt-server) (port rt-server) :local-port 0))))
 
