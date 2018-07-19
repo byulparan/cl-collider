@@ -126,9 +126,6 @@
    (control-get-handlers
     :initform (make-hash-table)
     :reader control-get-handlers)
-   (end-node-handler
-    :initform (make-hash-table)
-    :reader end-node-handler)
    (sync-id-map
     :initform (make-id-map)
     :reader sync-id-map
@@ -188,6 +185,7 @@
   (when (boot-p rt-server)
     (send-message rt-server "/notify" 1)
     (sched-run (scheduler rt-server))
+    (setf (node-watcher rt-server) (list 0 1))
     (group-free-all rt-server)
     (let ((options (server-options rt-server)))
       (setf (node-proxy-table rt-server) (make-hash-table)
@@ -275,8 +273,6 @@
      "/n_end"
      (lambda (id &rest args)
        (declare (ignore args))
-       (alexandria:when-let ((handle (gethash id (end-node-handler rt-server))))
-	 (funcall handle))
        (alexandria:removef (node-watcher rt-server) id)))
     (add-reply-responder
      "/d_removed" (lambda (&rest args) (declare (ignore args))))))
