@@ -177,7 +177,9 @@
 		     do (incf try-count)
 			(when (> try-count 30) (return))
 			(send-message rt-server "/sync" -1))
-	       (when (and (not (boot-p rt-server)) (bt:thread-alive-p (sc-thread rt-server)))
+	       (when (and (not (boot-p rt-server))
+			  (sc-thread rt-server)
+			  (bt:thread-alive-p (sc-thread rt-server)))
 		 (bootup)))))
     (bootup))
   (unless (boot-p rt-server)
@@ -226,9 +228,9 @@
      "/done"
      (lambda (path &rest options)
        (cond ((string= path "/notify")
-	      (destructuring-bind (notify &optional client-id)
+	      (destructuring-bind (client-id max-logins)
 		  options
-		(declare (ignore notify client-id))))
+		(declare (ignore client-id max-logins))))
 	     ((string= path "/quit") (setf (boot-p rt-server) nil))
 	     ((char= (elt path 1) #\b) (process-buffer-complete-handle rt-server (list path (car options)))))))
     (add-reply-responder
@@ -347,12 +349,14 @@
     (setf osc-device (sc-osc:osc-device (host rt-server) (port rt-server) :local-port 0))))
 
 (defmethod cleanup-server ((rt-server external-server))
-  (bt:join-thread (sc-thread rt-server))
+  (when (sc-thread rt-server)
+    (bt:join-thread (sc-thread rt-server)))
   (sc-osc:close-device (osc-device rt-server)))
 
 (defmethod server-quit ((rt-server external-server))
   (if (just-connect-p rt-server) (progn
 				   (assert (boot-p rt-server) nil "SuperCollider server is not running.")
+				   (send-message rt-server "/notify" 0)
 				   (setf (boot-p rt-server) nil)
 				   (sc-osc:close-device (osc-device rt-server))
 				   (sched-stop (scheduler rt-server)))
