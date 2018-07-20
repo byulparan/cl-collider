@@ -1,10 +1,10 @@
-
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (named-readtables:defreadtable :sc
     (:merge :common-lisp)))
 
-(defpackage #:sc
+(defpackage #:cl-collider
   (:use #:cl)
+  (:nicknames #:sc)
   #+ccl (:import-from :ccl #:make-id-map #:assign-id-map-id #:id-map-free-object)
   #+sbcl (:lock t)
   (:export #:*s*

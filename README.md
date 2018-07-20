@@ -25,6 +25,8 @@ If you have your own additional libraries, please report me. I will add here.
 - named-readtable: `sc`
 
 ```cl
+(ql:quickload :cl-collider)
+
 (in-package :sc-user)
 (named-readtables:in-readtable :sc)
 
