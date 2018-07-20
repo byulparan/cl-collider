@@ -32,12 +32,6 @@
       (gettimeofday tv (cffi::null-pointer))
       (+ (cffi:mem-ref tv 'time_t) (* (cffi:mem-ref tv 'seconds_t (cffi:foreign-type-size 'time_t)) 1.0d-6)))))
 
-(defun quant (next-time &optional time)
-  "Return a time which quantized to given a next-time."
-  (let ((time (* 1.0d0 (floor time))))
-    (+ time (- next-time (mod time next-time)))))
-
-
 #-windows
 (cffi:defcstruct sched-param
   (priority :int))
@@ -77,7 +71,6 @@
 					     (cffi:foreign-enum-keyword 'sched-policy policy))
 	    (cffi:with-foreign-slots ((priority dummy) param (:struct sched-param))
 	      priority))))
-
 
 #+windows
 (defun set-thread-realtime-priority ()

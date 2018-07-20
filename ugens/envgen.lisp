@@ -205,13 +205,14 @@
      (* (- y2 y1)
 	pos)))
 
-(defun exponential-interpolation (pos y1 y2)
-  (let ((y1 (1+ y1))
-	(y2 (1+ y2)))
-    (1-
-     (* y1
-	(expt (/ y2 y1)
-	      pos)))))
+;;; duplicate
+;; (defun exponential-interpolation (pos y1 y2)
+;;   (let ((y1 (1+ y1))
+;; 	(y2 (1+ y2)))
+;;     (1-
+;;      (* y1
+;; 	(expt (/ y2 y1)
+;; 	      pos)))))
 
 (defun exponential-interpolation (pos y1 y2)
   (let ((y1 (if (zerop y1) 0.0001 y1))
@@ -273,10 +274,6 @@
 		   (8 #'hold-interpolation))))
 	(funcall fun pos y1 y2))))
 
-(defun pos (x1 x2 x)
-  (/ (- x x1)
-     (- x2 x1)))
-
 (defmethod env-as-signal ((env env) (frames integer))
   "Return a list of length FRAMES created by sampling ENV at FRAMES number of intervals."
   (with-accessors ((levels levels) (times times)
@@ -306,7 +303,7 @@
 	    :for x2 := (elt times-lst (1+ pointer))
 	    :for y2 := (elt levels (1+ pointer))
 	    :for x := (* frame step)
-	    :for pos := (pos x1 x2 x)
+	    :for pos := (/ (- x x1) (- x2 x1))
 	    :for curve := (elt curve-number-lst pointer)
 	    :for curve-val := (when (= 5 curve) (elt curve-value-lst pointer))
 	    :if (> x x2) :do (decf frame)
