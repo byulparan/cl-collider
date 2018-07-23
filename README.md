@@ -4,6 +4,7 @@ A <a href="http://supercollider.github.io/">SuperCollider</a> client for <a href
 It is an experimental project, so changes to the API are possible.
 
 ## Videos:
+- [tempo-clock on cl-collider](https://youtu.be/3Lo7yyZcSzU)   
 - [cl-collider on Windows10](https://youtu.be/pCEfV4jOdUA)  
 - [Tutorial](https://www.youtube.com/watch?v=JivNMDUqNQc) - Due to API changes, this video is deprecated. A new tutorial video is coming soon.  
 - [Live Coding Demo 1](https://www.youtube.com/watch?v=xzTH_ZqaFKI)  
