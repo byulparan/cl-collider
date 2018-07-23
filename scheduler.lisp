@@ -180,7 +180,6 @@
 	   (set-thread-realtime-priority) ;thread-boost!!
 	   (bt:with-lock-held ((mutex scheduler))
 	     (setf (sched-status scheduler) :running)
-	     (sched-clear scheduler)
 	     (run))))
        :name (format nil "~@[~a ~]scheduler thread" (sched-name scheduler))))
     :running))
@@ -209,8 +208,70 @@
 (defun sched-stop (scheduler)
   "Stop the scheduler."
   (when (eql (sched-status scheduler) :running)
+    (sched-clear scheduler)
     (sched-add scheduler -1 (lambda () 'ensure-scheduler-stop-quit))
     (bt:join-thread (sched-thread scheduler))
     (setf (sched-status scheduler) :stop)))
+
+
+
+;;; TempoClock
+(defclass tempo-clock ()
+  ((name
+    :initarg :name
+    :reader tempo-clock-name)
+   (bpm
+    :initarg :bpm
+    :initform 60
+    :accessor tempo-clock-bpm)
+   (queue
+    :initform (pileup:make-heap #'< :key #'car)
+    :accessor tempo-clock-queue)
+   (scheduler
+    :initform nil
+    :accessor tempo-clock-scheduler)
+   (beat
+    :initform 0
+    :accessor tempo-clock-beat)))
+
+(defmethod initialize-instance :after ((self tempo-clock) &key)
+  (setf (tempo-clock-scheduler self) (make-instance 'scheduler
+  				       :name (format nil "~a TempoClock" (tempo-clock-name self))
+				       :timestamp #'unix-time)))
+
+(defun tempo-clock-process (tempo-clock time beat)
+  (setf (tempo-clock-beat tempo-clock) beat)
+  (loop while (let* ((top (pileup:heap-top (tempo-clock-queue tempo-clock))))
+		(and top (>= beat (car top))))
+	do (handler-case
+	       (funcall (cdr (pileup:heap-pop (tempo-clock-queue tempo-clock))) time)
+	     (error (c) (format t "caught error ~a in TempoClock~%" c))))
+  (let ((next (+ time (/ 60.0d0 (tempo-clock-bpm tempo-clock) 48.0d0))))
+    (sched-add (tempo-clock-scheduler tempo-clock) next 'tempo-clock-process tempo-clock next (+ beat 1/48))))
+
+(defun tempo-clock-run (tempo-clock)
+  (sched-run (tempo-clock-scheduler tempo-clock))
+  (tempo-clock-process tempo-clock (sched-quant (tempo-clock-scheduler tempo-clock) 1) -1))
+
+(defun tempo-clock-stop (tempo-clock)
+  (sched-stop (tempo-clock-scheduler tempo-clock)))
+
+(defun tempo-clock-clear (tempo-clock)
+  (setf (tempo-clock-queue tempo-clock) (pileup:make-heap #'< :key #'car)))
+
+(defun tempo-clock-add (tempo-clock beat function)
+  (assert (>= beat (tempo-clock-beat tempo-clock)) nil
+	  "too late for beat: ~d" beat)
+  (pileup:heap-insert (cons beat (lambda (time)
+				   (funcall function time)))
+		      (tempo-clock-queue tempo-clock))
+  (values))
+
+(defun tempo-clock-quant (tempo-clock quant)
+  (let* ((beat (tempo-clock-beat tempo-clock))
+	 (add (- quant (mod beat quant))))
+    (+ add beat)))
+
+
 
 

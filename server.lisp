@@ -113,6 +113,8 @@
     :accessor server-time-stamp)
    (scheduler
     :accessor scheduler)
+   (tempo-clock
+    :accessor tempo-clock)
    (sc-thread
     :initform nil
     :accessor sc-thread)
@@ -140,7 +142,9 @@
   (push self *all-rt-servers*)
   (setf (scheduler self) (make-instance 'scheduler
 			   :name (name self)
-			   :timestamp (server-time-stamp self))))
+			   :timestamp (server-time-stamp self))
+	(tempo-clock self) (make-instance 'tempo-clock
+			     :name (name self))))
 
 (let ((semaphore-table (make-hash-table)))
   (defun get-semaphore-by-thread ()
@@ -185,6 +189,7 @@
   (when (boot-p rt-server)
     (send-message rt-server "/notify" 1)
     (sched-run (scheduler rt-server))
+    (tempo-clock-run (tempo-clock rt-server))
     (setf (node-watcher rt-server) (list 0 1))
     (group-free-all rt-server)
     (let ((options (server-options rt-server)))
@@ -205,6 +210,7 @@
   (send-message rt-server "/quit")
   (thread-wait (lambda () (not (boot-p rt-server))))
   (sched-stop (scheduler rt-server))
+  (tempo-clock-stop (tempo-clock rt-server))
   (cleanup-server rt-server))
 
 (defun add-reply-responder (cmd handler)
@@ -291,15 +297,6 @@
   (message-distribute nil (list "/c_set" index value) *s*))
 
 
-;;; scheduler
-(defun callback (time f &rest args)
-  (apply #'sched-add (scheduler *s*) time f args))
-
-(defun now ()
-  (sched-time (scheduler *s*)))
-
-(defun quant (next-time &optional (offset .5))
-  (sched-quant (scheduler *s*) next-time offset))
 
 ;;; --------------------------------------------------------------------------------------------
 ;;; external server
@@ -542,6 +539,7 @@
 (defun group-free-all (&optional (rt-server *s*))
   (let ((*s* rt-server))
     (sched-clear (scheduler rt-server))
+    (tempo-clock-clear (tempo-clock rt-server))
     (send-message rt-server "/g_freeAll" 0)
     (send-message rt-server "/clearSched")
     (make-group :id 1 :pos :head :to 0)
@@ -552,6 +550,7 @@
 
 (defun stop (&optional (group 1) &rest groups)
   (sched-clear (scheduler *s*))
+  (tempo-clock-clear (tempo-clock *s*))
   (dolist (group (cons group groups))
     (send-message *s* "/g_freeAll" group)
     (send-message *s* "/clearSched"))
@@ -560,3 +559,59 @@
 
 (defun server-status (&optional (rt-server *s*))
   (send-message rt-server "/status"))
+
+;;; scheduler
+(defun callback (time f &rest args)
+  (apply #'sched-add (scheduler *s*) time f args))
+
+(defun now ()
+  (sched-time (scheduler *s*)))
+
+(defun quant (next-time &optional (offset .5))
+  (sched-quant (scheduler *s*) next-time offset))
+
+;;; tempo-clock
+(defun clock-bpm (&optional bpm)
+  (if bpm (progn
+	    (assert (and (numberp bpm) (plusp bpm)))
+	    (setf (tempo-clock-bpm (tempo-clock *s*)) bpm))
+    (tempo-clock-bpm (tempo-clock *s*))))
+
+(defun clock-add (beat f &rest args)
+  (tempo-clock-add (tempo-clock *s*) beat (lambda (time)
+					    (declare (ignore time))
+					    (apply f args))))
+
+(defun clock-add-delay (beat delaytime f &rest args)
+  (tempo-clock-add (tempo-clock *s*) beat (lambda (time)
+					    (declare (ignore time))
+					    (callback (+ (now) delaytime)
+						      (lambda () (apply f args))))))
+
+
+(defun clock-quant (quant)
+  (tempo-clock-quant (tempo-clock *s*) quant))
+
+(defun clock-tm (beat)
+  (unbubble (mapcar #'(lambda (b) (* b (/ 60.0 (clock-bpm)))) (alexandria:ensure-list beat))))
+
+(defun clock-reset ()
+  (let* ((bpm (clock-bpm))
+	 (name (tempo-clock-name (tempo-clock *s*))))
+    (tempo-clock-stop (tempo-clock *s*))
+    (setf (tempo-clock *s*) (make-instance 'tempo-clock :bpm bpm :name name))
+    (tempo-clock-run (tempo-clock *s*))))
+
+
+(defmacro at-beat (beat &body body)
+  `(tempo-clock-add (tempo-clock *s*) ,beat
+		    (lambda (time)
+		      (at time
+			,@body))))
+
+
+(defmacro at-beat-delay (beat delaytime &body body)
+  `(tempo-clock-add (tempo-clock *s*) ,beat
+		    (lambda (time)
+		      (at (+ time ,delaytime)
+			,@body))))

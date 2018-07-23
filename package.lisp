@@ -12,10 +12,7 @@
 	   #:*sc-plugin-paths*
 	   #:*sc-synthdefs-path*
 	   #:+inf+
-	   #:now
-	   #:callback
-	   #:quant
-
+	   
 	   #+linux #:jack-connect
 	   
 	   #:make-server-options
@@ -73,6 +70,18 @@
 	   #:*group-free-all-hook*
 	   #:*stop-hook*
 
+	   #:now
+	   #:callback
+	   #:quant
+	   #:clock-bpm
+	   #:clock-add
+	   #:clock-add-delay
+	   #:clock-quant
+	   #:clock-tm
+	   #:clock-reset
+	   #:at-beat
+	   #:at-beat-delay
+	   
 	   #:bufnum
 	   #:sr
 	   #:frames
