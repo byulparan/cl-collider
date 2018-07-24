@@ -232,6 +232,9 @@
                                    `(,(car item) ,@(convert-code (cdr item)))))
                              (cadr form))
         ,@(convert-code (cddr form))))
+     ((position (car form) (list 'destructuring-bind))
+      `(,(car form) ,(cadr form) ,(caddr form)
+         ,@(convert-code (cdddr form))))
 	(t (cons (convert-code (car form) t)
 		 (mapcar #'convert-code (cdr form))))))
 
