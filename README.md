@@ -20,6 +20,7 @@ It is an experimental project, so changes to the API are possible.
 If you have your own additional libraries, please report me. I will add here.
 
 - [sc-extensions](https://github.com/byulparan/sc-extensions) - extension library
+- [cl-patterns](https://github.com/defaultxr/cl-patterns) - patterns/sequencing library
 
 ## Usage:
 - package: `sc`, `sc-user` (use this package)
