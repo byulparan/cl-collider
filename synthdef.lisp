@@ -232,6 +232,9 @@
                                    `(,(car item) ,@(convert-code (cdr item)))))
                              (cadr form))
         ,@(convert-code (cddr form))))
+     ((position (car form) (list 'destructuring-bind))
+      `(,(car form) ,(cadr form) ,(caddr form)
+         ,@(convert-code (cdddr form))))
 	(t (cons (convert-code (car form) t)
 		 (mapcar #'convert-code (cdr form))))))
 
@@ -242,7 +245,7 @@
 
 (defun get-synthdef-metadata (synth &optional key)
   "Get metadata about the synthdef with the name of SYNTH. When KEY is provided, return that specific item from the metadata (i.e. controls, body, etc)."
-  (let ((metadata (gethash (as-keyword synth) *synthdef-metadata*)))
+  (let ((metadata (gethash (as-keyword (if (typep synth 'node) (name synth) synth)) *synthdef-metadata*)))
     (if key
         (getf metadata (as-keyword key))
         metadata)))

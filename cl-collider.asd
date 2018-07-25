@@ -56,4 +56,5 @@
 	       (:file "ugens/extras/envfollow")
 	       (:file "ugens/extras/mdapiano")
 	       (:file "ugens/extras/joshpv")
-	       (:file "ugens/extras/pitchdetection")))
+	       (:file "ugens/extras/pitchdetection")
+	       (:file "ugens/extras/ladspa")))
