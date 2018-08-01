@@ -277,7 +277,7 @@
 (defvar *temp-synth-name* "temp-synth")
 
 (defmacro play (body &key id (out-bus 0) (gain 1.0) (lag 1.0) (fade 0.02) (to 1) (pos :head))
-  (alexandria:with-gensyms (synthdef result dt gate gain-sym lag-sym
+  (alexandria:with-gensyms (synthdef result dt buses gate gain-sym lag-sym
                                      start-val env node-id name is-signal-p outlets seqs node)
     `(let* ((,name *temp-synth-name*)
             (,is-signal-p nil)
@@ -294,15 +294,16 @@
          (let ((,result ,(convert-code body)))
            (unless (numberp ,result)
              (setf ,is-signal-p t)
-             (destructuring-bind (,dt ,gate ,gain-sym ,lag-sym)
-                 (make-control (list (list "fade" ,fade) (list "gate" 1.0) (list "gain" ,gain) (list "lag" ,lag)) :control)
+             (destructuring-bind (,dt ,buses ,gate ,gain-sym ,lag-sym)
+                 (make-control (list (list "fade" ,fade) (list "out-bus" ,out-bus)
+				     (list "gate" 1.0) (list "gain" ,gain) (list "lag" ,lag)) :control)
                (let* ((,start-val (<=~ ,dt 0))
                       (,env (env-gen.kr
                              (env (list ,start-val 1 0) (list 1,1) :lin 1) :gate ,gate :level-scale 1 :level-bias 0.0
                              :time-scale ,dt :act :free)))
                  (setf ,result (*~ ,env ,result))
-                 (cond ((eql :audio (rate ,result)) (,outlets 'out.ar ,out-bus ,result ,gain-sym ,lag-sym))
-                       ((eql :control (rate ,result)) (,outlets 'out.kr ,out-bus ,result ,gain-sym ,lag-sym))
+                 (cond ((eql :audio (rate ,result)) (,outlets 'out.ar ,buses ,result ,gain-sym ,lag-sym))
+                       ((eql :control (rate ,result)) (,outlets 'out.kr ,buses ,result ,gain-sym ,lag-sym))
                        (t (error "Play: ~a is not a UGen." ,result))))))))
        (build-synthdef ,synthdef)
        (let* ((,node-id (or ,id (get-next-id *s*)))
