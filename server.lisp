@@ -192,7 +192,6 @@
   (when (boot-p rt-server)
     (send-message rt-server "/notify" 1)
     (sched-run (scheduler rt-server))
-    (tempo-clock-run (tempo-clock rt-server))
     (setf (node-watcher rt-server) (list 0 1))
     (group-free-all rt-server)
     (let ((options (server-options rt-server)))
@@ -579,6 +578,12 @@
 	    (assert (and (numberp bpm) (plusp bpm)))
 	    (setf (tempo-clock-bpm (tempo-clock *s*)) bpm))
     (tempo-clock-bpm (tempo-clock *s*))))
+
+(defun clock-run ()
+  (tempo-clock-run (tempo-clock *s*)))
+
+(defun clock-stop ()
+  (tempo-clock-stop (tempo-clock *s*)))
 
 (defun clock-add (beat f &rest args)
   (tempo-clock-add (tempo-clock *s*) beat (lambda (time)

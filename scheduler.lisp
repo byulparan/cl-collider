@@ -251,7 +251,7 @@
 
 (defun tempo-clock-run (tempo-clock)
   (sched-run (tempo-clock-scheduler tempo-clock))
-  (tempo-clock-process tempo-clock (sched-quant (tempo-clock-scheduler tempo-clock) 1) -1))
+  (tempo-clock-process tempo-clock (sched-quant (tempo-clock-scheduler tempo-clock) 1) 0))
 
 (defun tempo-clock-stop (tempo-clock)
   (sched-stop (tempo-clock-scheduler tempo-clock)))
