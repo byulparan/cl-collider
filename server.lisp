@@ -162,13 +162,14 @@
       semaphore)))
 
 (defun sync (&optional (rt-server *s*))
-  (when (typep rt-server 'rt-server)
-    (let* ((semaphore (get-semaphore-by-thread))
-	   (id (assign-id-map-id (sync-id-map rt-server) semaphore)))
-      (send-message rt-server "/sync" id)
-      #+ccl (ccl:wait-on-semaphore semaphore)
-      #+sbcl (sb-thread:wait-on-semaphore semaphore)
-      #+ecl (mp:wait-on-semaphore semaphore))))
+  (if (eql (bt:current-thread) (sc-reply-thread rt-server)) nil
+    (when (typep rt-server 'rt-server)
+      (let* ((semaphore (get-semaphore-by-thread))
+	     (id (assign-id-map-id (sync-id-map rt-server) semaphore)))
+	(send-message rt-server "/sync" id)
+	#+ccl (ccl:wait-on-semaphore semaphore)
+	#+sbcl (sb-thread:wait-on-semaphore semaphore)
+	#+ecl (mp:wait-on-semaphore semaphore)))))
 
 (defmethod server-boot ((rt-server rt-server))
   (when (boot-p rt-server) (error "SuperCollider server already running."))
