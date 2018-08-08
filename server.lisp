@@ -103,6 +103,8 @@
 (defgeneric node-watcher (rt-server))
 (defgeneric (setf node-watcher) (value rt-server))
 
+(defgeneric sc-reply-thread (rt-server))
+
 (defvar *cleanup-functions* nil)
 (defvar *all-rt-servers* nil)
 
@@ -327,6 +329,9 @@
 
 (defmethod is-local-p ((rt-server external-server))
   (string= (host rt-server) "127.0.0.1"))
+
+(defmethod sc-reply-thread ((rt-server external-server))
+  (sc-osc::listening-thread (osc-device rt-server)))
 
 (defmethod bootup-server-process ((rt-server external-server))
   (unless (just-connect-p rt-server)
