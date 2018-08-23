@@ -52,6 +52,7 @@
 	       (:file "ugens/math")
 	       (:file "ugens/grains")
 	       (:file "ugens/poll")
+	       (:file "ugens/stochastic")
 	       (:file "ugens/testugens")
 	       (:file "ugens/extras/envfollow")
 	       (:file "ugens/extras/mdapiano")
