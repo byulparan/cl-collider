@@ -134,7 +134,7 @@
       (bt:acquire-lock lock t))))
 
 (defun condition-timed-wait (condition-variable lock time)
-  #+sbcl (unless (sb-thread:condition-wait condition-variable lock :timeout time)
+  #+sbcl (unless (bt:condition-wait condition-variable lock :timeout time)
 	   (bt:acquire-lock lock t))
   #-sbcl
   (progn
