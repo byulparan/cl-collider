@@ -79,6 +79,7 @@
 	   #:clock-tm
 	   #:clock-clear
 	   #:at-beat
+	   #:at-task
 	   
 	   #:bufnum
 	   #:sr
