@@ -16,12 +16,14 @@
   #+linux (list "/usr/local/lib/SuperCollider/plugins/"
 		"/usr/local/share/SuperCollider/Extensions/")
   #+windows (list "c:/Program Files/SuperCollider-3.9.3/plugins/"
-		  "~/AppData/Local/SuperCollider/Extensions/"))
+		  (full-pathname (merge-pathnames #P"SuperCollider/Extensions/"
+						  (uiop:get-folder-path :local-appdata)))))
 
 (defvar *sc-synthdefs-path*
   #+darwin (full-pathname "~/Library/Application Support/SuperCollider/synthdefs")
   #+linux (full-pathname "~/.local/share/SuperCollider/synthdefs/")
-  #+windows (full-pathname "~/AppData/Local/SuperCollider/synthdefs/")
+  #+windows (full-pathname (merge-pathnames #P"SuperCollider/synthdefs/"
+					    (uiop:get-folder-path :local-appdata)))
   "The directory where the scsyndef files for synthdefs are saved.")
 
 ;;; -------------------------------------------------------
