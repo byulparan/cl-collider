@@ -151,7 +151,10 @@
 			   :name (name self)
 			   :timestamp (server-time-stamp self))
 	(tempo-clock self) (make-instance 'tempo-clock
-			     :name (name self))))
+			     :name (name self)
+			     :base-beats 0
+			     :base-seconds (unix-time)
+			     :beat-dur 1.0)))
 
 (let ((semaphore-table (make-hash-table)))
   (defun get-semaphore-by-thread ()
@@ -197,6 +200,7 @@
   (when (boot-p rt-server)
     (send-message rt-server "/notify" 1)
     (sched-run (scheduler rt-server))
+    (tempo-clock-run (tempo-clock rt-server))
     (setf (node-watcher rt-server) (list 0 1))
     (group-free-all rt-server)
     (let ((options (server-options rt-server)))
@@ -580,54 +584,37 @@
 (defun quant (next-time &optional (offset .5))
   (sched-quant (scheduler *s*) next-time offset))
 
+
 ;;; tempo-clock
 (defun clock-bpm (&optional bpm)
-  (if bpm (progn
-	    (assert (and (numberp bpm) (plusp bpm)))
-	    (setf (tempo-clock-bpm (tempo-clock *s*)) bpm))
-    (tempo-clock-bpm (tempo-clock *s*))))
-
-(defun clock-run ()
-  (tempo-clock-run (tempo-clock *s*)))
-
-(defun clock-stop ()
-  (tempo-clock-stop (tempo-clock *s*)))
-
-(defun clock-add (beat f &rest args)
-  (tempo-clock-add (tempo-clock *s*) beat (lambda (time)
-					    (declare (ignore time))
-					    (apply f args))))
-
-(defun clock-add-delay (beat delaytime f &rest args)
-  (tempo-clock-add (tempo-clock *s*) beat (lambda (time)
-					    (declare (ignore time))
-					    (callback (+ (now) delaytime)
-						      (lambda () (apply f args))))))
-
+  (tempo-clock-bpm (tempo-clock *s*) bpm))
 
 (defun clock-quant (quant)
   (tempo-clock-quant (tempo-clock *s*) quant))
 
 (defun clock-tm (beat)
-  (unbubble (mapcar #'(lambda (b) (* b (/ 60.0 (clock-bpm)))) (alexandria:ensure-list beat))))
+  (* (beat-dur (tempo-clock *s*)) beat))
 
-(defun clock-reset ()
-  (let* ((bpm (clock-bpm))
-	 (name (tempo-clock-name (tempo-clock *s*))))
-    (tempo-clock-stop (tempo-clock *s*))
-    (setf (tempo-clock *s*) (make-instance 'tempo-clock :bpm bpm :name name))
-    (tempo-clock-run (tempo-clock *s*))))
+(defun clock-add (beat function &rest args)
+  (tempo-clock-add (tempo-clock *s*) beat (lambda () (apply function args))))
 
+(defun clock-clear ()
+  (tempo-clock-clear (tempo-clock *s*)))
 
-(defmacro at-beat (beat &body body)
-  `(tempo-clock-add (tempo-clock *s*) ,beat
-		    (lambda (time)
-		      (at time
-			,@body))))
+(defmacro at-beat (beat synth-name &body param &key &allow-other-keys)
+  (alexandria:with-gensyms (b p)
+    `(tempo-clock-add (tempo-clock *s*) ,beat
+		      (let* ((,b ,beat)
+			     (,p (list ,@param)))
+			(lambda ()
+			  (at (beats-to-secs (tempo-clock *s*) ,b)
+			    (apply ,(if (keywordp synth-name) #'ctrl #'synth) ,synth-name ,p)))))))
 
-
-(defmacro at-beat-delay (beat delaytime &body body)
-  `(tempo-clock-add (tempo-clock *s*) ,beat
-		    (lambda (time)
-		      (at (+ time ,delaytime)
-			,@body))))
+(defmacro at-task (beat function &rest args)
+  (alexandria:with-gensyms (b p)
+    `(tempo-clock-add (tempo-clock *s*) ,beat
+		      (let* ((,b ,beat)
+			     (,p (list ,@args)))
+			(lambda () (callback (+ (sched-ahead (tempo-clock *s*))
+						(beats-to-secs (tempo-clock *s*) ,b))
+					     (lambda () (apply ,function ,p))))))))
