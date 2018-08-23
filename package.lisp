@@ -74,15 +74,11 @@
 	   #:callback
 	   #:quant
 	   #:clock-bpm
-	   #:clock-run
-	   #:clock-stop
 	   #:clock-add
-	   #:clock-add-delay
 	   #:clock-quant
 	   #:clock-tm
-	   #:clock-reset
+	   #:clock-clear
 	   #:at-beat
-	   #:at-beat-delay
 	   
 	   #:bufnum
 	   #:sr
