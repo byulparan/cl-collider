@@ -603,18 +603,18 @@
 
 (defmacro at-beat (beat synth-name &body param &key &allow-other-keys)
   (alexandria:with-gensyms (b p)
-    `(tempo-clock-add (tempo-clock *s*) ,beat
-		      (let* ((,b ,beat)
-			     (,p (list ,@param)))
-			(lambda ()
-			  (at (beats-to-secs (tempo-clock *s*) ,b)
-			    (apply ,(if (keywordp synth-name) #'ctrl #'synth) ,synth-name ,p)))))))
+    `(let* ((,b ,beat))
+       (tempo-clock-add (tempo-clock *s*) ,b
+			(let* ((,p (list ,@param)))
+			  (lambda ()
+			    (at (beats-to-secs (tempo-clock *s*) ,b)
+			      (apply ,(if (keywordp synth-name) #'ctrl #'synth) ,synth-name ,p))))))))
 
 (defmacro at-task (beat function &rest args)
   (alexandria:with-gensyms (b p)
-    `(tempo-clock-add (tempo-clock *s*) ,beat
-		      (let* ((,b ,beat)
-			     (,p (list ,@args)))
-			(lambda () (callback (+ (sched-ahead (tempo-clock *s*))
-						(beats-to-secs (tempo-clock *s*) ,b))
-					     (lambda () (apply ,function ,p))))))))
+    `(let* ((,b ,beat))
+       (tempo-clock-add (tempo-clock *s*) ,b
+			(let* ((,p (list ,@args)))
+			  (lambda () (callback (+ (sched-ahead (tempo-clock *s*))
+						  (beats-to-secs (tempo-clock *s*) ,b))
+					       (lambda () (apply ,function ,p)))))))))
