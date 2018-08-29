@@ -93,10 +93,10 @@
 	   #:buffer-free
 	   #:buffer-write
 	   #:buffer-get
-	   #:buffer-get-list
-	   #:buffer-get-list-using-file
+	   #:buffer-getn
+	   #:buffer-load-to-list
 	   #:buffer-set
-	   #:buffer-set-list
+	   #:buffer-setn
 	   #:buffer-zero
 	   #:buffer-normalize
 	   #:buffer-dur

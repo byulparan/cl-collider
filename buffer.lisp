@@ -135,7 +135,7 @@
 	(sync (server buffer))
 	result))))
 
-(defun buffer-get-list (buffer start frames &optional action)
+(defun buffer-getn (buffer start frames &optional action)
   (assert (>= (frames buffer) (+ start frames)) nil "Buffer index ~a out of range (buffer size: ~a)" (+ start frames) (frames buffer))
   (let ((bufnum (bufnum buffer))
 	(server (server buffer)))
@@ -171,7 +171,7 @@
   (sync (server buffer)))
 
 
-(defun buffer-set-list (buffer data)
+(defun buffer-setn (buffer data)
   (multiple-value-bind (repeat rest-message-len)
       (floor (length data) 1024)
     (let ((server (server buffer)))
