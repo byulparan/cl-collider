@@ -152,6 +152,7 @@
 
 (defun buffer-get-list-using-file (buffer &key (start 0) frames action)
   "Write BUFFER to a temporary file, then load the values back into a list and return it. The values are from index START and for the number of FRAMES, if provided, or otherwise until the end of the buffer. ACTION is a function which will be passed the resulting list as an argument and evaluated once the file has been read."
+  (assert (is-local-p (server buffer)) nil "This function only work on localhost server.")
   (when frames (assert (>= (frames buffer) (+ start frames)) nil
 		       "Buffer index ~a out of range (buffer size: ~a)"
 		       (+ start frames) (frames buffer)))
