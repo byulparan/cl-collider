@@ -150,7 +150,7 @@
 	(sync (server buffer))
 	result))))
 
-(defun buffer-get-list-using-file (buffer &key (start 0) frames action)
+(defun buffer-load-to-list (buffer &optional (start 0) (frames (slot-value buffer 'frames)))
   "Write BUFFER to a temporary file, then load the values back into a list and return it. The values are from index START and for the number of FRAMES, if provided, or otherwise until the end of the buffer. ACTION is a function which will be passed the resulting list as an argument and evaluated once the file has been read."
   (assert (is-local-p (server buffer)) nil "This function only work on localhost server.")
   (when frames (assert (>= (frames buffer) (+ start frames)) nil
@@ -162,12 +162,9 @@
 			     :element-type '(unsigned-byte 32))
     (buffer-write buffer path :format :float :frames (or frames -1) :start-frame start)
     (file-position file 0)
-    (let ((result (loop for frame = (read-byte file nil)
-			while frame
-			collect (ieee-floats:decode-float32 frame))))
-      (if action
-	  (funcall action result)
-	  result))))
+    (loop :for frame := (read-byte file nil)
+	  :while frame
+	  :collect (ieee-floats:decode-float32 frame))))
 
 (defun buffer-set (buffer index value)
   (send-message (server buffer) "/b_set" (bufnum buffer) index value)
