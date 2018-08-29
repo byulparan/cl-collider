@@ -137,6 +137,7 @@
 
 (defun buffer-getn (buffer start frames &optional action)
   (assert (>= (frames buffer) (+ start frames)) nil "Buffer index ~a out of range (buffer size: ~a)" (+ start frames) (frames buffer))
+  (assert (>= 400 frames) nil "requested frames too large. use `buffer-load-to-list` or `buffer-get-to-list`.")
   (let ((bufnum (bufnum buffer))
 	(server (server buffer)))
     (let* ((result nil)
@@ -150,8 +151,19 @@
 	(sync (server buffer))
 	result))))
 
+(defun buffer-get-to-list (buffer &optional (start 0) (frames (slot-value buffer 'frames)))
+  "Get a list of the frames of BUFFER. Unlike `buffer-get-list', this function is not limited by OSC packet size and can return any number of frames, though it may be slower. This is synchronous function, do not call in reply thread."
+  (let ((end (+ start frames)))
+    (assert (>= (frames buffer) end) nil "Buffer index ~a out of range (buffer size: ~a)" (+ start frames) (frames buffer))
+    (loop :while (< start end)
+	  :append
+	  (let ((dec (min 400 (- end start))))
+            (prog1
+		(buffer-getn buffer start dec)
+              (incf start dec))))))
+
 (defun buffer-load-to-list (buffer &optional (start 0) (frames (slot-value buffer 'frames)))
-  "Write BUFFER to a temporary file, then load the values back into a list and return it. The values are from index START and for the number of FRAMES, if provided, or otherwise until the end of the buffer. ACTION is a function which will be passed the resulting list as an argument and evaluated once the file has been read."
+  "Write BUFFER to a temporary file, then load the values back into a list and return it. The values are from index START and for the number of FRAMES, if provided, or otherwise until the end of the buffer. ACTION is a function which will be passed the resulting list as an argument and evaluated once the file has been read. This is synchronous function, do not call in reply thread."
   (assert (is-local-p (server buffer)) nil "This function only work on localhost server.")
   (when frames (assert (>= (frames buffer) (+ start frames)) nil
 		       "Buffer index ~a out of range (buffer size: ~a)"
@@ -169,7 +181,6 @@
 (defun buffer-set (buffer index value)
   (send-message (server buffer) "/b_set" (bufnum buffer) index value)
   (sync (server buffer)))
-
 
 (defun buffer-setn (buffer data)
   (multiple-value-bind (repeat rest-message-len)
