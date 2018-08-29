@@ -94,6 +94,7 @@
 	   #:buffer-write
 	   #:buffer-get
 	   #:buffer-get-list
+	   #:buffer-get-list-using-file
 	   #:buffer-set
 	   #:buffer-set-list
 	   #:buffer-zero
