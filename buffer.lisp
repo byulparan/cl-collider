@@ -150,6 +150,24 @@
 	(sync (server buffer))
 	result))))
 
+(defun buffer-get-list-using-file (buffer &key (start 0) frames action)
+  "Write BUFFER to a temporary file, then load the values back into a list and return it. The values are from index START and for the number of FRAMES, if provided, or otherwise until the end of the buffer. ACTION is a function which will be passed the resulting list as an argument and evaluated once the file has been read."
+  (when frames (assert (>= (frames buffer) (+ start frames)) nil
+		       "Buffer index ~a out of range (buffer size: ~a)"
+		       (+ start frames) (frames buffer)))
+  (uiop:with-temporary-file (:stream file
+			     :pathname path
+			     :type "raw"
+			     :element-type '(unsigned-byte 32))
+    (buffer-write buffer path :format :float :frames (or frames -1) :start-frame start)
+    (file-position file 0)
+    (let ((result (loop for frame = (read-byte file nil)
+			while frame
+			collect (ieee-floats:decode-float32 frame))))
+      (if action
+	  (funcall action result)
+	  result))))
+
 (defun buffer-set (buffer index value)
   (send-message (server buffer) "/b_set" (bufnum buffer) index value)
   (sync (server buffer)))
