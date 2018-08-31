@@ -35,7 +35,8 @@
 
 (defun full-pathname (path)
   "returning absoulte full-pathname of path"
-  (namestring (uiop:truename* path)))
+  (let* ((fullpath (uiop:truename* path)))
+    (when fullpath (namestring fullpath))))
 
 (defmethod cat ((sequence string) &rest sequences)
   (apply #'concatenate 'string sequence sequences))
