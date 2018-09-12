@@ -209,5 +209,24 @@
 		 data))
   (sync server))
 
+;; see http://doc.sccode.org/Classes/Wavetable.html#Advanced%20notes:%20wavetable%20format
+(defun list-in-wavetable-format (list)
+  "Convert a list of numbers LIST to SuperCollider's wavetable format."
+  (loop :for i :from 0 :below (length list)
+     :append (let ((a0 (nth-wrap i list))
+                   (a1 (nth-wrap (1+ i) list)))
+               (list (- (* 2 a0) a1) (- a1 a0)))))
 
-
+(defun buffer-read-as-wavetable (path)
+  "Read a soundfile located at PATH as a wavetable."
+  (let* ((tmp-buf (prog1 (buffer-read path)
+                    (sync)))
+         (file-frames (slot-value tmp-buf 'frames))
+         (powers-of-two (mapcar (lambda (x) (expt 2 (1+ x))) (alexandria:iota 16)))
+         (num-frames (nth (position-if (lambda (x) (>= x file-frames)) powers-of-two) powers-of-two))
+         (frames (prog1
+                     (buffer-get-to-list tmp-buf)
+                   (buffer-free tmp-buf)))
+         (buffer (buffer-alloc (* 2 num-frames))))
+    (buffer-setn buffer (list-in-wavetable-format (linear-resample frames num-frames)))
+    buffer))

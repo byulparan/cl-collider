@@ -90,3 +90,26 @@
      (symbol object)
      (string (string-upcase object)))))
 
+(defun nth-wrap (n list)
+  "Get the Nth value of LIST, wrapping around if the value is bigger or smaller than the list length."
+  (nth (mod n (length list)) list))
+
+(defun blend-nth (n list)
+  "Get the Nth value of LIST, linearly interpolating between the adjacent values if N is not an integer."
+  (if (= n (round n))
+      (nth n list)
+      (let* ((floor (floor n))
+             (ceiling (ceiling n))
+             (fl-diff (- n floor)))
+        (+ (* (nth floor list) (- 1 fl-diff))
+           (* (nth ceiling list) fl-diff)))))
+
+(defun linear-resample (list new-size)
+  "Using linear interpolation, resample the values of LIST to a new list of size NEW-SIZE."
+  (let* ((old-size (length list))
+         ;; this.size - 1 / (newSize - 1).max(1);
+         (factor (/ (1- old-size) (max (1- new-size) 1))))
+    (if (= old-size new-size)
+        list
+        (loop :for i :from 0 :below new-size
+           :collect (blend-nth (* i factor) list)))))

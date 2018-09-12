@@ -102,6 +102,7 @@
 	   #:buffer-normalize
 	   #:buffer-dur
 	   #:wavetable
+	   #:buffer-read-as-wavetable
 	   #:calc-pv-recsize
 	   #:local-buf
 	   #:set-buf
