@@ -71,7 +71,7 @@
 (def-unary-op midicps (lambda (note) (* 440 (expt 2 (/ (- note 69) 12.0))))
   :special-index 17)
 
-(def-unary-op cpsmidi (lambda (note) (* 440 (expt 2 (/ (- note 69) 12.0))))
+(def-unary-op cpsmidi (lambda (freq) (+ 69 (* 12.0 (log (/ freq 440) 2))))
   :special-index 18)
 
 (def-unary-op midiratio (lambda (note) (expt 2 (* note 0.083333333333)))
