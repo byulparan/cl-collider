@@ -195,6 +195,14 @@
     (sync (server buffer))
     buffer))
 
+
+(defun buffer-copy (bufnum-src bufnum-dst &optional (start-dst 0) (start-src 0) (nframes -1))
+  (apply #'send-message
+	 *s*
+	 (append (list "\b_gen" bufnum-dst "copy" start-dst bufnum-src start-src nframes)))
+  (sync *s*))
+
+
 ;;; wavetable
 (defun wavetable (buffer wave data &key (server *s*) (normalize t) (as-wavetable t) (clear-first t))
   (apply #'send-message

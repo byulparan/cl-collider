@@ -101,6 +101,8 @@
 	   #:buffer-zero
 	   #:buffer-normalize
 	   #:buffer-dur
+	   #:buffer-copy
+	   
 	   #:wavetable
 	   #:buffer-read-as-wavetable
 	   #:calc-pv-recsize
@@ -109,6 +111,7 @@
 	   #:clear-buf
 	   #:local-buf-list
 
+	   
 	   #:bus-audio
 	   #:bus-control
 	   #:bus-free
