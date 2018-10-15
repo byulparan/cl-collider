@@ -363,7 +363,7 @@
 			    (play ,body :id ,id :out-bus ,out-bus :fade ,fade :to ,to :pos ,pos :gain ,gain))
 		     (cond ((not ,id) (clear-node))
 		     	   ((and ,node (/= (id ,node) ,id)) (clear-node))))))
-            `(clear-node))))))
+            `(free ,node))))))
 
 
 ;;; ======================================================================
