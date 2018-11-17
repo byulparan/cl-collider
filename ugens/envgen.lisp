@@ -274,6 +274,36 @@
 		   (8 #'hold-interpolation))))
 	(funcall fun pos y1 y2))))
 
+(defmethod env-at ((env env) (time number))
+  "Return the value of the ENV at TIME."
+  (with-accessors ((levels levels) (times times)
+		   (curve-number curve-number)
+		   (curve-value curve-value))
+      env
+    ;;TODO abstract let block, it's duplicated in next function
+    (let* ((times-lst (loop :for i :in (append (list 0) times)
+			    :summing i :into ir
+			    :collect ir))
+	   (curve-number-lst (if (= 1 (length curve-number))
+				 (make-list (1- (length times-lst))
+					    :initial-element (car curve-number))
+				 curve-number))
+	   (curve-value-lst (if (= 1 (length curve-value))
+				(make-list (1- (length times-lst))
+					   :initial-element (car curve-value))
+				curve-value)))
+      (loop :for (time-a time-b) :on times-lst
+	    :for (level-aa level-b) :on levels
+	    :for curve-n :in curve-number-lst
+	    :for curve-v :in curve-value-lst
+	    :sum time-b :into r
+	    :until (>= r time)
+	    :finally (return (interpolation curve-n
+					    (/ time (- r time-a))
+					    level-a
+					    level-b
+					    curve-v))))))
+
 (defmethod env-as-signal ((env env) (frames integer))
   "Return a list of length FRAMES created by sampling ENV at FRAMES number of intervals."
   (with-accessors ((levels levels) (times times)
