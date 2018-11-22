@@ -54,6 +54,7 @@
 	       (:file "ugens/poll")
 	       (:file "ugens/stochastic")
 	       (:file "ugens/testugens")
+	       (:file "ugens/hilbert")
 	       (:file "ugens/extras/envfollow")
 	       (:file "ugens/extras/mdapiano")
 	       (:file "ugens/extras/joshpv")
