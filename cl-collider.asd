@@ -30,6 +30,7 @@
 	       (:file "ugens/fftunpacking")
 	       (:file "ugens/fft")
 	       (:file "ugens/envgen")
+	       (:file "ugens/ienvgen")
 	       (:file "ugens/noise")
 	       (:file "ugens/filter")
 	       (:file "ugens/osc")
