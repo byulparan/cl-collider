@@ -48,21 +48,9 @@
   (apply #'append sequence sequences))
 
 
-#-windows
 (defun sc-program-run (program options)
-  (let* ((command 
-	   (format nil "\"~a\" ~{~a ~}"
-		   program options)))
-    (uiop:run-program command
-		      :output :interactive)))
-
-#+windows
-(defun sc-program-run (program options)
-  (let* ((command 
-	   (format nil "\"\"~a\" ~{~a ~}\""
-		   program options)))
-    (uiop:run-program command
-		      :output :interactive)))
+  (simple-inferiors:run program options
+  		                :output t :copier :line))
 
 
 #+windows
