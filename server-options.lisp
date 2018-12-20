@@ -52,5 +52,6 @@
            (let* ((paths (server-options-ugen-plugins-path server-options)))
 	         (if (not paths) nil
 		         (list "-U" (format nil
-							        "~{~a~^:~}"
+							        #-windows "~{~a~^:~}"
+                                    #+windows "~{~a~^;~}"
 							        paths)))))))
