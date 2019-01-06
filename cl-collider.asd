@@ -12,7 +12,8 @@
 	       #:pileup
 	       #:flexi-streams
 	       #:split-sequence
-	       #:named-readtables)
+	       #:named-readtables
+           #:simple-inferiors)
   :serial t
   :components ((:file "package")
 	       #+(or sbcl ecl) (:file "id-map")

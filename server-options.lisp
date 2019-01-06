@@ -25,29 +25,33 @@
 	)
 
 (defun build-server-options (server-options)
-  (append
-   (list "-c" (write-to-string (server-options-num-control-bus server-options))
-				 "-a" (write-to-string (server-options-num-audio-bus server-options))
-				 "-i" (write-to-string (server-options-num-input-bus server-options))
-				 "-o" (write-to-string (server-options-num-output-bus server-options))
-				 "-z" (write-to-string (server-options-block-size server-options))
-				 ;;-Z hardware-buffer-size
-				 "-S" (write-to-string (server-options-hardware-samplerate server-options))
-				 "-b" (write-to-string (server-options-num-sample-buffers server-options))
-				 "-n" (write-to-string (server-options-max-num-nodes server-options))
-				 "-d" (write-to-string (server-options-max-num-synthdefs server-options))
-				 "-m" (write-to-string (server-options-realtime-mem-size server-options))
-				 "-w" (write-to-string (server-options-num-wire-buffers server-options))
-				 "-r" (write-to-string (server-options-num-random-seeds server-options))
-				 "-D" (write-to-string (server-options-load-synthdefs-p server-options))
-				 "-R" (write-to-string (server-options-publish-to-rendezvous-p server-options))
-				 "-l" (write-to-string (server-options-max-logins server-options))
-				 "-V" (write-to-string (server-options-verbosity server-options))
-				 "-H" (write-to-string (server-options-device server-options))
-				 )
-	 (let* ((paths (server-options-ugen-plugins-path server-options)))
-		 (if (not paths) nil
-				 (list "-U" (format nil
-														#-windows "\"~{~a~^:~}\""
-														#+windows "\"~{~a~^;~}\""
-														paths))))))
+  (mapcar (lambda (opt)
+            (if (stringp opt)
+                opt
+                (write-to-string opt)))
+          (append
+           (list "-c" (server-options-num-control-bus server-options)
+		         "-a" (server-options-num-audio-bus server-options)
+		         "-i" (server-options-num-input-bus server-options)
+		         "-o" (server-options-num-output-bus server-options)
+		         "-z" (server-options-block-size server-options)
+		         ;;-Z hardware-buffer-size
+		         "-S" (server-options-hardware-samplerate server-options)
+		         "-b" (server-options-num-sample-buffers server-options)
+		         "-n" (server-options-max-num-nodes server-options)
+		         "-d" (server-options-max-num-synthdefs server-options)
+		         "-m" (server-options-realtime-mem-size server-options)
+		         "-w" (server-options-num-wire-buffers server-options)
+		         "-r" (server-options-num-random-seeds server-options)
+		         "-D" (server-options-load-synthdefs-p server-options)
+		         "-R" (server-options-publish-to-rendezvous-p server-options)
+		         "-l" (server-options-max-logins server-options)
+		         "-V" (server-options-verbosity server-options)
+		         "-H" (server-options-device server-options)
+		         )
+           (let* ((paths (server-options-ugen-plugins-path server-options)))
+	         (if (not paths) nil
+		         (list "-U" (format nil
+							        #-windows "~{~a~^:~}"
+                                    #+windows "~{~a~^;~}"
+							        paths)))))))
