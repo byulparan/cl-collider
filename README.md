@@ -101,19 +101,41 @@ If you have your own additional libraries, please report me. I will add here.
 ```
 ### Record Audio Output
 ```cl
-(setf *synth-definition-mode* :load)
+;;; write a single channel to disk
 
-;; Re-define the saw-synth ugen
-;; The SynthDef file will be written to the *sc-synthdefs-path*
-(defsynth saw-synth ((note 60) (dur 4.0))
-  (let* ((env (env-gen.kr (env [0 .2 0] [(* dur .2) (* dur .8)]) :act :free))
-         (freq (midicps note))
-         (sig (lpf.ar (saw.ar freq env) (* freq 2))))
-    (out 0 [sig sig])))
+;; we can write to buffer number out_buf_num by reading in from the 0 bus
+(defsynth disk_writer ((out_buf_num 99))
+    (disk-out.ar out_buf_num (in.ar 0)))
 
-;; Render audio file
-(with-rendering ("~/Desktop/foo.aiff" :pad 60)
-  (make-melody 0.0d0 32)
-  (make-melody 8.0d0 32 12)
-  (make-melody 16.0d0 32 24))
+(setf mybuffer (buffer-alloc (expt 2 17))) 
+mybuffer
+
+;; start a disk_writer synth
+(setf writer_0 (synth 'disk_writer))
+
+;; make it output to buffer you allocated
+(ctrl writer_0 :out_buf_num (bufnum mybuffer))
+
+;; continuously write the buffer contents to a file
+(buffer-write mybuffer "/tmp/foo.aiff" :leave-open-p t)
+
+;; now play whatever sounds you like
+
+;; e.g.
+(proxy :blah (sin-osc.ar 440))
+(free  :blah)
+
+
+;; then when you are done
+
+;; stop the disk_writer synth
+(free writer_0)
+
+;; close and free the buffer
+(buffer-close mybuffer)
+(buffer-free mybuffer)
+
+
+;; then you can play what you recorded with a utility like mpv:
+;;     mpv /tmp/foo.aiff
 ```
