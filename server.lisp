@@ -619,14 +619,15 @@
 (defun clock-clear ()
   (tempo-clock-clear (tempo-clock *s*)))
 
-(defmacro at-beat (beat synth-name &body param &key &allow-other-keys)
-  (alexandria:with-gensyms (b p)
+(defmacro at-beat (beat synth-name &body param)
+  (alexandria:with-gensyms (b p synth)
     `(let* ((,b ,beat))
        (tempo-clock-add (tempo-clock *s*) ,b
-			(let* ((,p (list ,@param)))
+			(let* ((,p (list ,@param))
+			       (,synth ,synth-name))
 			  (lambda ()
 			    (at (beats-to-secs (tempo-clock *s*) ,b)
-			      (apply ,(if (keywordp synth-name) #'ctrl #'synth) ,synth-name ,p))))))))
+			      (apply (if (keywordp ,synth) #'ctrl #'synth) ,synth ,p))))))))
 
 (defmacro at-task (beat function &rest args)
   (alexandria:with-gensyms (b p)
