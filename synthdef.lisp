@@ -256,23 +256,24 @@
 
 (defmacro defsynth (name params &body body)
   (setf params (mapcar (lambda (param) (if (consp param) param (list param 0.0))) params))
-  (set-synthdef-metadata name :name name)
-  (set-synthdef-metadata name :controls
-                         (mapcar (lambda (param) (append (list (car param)) (cdr param)))
-                                 params))
-  (set-synthdef-metadata name :body body)
   (alexandria:with-gensyms (synthdef)
-    `(let* ((,synthdef (make-instance 'synthdef :name ,(string-downcase name)))
-	    (*synthdef* ,synthdef))
-       (with-controls (,@params)
-	 ,@(convert-code body)
-	 (build-synthdef ,synthdef)
-	 (when (and *s* (boot-p *s*))
-	   (ecase *synth-definition-mode*
-	     (:recv (recv-synthdef ,synthdef nil))
-	     (:load (load-synthdef ,synthdef nil)))
-	   (sync))
-	 ,synthdef))))
+    `(progn
+       (set-synthdef-metadata ',name :name ',name)
+       (set-synthdef-metadata ',name :controls
+                              (mapcar (lambda (param) (append (list (car param)) (cdr param)))
+                                      ',params))
+       (set-synthdef-metadata ',name :body ',body)
+       (let* ((,synthdef (make-instance 'synthdef :name ,(string-downcase name)))
+	      (*synthdef* ,synthdef))
+	 (with-controls (,@params)
+	   ,@(convert-code body)
+	   (build-synthdef ,synthdef)
+	   (when (and *s* (boot-p *s*))
+	     (ecase *synth-definition-mode*
+	       (:recv (recv-synthdef ,synthdef nil))
+	       (:load (load-synthdef ,synthdef nil)))
+	     (sync))
+	   ,synthdef)))))
 
 (defvar *temp-synth-name* "temp-synth")
 
