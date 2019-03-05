@@ -57,6 +57,7 @@
 	       (:file "ugens/stochastic")
 	       (:file "ugens/testugens")
 	       (:file "ugens/hilbert")
+	       (:file "ugens/machine-listening")
 	       (:file "ugens/extras/envfollow")
 	       (:file "ugens/extras/mdapiano")
 	       (:file "ugens/extras/joshpv")
