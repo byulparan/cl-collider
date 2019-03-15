@@ -229,6 +229,7 @@
   "Read a soundfile located at PATH as a wavetable."
   (let* ((tmp-buf (prog1 (buffer-read path)
                     (sync)))
+         (full-path (slot-value tmp-buf 'path))
          (file-frames (slot-value tmp-buf 'frames))
          (powers-of-two (mapcar (lambda (x) (expt 2 (1+ x))) (alexandria:iota 16)))
          (num-frames (nth (position-if (lambda (x) (>= x file-frames)) powers-of-two) powers-of-two))
@@ -237,4 +238,5 @@
                    (buffer-free tmp-buf)))
          (buffer (buffer-alloc (* 2 num-frames))))
     (buffer-setn buffer (list-in-wavetable-format (linear-resample frames num-frames)))
+    (setf (slot-value buffer 'path) full-path)
     buffer))

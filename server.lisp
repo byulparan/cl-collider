@@ -444,7 +444,7 @@
     `(let* ((,file-name (full-pathname ,output-files))
 	    (,osc-file (cat (subseq ,file-name 0 (position #\. ,file-name)) ".osc"))
 	    (*s* (make-instance 'nrt-server :name "NRTSynth" :streams nil)))
-       (make-group 1 :pos :head :to 0)
+       (make-group :id 1 :pos :head :to 0)
        ,@body
        (when ,pad (send-bundle *s* (* 1.0d0 ,pad) (list "/c_set" 0 0)))
        (with-open-file (,non-realtime-stream ,osc-file :direction :output :if-exists :supersede
@@ -455,14 +455,14 @@
 	     (write-sequence (osc::encode-int32 (length ,message)) ,non-realtime-stream)
 	     (write-sequence ,message ,non-realtime-stream))))
        (sc-program-run (full-pathname *sc-synth-program*)
-		       (list "-U" (format nil "~{\"~a\"~^:~}" (mapcar #'full-pathname *sc-plugin-paths*))
-			     "-N" ,osc-file
-			     "_" ,file-name ,sr (string-upcase (pathname-type ,file-name))
-			     (ecase ,format
-			       (:int16 "int16")
-			       (:int24 "int24")
-			       (:float "float")
-			       (:double "double"))))
+		               (list "-U" (format nil "~{~a~^:~}" (mapcar #'full-pathname *sc-plugin-paths*))
+			                 "-N" ,osc-file
+			                 "_" ,file-name ,(write-to-string sr) (string-upcase (pathname-type ,file-name))
+			                 (ecase ,format
+			                   (:int16 "int16")
+			                   (:int24 "int24")
+			                   (:float "float")
+			                   (:double "double"))))
        (unless ,keep-osc-file
 	 (delete-file ,osc-file))
        (values))))
@@ -560,7 +560,6 @@
       (let* ((group-id (if id id (incf new-group-id)))
 	     (group (make-instance 'group :server server :id group-id :pos pos :to target-id)))
 	(message-distribute group (list "/g_new" group-id (node-to-pos pos) target-id) server)
-	(sync)
 	group))))
 
 (defun server-query-all-nodes (&optional (rt-server *s*))

@@ -468,13 +468,11 @@
   (list list))
 
 (defun flop (lists)
-  (labels ((this-nth (n list)
-	     (nth (mod n (length list)) list)))
-    (let* ((lists (mapcar #'alexandria:ensure-list lists))
-	   (len (apply #'max (mapcar #'length lists))))
-      (loop repeat len
-	    for i from 0
-	    collect (mapcar (lambda (list) (this-nth i list)) lists)))))
+  (let* ((lists (mapcar #'alexandria:ensure-list lists))
+	     (len (apply #'max (mapcar #'length lists))))
+    (loop repeat len
+	   for i from 0
+	   collect (mapcar (lambda (list) (nth-wrap i list)) lists))))
 
 (defun clump (lists n)
   (loop for i from 0 below (length lists) by n
