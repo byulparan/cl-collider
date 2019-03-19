@@ -89,7 +89,8 @@
   synthdef)
 
 (defun write-synthdef-file (name encoded-synthdef)
-  (let ((path (make-pathname :directory (full-pathname *sc-synthdefs-path*) :name name :type "scsyndef")))
+  (let ((path (merge-pathnames (make-pathname :name name :type "scsyndef")
+			       (full-pathname *sc-synthdefs-path*))))
     (with-open-file (stream path :direction :output
 				 :if-exists :supersede
 				 :element-type '(unsigned-byte 8))

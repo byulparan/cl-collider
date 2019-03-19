@@ -455,14 +455,17 @@
 	     (write-sequence (osc::encode-int32 (length ,message)) ,non-realtime-stream)
 	     (write-sequence ,message ,non-realtime-stream))))
        (sc-program-run (full-pathname *sc-synth-program*)
-		               (list "-U" (format nil "~{~a~^:~}" (mapcar #'full-pathname *sc-plugin-paths*))
-			                 "-N" ,osc-file
-			                 "_" ,file-name ,(write-to-string sr) (string-upcase (pathname-type ,file-name))
-			                 (ecase ,format
-			                   (:int16 "int16")
-			                   (:int24 "int24")
-			                   (:float "float")
-			                   (:double "double"))))
+		       (list "-U" (format nil
+					  #-windows "~{~a~^:~}"
+					  #+windows "~{~a~^;~}"
+					  (mapcar #'full-pathname *sc-plugin-paths*))
+			     "-N" ,osc-file
+			     "_" ,file-name ,(write-to-string sr) (string-upcase (pathname-type ,file-name))
+			     (ecase ,format
+			       (:int16 "int16")
+			       (:int24 "int24")
+			       (:float "float")
+			       (:double "double"))))
        (unless ,keep-osc-file
 	 (delete-file ,osc-file))
        (values))))
