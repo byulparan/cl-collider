@@ -14,7 +14,11 @@
 ;; default path are which build target from source
 (defvar *sc-synth-program*
   #+darwin "/Applications/SuperCollider/SuperCollider.app/Contents/Resources/scsynth"
-  #+linux "/usr/local/bin/scsynth"
+  #+linux (handler-case
+            (uiop:run-program "which scsynth" :output :line)
+            (t (c)
+               (warn "SuperCollider was not found in the system path.")
+               nil))
   #+windows (merge-pathnames *win-sc-dir* #P"scsynth.exe")
   "The path to the scsynth binary.")
 
