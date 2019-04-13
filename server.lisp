@@ -25,8 +25,13 @@
 (setf *sc-plugin-paths*
   #+darwin (list "/Applications/SuperCollider/SuperCollider.app/Contents/Resources/plugins/"
 		 "~/Library/Application\ Support/SuperCollider/Extensions/")
-  #+linux (list "/usr/local/lib/SuperCollider/plugins/"
-		"/usr/local/share/SuperCollider/Extensions/")
+  #+linux (remove-if-not
+            #'uiop:directory-exists-p
+            (list
+              "/usr/local/lib/SuperCollider/plugins/"
+              "/usr/lib/SuperCollider/plugins/"
+              "/usr/local/share/SuperCollider/Extensions/"
+              "/usr/share/SuperCollider/Extensions/"))
   #+windows (list (merge-pathnames #P"plugins/" *win-sc-dir*)
 		  (full-pathname (merge-pathnames #P"SuperCollider/Extensions/"
 						  (uiop:get-folder-path :local-appdata)))))
