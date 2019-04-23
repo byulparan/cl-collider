@@ -21,8 +21,8 @@
   (max-logins 1)
   (verbosity 0)
   (ugen-plugins-path (mapcar #'full-pathname *sc-plugin-paths*))
-	(device "cl-collider")
-	)
+  (device nil))
+  
 
 (defun build-server-options (server-options)
   (reduce #'append
