@@ -25,6 +25,7 @@
 	   #:defsynth
 	   #:synth
 	   #:get-synthdef-metadata
+       #:synthdef-metadata
 	   #:with-controls
 	   #:play
 	   #:proxy
