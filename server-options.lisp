@@ -21,37 +21,40 @@
   (max-logins 1)
   (verbosity 0)
   (ugen-plugins-path (mapcar #'full-pathname *sc-plugin-paths*))
-	(device "cl-collider")
-	)
+  (device nil))
+  
 
 (defun build-server-options (server-options)
-  (mapcar (lambda (opt)
-            (if (stringp opt)
-                opt
-                (write-to-string opt)))
-          (append
-           (list "-c" (server-options-num-control-bus server-options)
-		         "-a" (server-options-num-audio-bus server-options)
-		         "-i" (server-options-num-input-bus server-options)
-		         "-o" (server-options-num-output-bus server-options)
-		         "-z" (server-options-block-size server-options)
-		         ;;-Z hardware-buffer-size
-		         "-S" (server-options-hardware-samplerate server-options)
-		         "-b" (server-options-num-sample-buffers server-options)
-		         "-n" (server-options-max-num-nodes server-options)
-		         "-d" (server-options-max-num-synthdefs server-options)
-		         "-m" (server-options-realtime-mem-size server-options)
-		         "-w" (server-options-num-wire-buffers server-options)
-		         "-r" (server-options-num-random-seeds server-options)
-		         "-D" (server-options-load-synthdefs-p server-options)
-		         "-R" (server-options-publish-to-rendezvous-p server-options)
-		         "-l" (server-options-max-logins server-options)
-		         "-V" (server-options-verbosity server-options)
-		         "-H" (server-options-device server-options)
-		         )
-           (let* ((paths (server-options-ugen-plugins-path server-options)))
-	         (if (not paths) nil
-		         (list "-U" (format nil
-							        #-windows "~{~a~^:~}"
-                                    #+windows "~{~a~^;~}"
-							        paths)))))))
+  (reduce #'append
+    (mapcar (lambda (pair)
+              (let ((param-name (first pair))
+                    (param-value (funcall (second pair) server-options)))
+                (when param-value
+                  (list param-name
+                        (if (stringp param-value)
+                          param-value
+                          (write-to-string param-value))))))
+            (list '("-c" server-options-num-control-bus)
+                  '("-a" server-options-num-audio-bus)
+                  '("-i" server-options-num-input-bus)
+                  '("-o" server-options-num-output-bus)
+                  '("-z" server-options-block-size)
+                  '("-S" server-options-hardware-samplerate)
+                  '("-b" server-options-num-sample-buffers)
+                  '("-n" server-options-max-num-nodes)
+                  '("-d" server-options-max-num-synthdefs)
+                  '("-m" server-options-realtime-mem-size)
+                  '("-w" server-options-num-wire-buffers)
+                  '("-r" server-options-num-random-seeds)
+                  '("-D" server-options-load-synthdefs-p)
+                  '("-R" server-options-publish-to-rendezvous-p)
+                  '("-l" server-options-max-logins)
+                  '("-V" server-options-verbosity)
+                  '("-H" server-options-device)))
+             
+    :initial-value (let* ((paths (server-options-ugen-plugins-path server-options)))
+                       (if (not paths) nil
+                        (list "-U" (format nil
+                                    #-windows "~{~a~^:~}"
+                                                 #+windows "~{~a~^;~}"
+                                    paths))))))

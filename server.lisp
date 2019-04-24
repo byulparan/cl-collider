@@ -14,15 +14,24 @@
 ;; default path are which build target from source
 (defvar *sc-synth-program*
   #+darwin "/Applications/SuperCollider/SuperCollider.app/Contents/Resources/scsynth"
-  #+linux "/usr/local/bin/scsynth"
+  #+linux (handler-case
+            (uiop:run-program "which scsynth" :output :line)
+            (t (c)
+               (warn "SuperCollider was not found in the system path.")
+               nil))
   #+windows (merge-pathnames *win-sc-dir* #P"scsynth.exe")
   "The path to the scsynth binary.")
 
 (setf *sc-plugin-paths*
   #+darwin (list "/Applications/SuperCollider/SuperCollider.app/Contents/Resources/plugins/"
 		 "~/Library/Application\ Support/SuperCollider/Extensions/")
-  #+linux (list "/usr/local/lib/SuperCollider/plugins/"
-		"/usr/local/share/SuperCollider/Extensions/")
+  #+linux (remove-if-not
+            #'uiop:directory-exists-p
+            (list
+              "/usr/local/lib/SuperCollider/plugins/"
+              "/usr/lib/SuperCollider/plugins/"
+              "/usr/local/share/SuperCollider/Extensions/"
+              "/usr/share/SuperCollider/Extensions/"))
   #+windows (list (merge-pathnames #P"plugins/" *win-sc-dir*)
 		  (full-pathname (merge-pathnames #P"SuperCollider/Extensions/"
 						  (uiop:get-folder-path :local-appdata)))))
