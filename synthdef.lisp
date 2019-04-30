@@ -369,6 +369,7 @@
                 :unless (null res)
                 :return res)))))
 
+
 (defmacro proxy (key body &key id (gain 1.0) (fade 0.5) (pos :head) (to 1) (out-bus 0))
   (alexandria:with-gensyms (node d-key)
     `(let ((,node (gethash ,key (node-proxy-table *s*))))
@@ -382,10 +383,8 @@
 		   (error  "already running id ~d~%" ,id))
 		 (let ((,d-key (string-downcase ,key)))
 		   (set-synthdef-metadata ,d-key :name ,d-key)
-		   (alexandria:when-let ((controls (get-controls-list ',body)))
-                     (set-synthdef-metadata ,d-key :controls
-		 			    (mapcar (lambda (param) (append (list (car param)) (cdr param)))
-		 				    controls)))
+		   (let ((controls (get-controls-list ',body)))
+                     (set-synthdef-metadata ,d-key :controls (mapcar (lambda (param) (append (list (car param)) (cdr param))) controls)))
 		   (set-synthdef-metadata ,d-key :body ',body))
 		 (let ((*temp-synth-name* ,(string-downcase key)))
 		   (prog1 (setf (gethash ,key (node-proxy-table *s*))
