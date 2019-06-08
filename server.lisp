@@ -304,7 +304,8 @@
 	 (setf (frames buffer) frames (chanls buffer) chanls (sr buffer) sr))))
     (add-reply-responder
      "/fail"
-     (lambda (&rest args) (format t "FAILURE in server: ~{~a ~}~%" args)))
+     (lambda (&rest args)
+       (declare (ignore args))))
     (add-reply-responder
      "/n_go"
      (lambda (id &rest args)
