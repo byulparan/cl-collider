@@ -3,17 +3,22 @@
 (defvar *s* nil
   "Special symbol bound to the default scsynth server. If functions do not specify a target server, that message is sent to the *s* server.")
 
+(defun sc-path-not-found-warning ()
+  (progn (warn "SuperCollider was not found in the default path.") #p""))
+
 #+windows
 (defvar *win-sc-dir*
   (or (find-if (alexandria:compose (alexandria:curry #'search "SuperCollider")
 				   #'namestring)
 	       (uiop:subdirectories (uiop:getenv-pathname "ProgramFiles"))
 	       :from-end t)
-      (progn (warn "SuperCollider was not found in the default path.") #p"")))
+       (sc-path-not-found-warning)))
 
 ;; default path are which build target from source
 (defvar *sc-synth-program*
-  #+darwin "/Applications/SuperCollider/SuperCollider.app/Contents/Resources/scsynth"
+  #+darwin (or (find-if #'uiop:file-exists-p '("/Applications/SuperCollider/SuperCollider.app/Contents/Resources/scsynth"
+                                               "/Applications/SuperCollider.app/Contents/Resources/scsynth"))
+               (sc-path-not-found-warning))	
   #+linux (handler-case
             (uiop:run-program "which scsynth" :output :line)
             (t (c)
@@ -23,8 +28,9 @@
   "The path to the scsynth binary.")
 
 (setf *sc-plugin-paths*
-  #+darwin (list "/Applications/SuperCollider/SuperCollider.app/Contents/Resources/plugins/"
-		 "~/Library/Application\ Support/SuperCollider/Extensions/")
+  #+darwin (list (or (find-if #'uiop:truename* '("/Applications/SuperCollider/SuperCollider.app/Contents/Resources/plugins/"
+                                                 "/Applications/SuperCollider.app/Contents/Resources/plugins/")))
+	      "~/Library/Application\ Support/SuperCollider/Extensions/")    
   #+linux (remove-if-not
             #'uiop:directory-exists-p
             (list
