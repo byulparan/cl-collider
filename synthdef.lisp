@@ -369,29 +369,29 @@
                 :unless (null res)
                 :return res)))))
 
-
 (defmacro proxy (key body &key id (gain 1.0) (fade 0.5) (pos :head) (to 1) (out-bus 0))
-  (alexandria:with-gensyms (node d-key)
-    `(let ((,node (gethash ,key (node-proxy-table *s*))))
-       (labels ((clear-node ()
-                  (when (and ,node (is-playing-p ,node))
-                    (if (getf (meta ,node) :is-signal-p) (ctrl ,node :gate 0 :fade ,fade)
-                      (free ,node)))))
-         ,(if body
-	      `(progn
-		 (when (and ,id (find ,id (node-watcher *s*)))
+  (alexandria:with-gensyms (node node-alive-p d-key)
+    `(let* ((,node (gethash ,key (node-proxy-table *s*)))
+	    (,node-alive-p (is-playing-p ,node)))
+       ,(if body
+	    (alexandria:once-only (id fade)
+	      `(labels ((clear-node ()
+			  (when ,node-alive-p
+			    (if (getf (meta ,node) :is-signal-p) (ctrl ,node :gate 0 :fade ,fade)
+			      (free ,node)))))
+		 (when (is-playing-p ,id)
 		   (error  "already running id ~d~%" ,id))
 		 (let ((,d-key (string-downcase ,key)))
 		   (set-synthdef-metadata ,d-key :name ,d-key)
 		   (let ((controls (get-controls-list ',body)))
-                     (set-synthdef-metadata ,d-key :controls (mapcar (lambda (param) (append (list (car param)) (cdr param))) controls)))
+		     (set-synthdef-metadata ,d-key :controls (mapcar (lambda (param) (append (list (car param)) (cdr param))) controls)))
 		   (set-synthdef-metadata ,d-key :body ',body))
-		 (let ((*temp-synth-name* ,(string-downcase key)))
-		   (prog1 (setf (gethash ,key (node-proxy-table *s*))
-			    (play ,body :id ,id :out-bus ,out-bus :fade ,fade :to ,to :pos ,pos :gain ,gain))
-		     (cond ((not ,id) (clear-node))
-		     	   ((and ,node (/= (id ,node) ,id)) (clear-node))))))
-            `(free ,node))))))
+		 (let ((*temp-synth-name* (string-downcase ,key)))
+		   (clear-node)
+		   (setf (gethash ,key (node-proxy-table *s*))
+		     (play ,body :id ,id :out-bus ,out-bus :fade ,fade :to ,to :pos ,pos :gain ,gain)))))
+          `(when ,node-alive-p
+	     (free ,node))))))
 
 
 ;;; ======================================================================
