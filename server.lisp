@@ -218,7 +218,7 @@
     (send-message rt-server "/notify" 1)
     (sched-run (scheduler rt-server))
     (tempo-clock-run (tempo-clock rt-server))
-    (setf (node-watcher rt-server) (list 0 1))
+    (sync rt-server)
     (group-free-all rt-server)
     (let ((options (server-options rt-server)))
       (setf (node-proxy-table rt-server) (make-hash-table)
@@ -237,6 +237,7 @@
     (funcall f))
   (send-message rt-server "/quit")
   (thread-wait (lambda () (not (boot-p rt-server))))
+  (setf (node-watcher rt-server) nil)
   (sched-stop (scheduler rt-server))
   (tempo-clock-stop (tempo-clock rt-server))
   (cleanup-server rt-server))
@@ -302,7 +303,7 @@
      "/n_go"
      (lambda (id &rest args)
        (declare (ignore args))
-       (push id (node-watcher rt-server))))
+       (pushnew id (node-watcher rt-server))))
     (add-reply-responder
      "/n_end"
      (lambda (id &rest args)
@@ -550,9 +551,10 @@
   (ctrl node :gate 0))
 
 (defun is-playing-p (node)
-  (with-node (node id server)
-    (when (find id (node-watcher server))
-      t)))
+  (when node
+    (with-node (node id server)
+      (when (find id (node-watcher server))
+	t))))
 
 ;;; Group
 (defclass group (node)
