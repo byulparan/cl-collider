@@ -159,6 +159,7 @@
     (setf (sched-thread scheduler)
       (bt:make-thread
        (lambda ()
+	 (setf *random-state* (make-random-state t))
 	 (labels ((run ()
 		    (handler-case
 			(let* ((run-p t))
@@ -234,6 +235,7 @@
     (setf (sched-thread tempo-clock)
       (bt:make-thread
        (lambda ()
+	 (setf *random-state* (make-random-state t))
 	 (labels ((run ()
 		    (handler-case
 			(let* ((run-p t))
