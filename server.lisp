@@ -621,6 +621,12 @@
 
 
 ;;; tempo-clock
+(defun set-clock (new-clock)
+  (stop)
+  (tempo-clock-stop (tempo-clock *s*))
+  (setf (tempo-clock *s*) new-clock)
+  (tempo-clock-run (tempo-clock *s*)))
+
 (defun clock-bpm (&optional bpm)
   (tempo-clock-bpm (tempo-clock *s*) bpm))
 

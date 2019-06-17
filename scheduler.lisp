@@ -222,15 +222,15 @@
    (base-seconds :initarg :base-seconds :accessor base-seconds)
    (base-beats :initarg :base-beats :accessor base-beats)))
 
-(defun beats-to-secs (tempo-clock beats)
+(defmethod beats-to-secs ((tempo-clock tempo-clock) beats)
   (with-slots (base-beats tempo beat-dur base-seconds) tempo-clock
     (+ (* (- beats base-beats) beat-dur) base-seconds)))
 
-(defun secs-to-beats (tempo-clock secs)
+(defmethod secs-to-beats ((tempo-clock tempo-clock) secs)
   (with-slots (base-seconds tempo base-beats) tempo-clock
     (+ (* (- secs base-seconds) tempo) base-beats)))
 
-(defun tempo-clock-run (tempo-clock)
+(defmethod tempo-clock-run ((tempo-clock tempo-clock))
   (when (eql (sched-status tempo-clock) :stop)
     (setf (sched-thread tempo-clock)
       (bt:make-thread
@@ -265,8 +265,8 @@
        :name (format nil "~@[~a ~]TempoClock thread" (sched-name tempo-clock))))
     :running))
 
-(defun tempo-clock-beats (tempo-clock)
-  (secs-to-beats tempo-clock (unix-time)))
+(defmethod tempo-clock-beats ((tempo-clock tempo-clock))
+  (secs-to-beats tempo-clock (sched-time tempo-clock)))
 
 (defun tempo-clock-add (tempo-clock beats f &rest args)
   (bt:with-recursive-lock-held ((mutex tempo-clock))
@@ -276,13 +276,13 @@
     (bt:condition-notify (condition-var tempo-clock)))
   (values))
 
-(defun tempo-clock-stop (tempo-clock)
+(defmethod tempo-clock-stop ((tempo-clock tempo-clock))
   (when (eql (sched-status tempo-clock) :running)
     (tempo-clock-add tempo-clock (tempo-clock-beats tempo-clock) (lambda () 'ensure-scheduler-stop-quit))
     (bt:join-thread (sched-thread tempo-clock))
     (setf (sched-status tempo-clock) :stop)))
 
-(defun tempo-clock-set-tempo (tempo-clock new-tempo)
+(defmethod tempo-clock-set-tempo ((tempo-clock tempo-clock) new-tempo)
   (bt:with-recursive-lock-held ((mutex tempo-clock))
     (with-slots (base-seconds base-beats tempo beat-dur) tempo-clock
       (let* ((in-beats (tempo-clock-beats tempo-clock)))
@@ -292,7 +292,7 @@
 	      beat-dur (/ 1.0 new-tempo))))
     (bt:condition-notify (condition-var tempo-clock))))
 
-(defun tempo-clock-bpm (tempo-clock &optional new-tempo)
+(defmethod tempo-clock-bpm ((tempo-clock tempo-clock) &optional new-tempo)
   (if new-tempo (tempo-clock-set-tempo tempo-clock (/ new-tempo 60.0))
     (* (tempo tempo-clock) 60.0)))
 
@@ -303,8 +303,8 @@
 	    :do (pileup:heap-pop in-queue)))
     (bt:condition-notify (condition-var tempo-clock))))
 
-(defun tempo-clock-quant (tempo-clock quant)
-  (let* ((beats (secs-to-beats tempo-clock (+ .3 (unix-time)))))
+(defmethod tempo-clock-quant ((tempo-clock tempo-clock) quant)
+  (let* ((beats (secs-to-beats tempo-clock (+ .3 (sched-time tempo-clock)))))
     (+ beats (- quant (mod beats quant)))))
 
 

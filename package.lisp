@@ -76,6 +76,7 @@
 	   #:now
 	   #:callback
 	   #:quant
+	   #:set-clock
 	   #:clock-bpm
 	   #:clock-add
 	   #:clock-quant
