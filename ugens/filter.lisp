@@ -237,7 +237,7 @@
   (let* ((w0 (*~ 2 pi freq (sample-dur.ir)))
          (cos-w0 (cos~ w0))
          (i (funcall (if (eq :low low-hi) #'-~ #'+~) 1 cos-w0))
-         (alpha (*~ (sin~ w0) 0.5 rq))
+         (alpha (*~ (sin~ w0) 0.5 (sqrt~ rq)))
          (b0rz (/~ 1 (+~ 1 alpha)))
          (a0 (*~ i 0.5 b0rz))
          (a1 (*~ (if (eq :low low-hi) i (*~ -1 i)) b0rz))
@@ -247,7 +247,7 @@
 
 (defun b-pass4-new (low-hi new in freq rq)
   (declare (ignorable new))
-  (let ((coefs (b-pass-sc low-hi freq (sqrt rq))))
+  (let ((coefs (b-pass-sc low-hi freq rq)))
     (apply #'multinew #'sos.ar (apply #'sos.ar in coefs) coefs)))
 
 (defugen (b-lowpass "BLowPass")
