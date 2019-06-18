@@ -217,7 +217,7 @@
 
 ;;; TempoClock
 (defclass tempo-clock (scheduler)
-  ((tempo :initform 1.0 :accessor tempo)
+  ((bpm :initarg :bpm :accessor bpm)
    (beat-dur :initarg :beat-dur)
    (base-seconds :initarg :base-seconds :accessor base-seconds)
    (base-beats :initarg :base-beats :accessor base-beats)))
@@ -226,12 +226,12 @@
   (slot-value tempo-clock 'beat-dur))
 
 (defmethod beats-to-secs ((tempo-clock tempo-clock) beats)
-  (with-slots (base-beats tempo beat-dur base-seconds) tempo-clock
+  (with-slots (base-beats beat-dur base-seconds) tempo-clock
     (+ (* (- beats base-beats) beat-dur) base-seconds)))
 
 (defmethod secs-to-beats ((tempo-clock tempo-clock) secs)
-  (with-slots (base-seconds tempo base-beats) tempo-clock
-    (+ (* (- secs base-seconds) tempo) base-beats)))
+  (with-slots (base-seconds bpm base-beats) tempo-clock
+    (+ (* (- secs base-seconds) (/ bpm 60.0)) base-beats)))
 
 (defmethod tempo-clock-run ((tempo-clock tempo-clock))
   (when (eql (sched-status tempo-clock) :stop)
@@ -285,19 +285,19 @@
     (bt:join-thread (sched-thread tempo-clock))
     (setf (sched-status tempo-clock) :stop)))
 
-(defmethod tempo-clock-set-tempo ((tempo-clock tempo-clock) new-tempo)
+(defmethod tempo-clock-set-bpm ((tempo-clock tempo-clock) new-bpm)
   (bt:with-recursive-lock-held ((mutex tempo-clock))
-    (with-slots (base-seconds base-beats tempo beat-dur) tempo-clock
+    (with-slots (base-seconds base-beats bpm beat-dur) tempo-clock
       (let* ((in-beats (tempo-clock-beats tempo-clock)))
 	(setf base-seconds (beats-to-secs tempo-clock in-beats)
 	      base-beats in-beats
-	      tempo new-tempo
-	      beat-dur (/ 1.0 new-tempo))))
+	      bpm new-bpm
+	      beat-dur (/ 60.0 new-bpm))))
     (bt:condition-notify (condition-var tempo-clock))))
 
-(defmethod tempo-clock-bpm ((tempo-clock tempo-clock) &optional new-tempo)
-  (if new-tempo (tempo-clock-set-tempo tempo-clock (/ new-tempo 60.0))
-    (* (tempo tempo-clock) 60.0)))
+(defmethod tempo-clock-bpm ((tempo-clock tempo-clock) &optional new-bpm)
+  (if new-bpm (tempo-clock-set-bpm tempo-clock new-bpm)
+    (bpm tempo-clock)))
 
 (defun tempo-clock-clear (tempo-clock)
   (bt:with-recursive-lock-held ((mutex tempo-clock))

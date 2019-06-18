@@ -175,6 +175,7 @@
 			   :timestamp (server-time-stamp self))
 	(tempo-clock self) (make-instance 'tempo-clock
 			     :name (name self)
+			     :bpm 60.0
 			     :base-beats 0
 			     :base-seconds (unix-time)
 			     :beat-dur 1.0)))
