@@ -80,7 +80,7 @@
 	   #:clock-bpm
 	   #:clock-add
 	   #:clock-quant
-	   #:clock-tm
+	   #:clock-dur
 	   #:clock-clear
 	   #:at-beat
 	   #:at-task

@@ -633,7 +633,7 @@
 (defun clock-quant (quant)
   (tempo-clock-quant (tempo-clock *s*) quant))
 
-(defun clock-tm (beat)
+(defun clock-dur (beat)
   (* (beat-dur (tempo-clock *s*)) beat))
 
 (defun clock-add (beat function &rest args)
