@@ -77,6 +77,7 @@
 (defun make-listening-thread (osc-device)
   (bt:make-thread
    (lambda ()
+     (setf *random-state* (make-random-state t))
      (let ((buffer (make-array 2048 :element-type '(unsigned-byte 8))))
        (loop
 	 do #+ecl
