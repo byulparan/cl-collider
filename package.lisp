@@ -25,7 +25,7 @@
 	   #:defsynth
 	   #:synth
 	   #:get-synthdef-metadata
-       #:synthdef-metadata
+	   #:synthdef-metadata
 	   #:with-controls
 	   #:play
 	   #:proxy
@@ -70,7 +70,7 @@
 	   #:group-free-all
 	   #:stop
 	   #:server-status
-	   #:server-quit-hooks*
+	   #:*server-quit-hooks*
 	   #:*group-free-all-hooks*
 	   #:*stop-hooks*
 
