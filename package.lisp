@@ -70,8 +70,9 @@
 	   #:group-free-all
 	   #:stop
 	   #:server-status
-	   #:*group-free-all-hook*
-	   #:*stop-hook*
+	   #:server-quit-hooks*
+	   #:*group-free-all-hooks*
+	   #:*stop-hooks*
 
 	   #:now
 	   #:callback

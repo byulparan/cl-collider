@@ -130,7 +130,7 @@
 
 (defgeneric sc-reply-thread (rt-server))
 
-(defvar *cleanup-functions* nil)
+(defvar *server-quit-hooks* nil)
 (defvar *all-rt-servers* nil)
 
 (defclass rt-server (server)
@@ -239,7 +239,7 @@
 
 (defmethod server-quit ((rt-server rt-server))
   (unless (boot-p rt-server) (error "SuperCollider server is not running."))
-  (dolist (f *cleanup-functions*)
+  (dolist (f *server-quit-hooks*)
     (funcall f))
   (send-message rt-server "/quit")
   (thread-wait (lambda () (not (boot-p rt-server))))
@@ -583,7 +583,7 @@
 (defun server-query-all-nodes (&optional (rt-server *s*))
   (send-message rt-server "/g_dumpTree" 0 0))
 
-(defvar *group-free-all-hook* nil)
+(defvar *group-free-all-hooks* nil)
 
 (defun group-free-all (&optional (rt-server *s*))
   (let ((*s* rt-server))
@@ -592,10 +592,10 @@
     (send-message rt-server "/g_freeAll" 0)
     (send-message rt-server "/clearSched")
     (make-group :id 1 :pos :head :to 0)
-    (dolist (hook *group-free-all-hook*)
+    (dolist (hook *group-free-all-hooks*)
       (funcall hook))))
 
-(defvar *stop-hook* nil)
+(defvar *stop-hooks* nil)
 
 (defun stop (&optional (group 1) &rest groups)
   (sched-clear (scheduler *s*))
@@ -603,7 +603,7 @@
   (dolist (group (cons group groups))
     (send-message *s* "/g_freeAll" group)
     (send-message *s* "/clearSched"))
-  (dolist (hook *stop-hook*)
+  (dolist (hook *stop-hooks*)
     (funcall hook)))
 
 (defun server-status (&optional (rt-server *s*))
