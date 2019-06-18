@@ -218,9 +218,12 @@
 ;;; TempoClock
 (defclass tempo-clock (scheduler)
   ((tempo :initform 1.0 :accessor tempo)
-   (beat-dur :initarg :beat-dur :accessor beat-dur)
+   (beat-dur :initarg :beat-dur)
    (base-seconds :initarg :base-seconds :accessor base-seconds)
    (base-beats :initarg :base-beats :accessor base-beats)))
+
+(defmethod beat-dur ((tempo-clock tempo-clock))
+  (slot-value tempo-clock 'beat-dur))
 
 (defmethod beats-to-secs ((tempo-clock tempo-clock) beats)
   (with-slots (base-beats tempo beat-dur base-seconds) tempo-clock
