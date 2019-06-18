@@ -630,6 +630,9 @@
 (defun clock-bpm (&optional bpm)
   (tempo-clock-bpm (tempo-clock *s*) bpm))
 
+(defun clock-beats ()
+  (tempo-clock-beats (tempo-clock *s*)))
+
 (defun clock-quant (quant)
   (tempo-clock-quant (tempo-clock *s*) quant))
 

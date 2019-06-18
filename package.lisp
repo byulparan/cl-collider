@@ -78,6 +78,7 @@
 	   #:quant
 	   #:set-clock
 	   #:clock-bpm
+	   #:clock-beats
 	   #:clock-add
 	   #:clock-quant
 	   #:clock-dur
