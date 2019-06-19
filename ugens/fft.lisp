@@ -201,6 +201,6 @@
    (:kr (multinew new 'ugen in num-samp))))
 
 (defun running-sum-rms (in &optional (num-samp 40.0))
-  (sqrt
+  (sqrt~
    (mul (running-sum.ar (squared in) num-samp)
 	(reciprocal num-samp))))

@@ -169,7 +169,8 @@
 	   #:ifft
 	   #:pvcalc
 	   #:pvcalc2
-	   #:pv-collect))
+	   #:pv-collect
+	   #:running-sum-rms))
 
 (defpackage #:sc-user
   (:use #:cl #:sc))
