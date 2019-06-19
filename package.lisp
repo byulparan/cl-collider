@@ -162,6 +162,7 @@
 	   #:dadsr
 	   #:adsr
 	   #:asr
+	   #:env-at
 	   #:env-as-signal
 
 	   #:fft

@@ -274,37 +274,64 @@
 		   (8 #'hold-interpolation))))
 	(funcall fun pos y1 y2))))
 
+(defun times-and-curves-as-list (times curve-numbers curve-values)
+  (let* ((times-list (loop :for i :in (append (list 0) times)
+			  :summing i :into ir
+			  :collect ir))
+	 (curve-number-list (if (= 1 (length curve-numbers))
+			       (make-list (1- (length times-list))
+					  :initial-element (car curve-numbers))
+			       curve-numbers))
+	 (curve-value-list (if (= 1 (length curve-values))
+			      (make-list (1- (length times-list))
+					 :initial-element (car curve-values))
+			      curve-values)))
+    (values times-list curve-number-list curve-value-list)))
+
+(defmethod env-at ((env env) time)
+  "Return the value of the envelope ENV at TIME."
+  (with-accessors ((levels levels) (times times)
+		   (curve-number curve-number)
+		   (curve-value curve-value))
+      env
+    (multiple-value-bind (times-list curve-number-list curve-value-list)
+	(times-and-curves-as-list times curve-number curve-value)
+      (assert (<= time (car (last times-list))) (time)
+	      "~S must be less or equal the total duration of the envelope." time)
+      (loop :for (time-a time-b) :on times-list
+	    :for (level-a level-b) :on levels
+	    :for curve-n :in curve-number-list
+	    :for curve-v :in curve-value-list
+	    :until (>= time-b time)
+	    :finally (return (interpolation curve-n
+					    (/ (- time time-a)
+					       (- time-b time-a))
+					    level-a
+					    level-b
+					    curve-v))))))
+
 (defmethod env-as-signal ((env env) (frames integer))
   "Return a list of length FRAMES created by sampling ENV at FRAMES number of intervals."
   (with-accessors ((levels levels) (times times)
 		   (curve-number curve-number)
 		   (curve-value curve-value))
       env
-    (let* ((times-lst (loop :for i :in (append (list 0) times)
-			    :summing i :into ir
-			    :collect ir))
-	   (curve-number-lst (if (= 1 (length curve-number))
-				 (make-list (1- (length times-lst))
-					    :initial-element (car curve-number))
-				 curve-number))
-	   (curve-value-lst (if (= 1 (length curve-value))
-				(make-list (1- (length times-lst))
-					   :initial-element (car curve-value))
-				curve-value)))
-      (loop :with max-time := (car (last times-lst))
+    (multiple-value-bind (times-list curve-number-list curve-value-list)
+	(times-and-curves-as-list times curve-number curve-value)
+      (loop :with max-time := (car (last times-list))
 	    :with step := (/ max-time
 			     (1- frames))
 	    :for frame :from 0 :below frames
 	    :for pointer := 0 :then (if (> x x2)
 					(incf pointer)
 					pointer)
-	    :for x1 := (elt times-lst pointer)
+	    :for x1 := (elt times-list pointer)
 	    :for y1 := (elt levels pointer)
-	    :for x2 := (elt times-lst (1+ pointer))
+	    :for x2 := (elt times-list (1+ pointer))
 	    :for y2 := (elt levels (1+ pointer))
 	    :for x := (* frame step)
 	    :for pos := (/ (- x x1) (- x2 x1))
-	    :for curve := (elt curve-number-lst pointer)
-	    :for curve-val := (when (= 5 curve) (elt curve-value-lst pointer))
+	    :for curve := (elt curve-number-list pointer)
+	    :for curve-val := (when (= 5 curve) (elt curve-value-list pointer))
 	    :if (> x x2) :do (decf frame)
-	    :else :collect (interpolation curve pos y1 y2 curve-val)))))
+	      :else :collect (interpolation curve pos y1 y2 curve-val)))))
