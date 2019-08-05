@@ -388,9 +388,9 @@
 		     (set-synthdef-metadata ,d-key :controls (mapcar (lambda (param) (append (list (car param)) (cdr param))) controls)))
 		   (set-synthdef-metadata ,d-key :body ',body))
 		 (let ((*temp-synth-name* (string-downcase ,key)))
-		   (clear-node)
-		   (setf (gethash ,key (node-proxy-table *s*))
-		     (play ,body :id ,id :out-bus ,out-bus :fade ,fade :to ,to :pos ,pos :gain ,gain)))))
+		   (prog1 (setf (gethash ,key (node-proxy-table *s*))
+			    (play ,body :id ,id :out-bus ,out-bus :fade ,fade :to ,to :pos ,pos :gain ,gain)))
+		   (clear-node))))
           `(when ,node-alive-p
 	     (free ,node))))))
 
