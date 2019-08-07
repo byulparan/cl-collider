@@ -389,8 +389,8 @@
 		   (set-synthdef-metadata ,d-key :body ',body))
 		 (let ((*temp-synth-name* (string-downcase ,key)))
 		   (prog1 (setf (gethash ,key (node-proxy-table *s*))
-			    (play ,body :id ,id :out-bus ,out-bus :fade ,fade :to ,to :pos ,pos :gain ,gain)))
-		   (clear-node))))
+			    (play ,body :id ,id :out-bus ,out-bus :fade ,fade :to ,to :pos ,pos :gain ,gain))
+		     (clear-node)))))
           `(when ,node-alive-p
 	     (free ,node))))))
 
