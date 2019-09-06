@@ -152,15 +152,17 @@
 	result))))
 
 (defun buffer-get-to-list (buffer &optional (start 0) (frames (slot-value buffer 'frames)))
-  "Get a list of the frames of BUFFER. Unlike `buffer-get-list', this function is not limited by OSC packet size and can return any number of frames, though it may be slower. This is synchronous function, do not call in reply thread."
+  "Get a list of the frames of BUFFER. Unlike `buffer-get-list', this function is not limited by OSC packet size and can return any number of frames, though it may be slower.
+
+Note that this is a synchronous function, so you should not call it in the reply thread."
   (let ((end (+ start frames)))
     (assert (>= (frames buffer) end) nil "Buffer index ~a out of range (buffer size: ~a)" (+ start frames) (frames buffer))
     (loop :while (< start end)
-	  :append
-	  (let ((dec (min 400 (- end start))))
-            (prog1
-		(buffer-getn buffer start dec)
-              (incf start dec))))))
+       :append
+         (let ((dec (min 400 (- end start))))
+           (prog1
+               (buffer-getn buffer start dec)
+             (incf start dec))))))
 
 (defun buffer-load-to-list (buffer &optional (start 0) (frames (slot-value buffer 'frames)))
   "Write BUFFER to a temporary file, then load the values back into a list and return it. The values are from index START and for the number of FRAMES, if provided, or otherwise until the end of the buffer. ACTION is a function which will be passed the resulting list as an argument and evaluated once the file has been read. This is synchronous function, do not call in reply thread."
@@ -237,6 +239,6 @@
                      (buffer-get-to-list tmp-buf)
                    (buffer-free tmp-buf)))
          (buffer (buffer-alloc (* 2 num-frames))))
-    (buffer-setn buffer (list-in-wavetable-format (linear-resample frames num-frames)))
+    (buffer-setn buffer (list-in-wavetable-format (coerce (linear-resample frames num-frames) 'vector)))
     (setf (slot-value buffer 'path) full-path)
     buffer))
