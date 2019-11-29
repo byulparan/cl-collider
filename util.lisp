@@ -35,7 +35,7 @@
 
 (defun full-pathname (path)
   "returning absoulte full-pathname of path"
-  (let* ((directory (uiop:truename* (uiop:pathname-directory-pathname path)))
+  (let* ((directory (uiop:truenamize (uiop:pathname-directory-pathname path)))
 	 (filename (pathname-name path))
 	 (filetype (pathname-type path)))
     (when directory
