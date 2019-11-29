@@ -80,17 +80,17 @@
 
 (defun nth-wrap (n list)
   "Get the Nth value of LIST, wrapping around if the value is bigger or smaller than the list length."
-  (nth (mod n (length list)) list))
+  (elt list (mod n (length list))))
 
 (defun blend-nth (n list)
   "Get the Nth value of LIST, linearly interpolating between the adjacent values if N is not an integer."
   (if (= n (round n))
-      (nth n list)
+      (elt list n)
       (let* ((floor (floor n))
              (ceiling (ceiling n))
              (fl-diff (- n floor)))
-        (+ (* (nth floor list) (- 1 fl-diff))
-           (* (nth ceiling list) fl-diff)))))
+        (+ (* (elt list floor) (- 1 fl-diff))
+           (* (elt list ceiling) fl-diff)))))
 
 (defun linear-resample (list new-size)
   "Using linear interpolation, resample the values of LIST to a new list of size NEW-SIZE."
