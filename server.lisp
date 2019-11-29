@@ -654,7 +654,17 @@
   `(at (beats-to-secs (tempo-clock *s*) ,beat)
      ,@body))
 
-(defmacro at-task (beat function &rest args)
-  `(callback (+ (sched-ahead (tempo-clock *s*))
-		(beats-to-secs (tempo-clock *s*) ,beat))
-	     (lambda () (apply ,function (list ,@args)))))
+
+(defun at-synth (beat name &rest param &key &allow-other-keys)
+  (clock-add beat
+	     (lambda ()
+	       (at (beats-to-secs (tempo-clock *s*) beat)
+		 (apply (if (keywordp name) #'ctrl #'synth) name param)))))
+
+
+(defun at-task (beat fun &rest args)
+  (clock-add beat
+	     (lambda ()
+	       (callback (+ (sched-ahead (tempo-clock *s*))
+			    (beats-to-secs (tempo-clock *s*) beat))
+			 (lambda () (apply fun args))))))

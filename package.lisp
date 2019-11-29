@@ -85,6 +85,7 @@
 	   #:clock-dur
 	   #:clock-clear
 	   #:at-beat
+	   #:at-synth
 	   #:at-task
 	   
 	   #:bufnum
