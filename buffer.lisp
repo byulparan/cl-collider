@@ -104,8 +104,11 @@
       (send-message server "/b_free" buffer))
     free-buffer))
 
-(defmethod buffer-free ((buffer buffer) &key (server *s*) complete-handler)
-  (buffer-free (bufnum buffer) :server server :complete-handler complete-handler))
+(defmethod buffer-free ((buffer buffer) &key server complete-handler)
+  (buffer-free (bufnum buffer) :server (or server (slot-value buffer 'server)) :complete-handler complete-handler))
+
+(defmethod free ((buffer buffer))
+  (buffer-free buffer))
 
 (defun buffer-normalize (buffer &key (server *s*) (new-max 1.0) wavetable-p complete-handler)
   (with-sync-or-call-handle (server buffer "/b_gen" complete-handler)
