@@ -95,6 +95,9 @@
   (:documentation "The scsynth server can run across the network.
  If the server is running on the local machine, return T, otherwise NIL."))
 
+(defgeneric free (object)
+  (:documentation "Free a node or buffer on the server."))
+
 (defgeneric sr (buffer))
 (defgeneric (setf sr) (sr buffer))
 (defgeneric chanls (buffer))
@@ -552,8 +555,7 @@
   (warn "#'bye is deprecated; please use #'free instead.")
   (free node))
 
-(defun free (node)
-  "Free a node running on the server."
+(defmethod free ((node node))
   (with-node (node id server)
     (message-distribute node (list "/n_free" id) server)))
 
