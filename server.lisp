@@ -560,7 +560,7 @@
   (with-node (node id server)
     (message-distribute node (list "/n_free" id) server)))
 
-(defmethod free ((node keyword))
+(defmethod free ((node symbol))
   (alexandria:when-let ((node (gethash node (node-proxy-table *s*))))
     (free node)))
 
