@@ -560,9 +560,12 @@
   (with-node (node id server)
     (message-distribute node (list "/n_free" id) server)))
 
+(defmethod free ((node fixnum))
+  (send-message *s* "/n_free" node))
+
 (defmethod free ((node symbol))
-  (alexandria:when-let ((node (gethash node (node-proxy-table *s*))))
-    (free node)))
+  (with-node (node id server)
+    (message-distribute node (list "/n_free" id) server)))
 
 (defun release (node)
   "Set the gate control of NODE to 0, releasing the node."
