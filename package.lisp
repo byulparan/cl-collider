@@ -42,15 +42,12 @@
 	   #:with-rendering
 
 	   #:all-running-servers
-	   #:reply-log-p
 	   #:make-external-server
 	   #:server-boot
 	   #:server-quit
-	   #:boot-p
+	   #:boot-p 
 	   #:send-message
 	   #:send-bundle
-	   #:addr
-	   #:lisp-port
 
 	   #:control-get
 	   #:control-set
@@ -169,7 +166,6 @@
 	   #:env-as-signal
 
 	   #:fft
-	   #:ifft
 	   #:pvcalc
 	   #:pvcalc2
 	   #:pv-collect
