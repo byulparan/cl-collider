@@ -99,6 +99,31 @@ If you have your own additional libraries, please report me. I will add here.
 (make-melody (quant 4) 16)
 (make-melody (+ 4 (quant 4)) 16 12)
 ```
+### Non-real-time Rendering to File
+```cl
+(setf *synth-definition-mode* :load)
+
+;; Redefine the saw-synth ugen
+;; The SynthDef file will be written to the *sc-synthdefs-path*
+(defsynth saw-synth ((note 60) (dur 4.0))
+  (let* ((env (env-gen.kr (env [0 .2 0] [(* dur .2) (* dur .8)]) :act :free))
+         (freq (midicps note))
+         (sig (lpf.ar (saw.ar freq env) (* freq 2))))
+    (out 0 [sig sig])))
+
+;; We can use a similar function to make a melody, but we don't need to schedule the callbacks
+(defun make-melody (time n &optional (offset 0))
+  (when (> n 0)
+    (at time (synth 'saw-synth :note (+ offset (alexandria:random-elt '(62 65 69 72)))))
+      (let ((next-time (+ time (alexandria:random-elt '(0 1 2 1.5)))))
+        (make-melody next-time (- n 1) offset))))
+	
+;; Render audio file
+(with-rendering ("~/Desktop/foo.aiff" :pad 60)
+  (make-melody 0.0d0 32)
+  (make-melody 8.0d0 32 12)
+  (make-melody 16.0d0 32 24))
+```
 ### Record Audio Output
 ```cl
 ;;; write a single channel to disk
