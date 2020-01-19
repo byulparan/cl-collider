@@ -46,6 +46,7 @@
 	   #:make-external-server
 	   #:server-boot
 	   #:server-quit
+	   #:boot-p
 	   #:send-message
 	   #:send-bundle
 	   #:addr
@@ -92,6 +93,7 @@
 	   #:sr
 	   #:frames
 	   #:chanls
+	   #:path
 	   #:buffer-read
 	   #:buffer-read-channel
 	   #:buffer-alloc
