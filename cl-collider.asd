@@ -13,11 +13,12 @@
 	       #:flexi-streams
 	       #:split-sequence
 	       #:named-readtables
-           #:simple-inferiors)
+	       #:simple-inferiors)
   :serial t
   :components ((:file "package")
 	       #+(or sbcl ecl) (:file "id-map")
 	       (:file "util")
+	       ;; swank-extensions.lisp conditionally loaded at the end of util.lisp
 	       (:file "server-options")
 	       (:file "scheduler")
 	       (:file "server")
