@@ -101,3 +101,9 @@
         list
         (loop :for i :from 0 :below new-size
            :collect (blend-nth (* i factor) list)))))
+
+;; conditionally load swank extensions
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (when (alexandria:featurep :swank)
+    (load (asdf:system-relative-pathname :cl-collider "swank-extensions.lisp"))))
+
