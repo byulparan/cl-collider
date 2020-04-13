@@ -260,6 +260,7 @@
 					(setf run-p nil)
 					(return)))))
 		      (error (c) (format t "~&Error \"~a\" in Tempo-Clock thread~%" c)
+			(finish-output)
 			(run)))))
 	   (set-thread-realtime-priority)
 	   (bt:with-lock-held ((mutex tempo-clock))
