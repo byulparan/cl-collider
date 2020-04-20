@@ -207,19 +207,29 @@ Note that this is a synchronous function, so you should not call it in the reply
 	 (append (list "\b_gen" bufnum-dst "copy" start-dst bufnum-src start-src nframes)))
   (sync *s*))
 
+(defun buffer-fill (buffer wave amplitudes &key frequencies phases
+					     (server *s*) (normalize t) (as-wavetable t) (clear-first t))
+  "Fill BUFFER with either: a series of sine wave partials, when WAVE is `:sine'; or a series of chebyshev polynomials, when WAVE is `:cheby'. 
 
-;;; wavetable
-(defun wavetable (buffer wave data &key (server *s*) (normalize t) (as-wavetable t) (clear-first t))
+In the case of sine wave partials, AMPLITUDES is a list whose first value specifies the amplitude of the first partial, the second value specifies the amplitude of the second partial, and so on. FREQUENCIES is a list of partial frequencies, in cycles per buffer. It's assumed to be an integer series of partials if the list is not supplied. When frequencies are specified, a list of PHASES can also be used where each partial may have a nonzero starting phase.
+
+Chebyshev polynomials can be defined as cheby(n) = amplitude * cos(n * acos(x)). In this case, the first value of AMPLITUDES specifies the amplitude for n = 1, the second value specifies the amplitude for n = 2, and so on. FREQUENCIES and PHASES are ignored.
+
+When NORMALIZE is T, the peak amplitude of the wave is normalized to 1.0. If WAVETABLE is set to T, the buffer is written in a special wavetable format so that it can be read by interpolating oscillators. Setting CLEAR-FIRST to T clears the buffer before new partials are written into it. If NIL, the new partials are summed with the existing contents of the buffer."
   (apply #'send-message
-	 (server buffer) 
+	 (server buffer)
 	 (append (list "/b_gen" (bufnum buffer)
 		       (ecase wave
 			 (:cheby "cheby")
-			 (:sine1 "sine1"))
+			 (:sine (cond ((and frequencies phases) "sine3")
+				      (frequencies "sine2")
+				      (t "sine1"))))
 		       (+ (if normalize 1 0)
 			  (if as-wavetable 2 0)
 			  (if clear-first 4 0)))
-		 data))
+		 (if (and (eql wave :sine) frequencies)
+		     (append frequencies amplitudes phases)
+		     amplitudes)))
   (sync server))
 
 ;; see http://doc.sccode.org/Classes/Wavetable.html#Advanced%20notes:%20wavetable%20format
