@@ -109,7 +109,7 @@
 	   #:buffer-dur
 	   #:buffer-copy
 	   
-	   #:wavetable
+	   #:buffer-fill
 	   #:buffer-read-as-wavetable
 	   #:calc-pv-recsize
 	   #:local-buf
