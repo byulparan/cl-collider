@@ -135,7 +135,7 @@
 
 (defun condition-timed-wait (condition-variable lock time)
   #+sbcl (unless (bt:condition-wait condition-variable lock :timeout time)
-	   (bt:acquire-lock lock t))
+	   (bt:acquire-recursive-lock lock))
   #-sbcl
   (progn
     (bt:release-lock lock)
