@@ -8,7 +8,6 @@
 	       #:alexandria
 	       #:cffi
 	       #:bordeaux-threads
-	       #+ecl #:bt-semaphore
 	       #:pileup
 	       #:flexi-streams
 	       #:split-sequence
