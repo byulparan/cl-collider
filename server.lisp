@@ -178,10 +178,10 @@
 			   :timestamp (server-time-stamp self))
 	(tempo-clock self) (make-instance 'tempo-clock
 			     :name (name self)
-			     :bpm 60.0
-			     :base-beats 0
+			     :bpm 60.0d0
+			     :base-beats 0.0d0
 			     :base-seconds (unix-time)
-			     :beat-dur 1.0)))
+			     :beat-dur 1.0d0)))
 
 (let ((semaphore-table (make-hash-table)))
   (defun get-semaphore-by-thread ()

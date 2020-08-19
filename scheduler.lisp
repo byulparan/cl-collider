@@ -106,7 +106,7 @@
     :accessor sched-status)
    (ahead
     :initarg :sched-ahead
-    :initform .3
+    :initform .3d0
     :accessor sched-ahead)
    (timestamp
     :initarg :timestamp
@@ -268,7 +268,7 @@
 	(setf base-seconds (beats-to-secs tempo-clock in-beats)
 	      base-beats in-beats
 	      bpm new-bpm
-	      beat-dur (/ 60.0 new-bpm))))
+	      beat-dur (/ 60.0d0 new-bpm))))
     (bt:condition-notify (condition-var tempo-clock))))
 
 (defmethod tempo-clock-bpm ((tempo-clock tempo-clock) &optional new-bpm)
@@ -283,7 +283,7 @@
     (bt:condition-notify (condition-var tempo-clock))))
 
 (defmethod tempo-clock-quant ((tempo-clock tempo-clock) quant)
-  (let* ((beats (secs-to-beats tempo-clock (+ .3 (sched-time tempo-clock)))))
+  (let* ((beats (secs-to-beats tempo-clock (+ .3d0 (sched-time tempo-clock)))))
     (+ beats (- quant (mod beats quant)))))
 
 
