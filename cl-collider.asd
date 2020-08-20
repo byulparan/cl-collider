@@ -12,7 +12,7 @@
 	       #:flexi-streams
 	       #:split-sequence
 	       #:named-readtables
-	       #-lispwroks #:simple-inferiors)
+	       #-lispworks #:simple-inferiors)
   :serial t
   :components ((:file "package")
 	       #-ccl (:file "id-map")
