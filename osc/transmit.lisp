@@ -32,12 +32,22 @@
 						  :local-host local-host
 						  :local-port local-port))))
     #+sbcl (setf (sb-bsd-sockets:sockopt-send-buffer (usocket:socket (socket device)))
-		 usocket:+max-datagram-packet-size+)
-    #+ccl
-    (let ((result (ccl::int-setsockopt (ccl:socket-os-fd (usocket:socket (socket device)))
-				       #$SOL_SOCKET #$SO_SNDBUF
-				       usocket:+max-datagram-packet-size+)))
-      (assert (zerop result) nil "fail increase socket sndbuf"))
+	     usocket:+max-datagram-packet-size+)
+    #+(or ccl lispworks)
+    (let* ((sol-socket #+linux 1 #-linux #xffff)
+	   (so-sndbuf #+linux 7 #-linux #x1001))
+      (let ((result #+ccl (ccl::int-setsockopt (ccl:socket-os-fd (usocket:socket (socket device)))
+					       sol-socket so-sndbuf
+					       usocket:+max-datagram-packet-size+)
+		    #+lispworks (cffi:with-foreign-objects ((max-len :int))
+				  (setf (cffi:mem-ref max-len :int) usocket:+max-datagram-packet-size+)
+				  (cffi:foreign-funcall "setsockopt" :int (usocket:socket (socket device))
+								     :int sol-socket
+								     :int so-sndbuf
+								     :pointer max-len
+								     :int 4
+								     :int))))
+	(assert (zerop result) nil "fail increase socket sndbuf")))
     (when local-port
       (setf (listening-thread device) (make-listening-thread device)))
     (setf (status device) :running)

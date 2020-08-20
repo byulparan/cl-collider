@@ -6,7 +6,7 @@
 (defvar *synthdef* nil)
 
 (defconstant +inf+
-  #+ccl 1E++0 
+  #+(or ccl lispworks) 1F++0 
   #+sbcl sb-ext:single-float-positive-infinity
   #+ecl ;; ext:single-float-positive-infinity // this is right value. but it signal a #<FLOATING-POINT-OVERFLOW>. maybe it's ecl's bug
   ext::most-positive-single-float)

@@ -1,7 +1,3 @@
-;;; This id-map implentation code all from ClozureCL.
-;;; I want use it in SBCL/ECL....so just I was copy.(1:1)
-;;; I use id-map for sync to scsynth <---> lisp(#'sync).
-
 (in-package #:sc)
 
 ;;; ---id map ------------------------------------

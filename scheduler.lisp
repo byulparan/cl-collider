@@ -14,7 +14,7 @@
 	(values (ccl:pref tv :timeval.tv_sec) (ccl:pref tv :timeval.tv_usec))
       (+ secs (* usecs 1.0d-6)))))
  
-#+ecl
+#+(or ecl lispworks)
 (progn
   (cffi:defctype time_t :long)
   (cffi:defctype seconds_t :int)
@@ -31,6 +31,7 @@
     (cffi:with-foreign-object (tv '(:struct timeval))
       (gettimeofday tv (cffi::null-pointer))
       (+ (cffi:mem-ref tv 'time_t) (* (cffi:mem-ref tv 'seconds_t (cffi:foreign-type-size 'time_t)) 1.0d-6)))))
+
 
 #-windows
 (cffi:defcstruct sched-param
@@ -118,8 +119,8 @@
 (defmethod initialize-instance :after ((self scheduler) &key)
   ;;; pilep:heap include lock. so scheduler use that lock.
   (with-slots (mutex in-queue) self
-    #-ecl (setf mutex (slot-value in-queue 'pileup::lock))
-    #+ecl (setf mutex (bt:make-recursive-lock))))
+    #-(or ecl lispworks) (setf mutex (slot-value in-queue 'pileup::lock))
+    #+(or ecl lispworks) (setf mutex (bt:make-recursive-lock))))
 
 ;;; -----------------------------------------------------------------------------------------------------
 

@@ -14,6 +14,7 @@
 
 (defun thread-wait (f)
   #+ccl (ccl:process-wait "wait.." f)
+  #+lispworks (mp:process-wait "wait.." f)
   #+(or sbcl ecl) (or (apply f nil)
 		      (loop
 			(when (apply f nil)
@@ -22,6 +23,7 @@
 
 (defun thread-wait-with-timeout (f timeout-msec)
   #+ccl (ccl:process-wait-with-timeout "wait.." timeout-msec f)
+  #+lispworks (mp:process-wait-with-timeout "wait.." (* timeout-msec 0.001) f)
   #+(or sbcl ecl) (let ((dead-time (+ (/ (get-internal-real-time) internal-time-units-per-second)
 				      (* 1e-3 timeout-msec))))
 		    (cond ((apply f nil) t)
@@ -49,8 +51,11 @@
 
 
 (defun sc-program-run (program options)
+  #-lispworks
   (simple-inferiors:run program options
-  		                :output t :copier :line))
+  		                :output t :copier :line)
+  #+lispworks
+  (system:run-shell-command (format nil "~{~s ~}" (cons program options))))
 
 
 #+windows

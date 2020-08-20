@@ -69,7 +69,8 @@
   #+ccl (ccl::atomic-incf (car (id server)))
   #+sbcl (sb-ext:atomic-incf (car (id server)))
   #+ecl (bt:with-lock-held ((server-lock server))
-	  (incf (car (id server)))))
+	  (incf (car (id server))))
+  #+lispworks (system:atomic-incf (car (id server))))
 
 
 ;;; declare generic function for realtime server
@@ -190,7 +191,8 @@
       (unless semaphore
 	(let ((new-semaphore #+ccl (ccl:make-semaphore)
 			     #+sbcl (sb-thread:make-semaphore)
-			     #+ecl (mp:make-semaphore)))
+			     #+ecl (mp:make-semaphore)
+			     #+lispworks (mp:make-semaphore :count 0)))
 	  (setf (gethash (bt:current-thread) semaphore-table) new-semaphore
 		semaphore new-semaphore)))
       semaphore)))
@@ -203,7 +205,8 @@
 	(send-message rt-server "/sync" id)
 	#+ccl (ccl:wait-on-semaphore semaphore)
 	#+sbcl (sb-thread:wait-on-semaphore semaphore)
-	#+ecl (mp:wait-on-semaphore semaphore)))))
+	#+ecl (mp:wait-on-semaphore semaphore)
+	#+lisworks (mp:semaphore-acquire semaphore)))))
 
 (defmethod server-boot ((rt-server rt-server))
   (when (boot-p rt-server) (error "SuperCollider server already running."))
@@ -289,7 +292,8 @@
 	 (otherwise (let ((semaphore (id-map-free-object (sync-id-map rt-server) id)))
 		      #+ccl (ccl:signal-semaphore semaphore)
 		      #+sbcl (sb-thread:signal-semaphore semaphore)
-		      #+ecl (mp:signal-semaphore semaphore))))))
+		      #+ecl (mp:signal-semaphore semaphore)
+		      #+lispworks (mp:semaphore-release semaphore))))))
     (add-reply-responder
      "/c_set"
      (lambda (bus value)
@@ -438,13 +442,15 @@
 				  :just-connect-p just-connect-p))
 
 
-;;cleanup
-(labels ((clean-up-server ()
+;; cleanup server
+(labels ((cleanup-server ()
 	   (dolist (server (all-running-servers))
 	     (server-quit server))))
-  #+ccl (push #'clean-up-server ccl::*lisp-cleanup-functions*)
-  #+sbcl (push #'clean-up-server sb-ext:*exit-hooks*)
-  #+ecl (push #'clean-up-server si:*exit-hooks*))
+  #+ccl (push #'cleanup-server ccl::*lisp-cleanup-functions*)
+  #+sbcl (push #'cleanup-server sb-ext:*exit-hooks*)
+  #+ecl (push #'cleanup-server si:*exit-hooks*)
+  #+lispworks (lispworks:define-action "Confirm when quitting image" "cleanup scsynth"
+		#'(lambda () (cleanup-server) t)))
 
 
 
