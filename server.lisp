@@ -43,7 +43,7 @@
 						  (uiop:get-folder-path :local-appdata)))))
 
 (defvar *sc-synthdefs-path*
-  #+darwin (full-pathname "~/Library/Application Support/SuperCollider/synthdefs")
+  #+darwin (full-pathname "~/Library/Application Support/SuperCollider/synthdefs/")
   #+linux (full-pathname "~/.local/share/SuperCollider/synthdefs/")
   #+windows (full-pathname (merge-pathnames #P"SuperCollider/synthdefs/"
 					    (uiop:get-folder-path :local-appdata)))
