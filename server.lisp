@@ -273,11 +273,7 @@
     (add-reply-responder
      "/done"
      (lambda (path &rest options)
-       (cond ((string= path "/notify")
-	      (destructuring-bind (client-id max-logins)
-		  options
-		(declare (ignore client-id max-logins))))
-	     ((string= path "/quit") (setf (boot-p rt-server) nil))
+       (cond ((string= path "/quit") (setf (boot-p rt-server) nil))
 	     ((char= (elt path 1) #\b) (process-buffer-complete-handle rt-server (list path (car options)))))))
     (add-reply-responder
      "/status.reply"
