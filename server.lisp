@@ -675,7 +675,7 @@
   (clock-add beat
 	     (lambda ()
 	       (at (beats-to-secs (tempo-clock *s*) beat)
-		 (apply (if (keywordp name) #'ctrl #'synth) name param)))))
+		 (apply (if (or (keywordp name) (typep name 'node)) #'ctrl #'synth) name param)))))
 
 
 (defun at-task (beat fun &rest args)
