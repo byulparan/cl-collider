@@ -109,7 +109,7 @@ If you have your own additional libraries, please report me. I will add here.
   (let* ((env (env-gen.kr (env [0 .2 0] [(* dur .2) (* dur .8)]) :act :free))
          (freq (midicps note))
          (sig (lpf.ar (saw.ar freq env) (* freq 2))))
-    (out 0 [sig sig])))
+    (out.ar 0 [sig sig])))
 
 ;; We can use a similar function to make a melody, but we don't need to schedule the callbacks
 (defun make-melody (time n &optional (offset 0))
