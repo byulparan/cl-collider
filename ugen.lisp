@@ -307,6 +307,39 @@
   (alexandria:appendf (width-first-ugens (synthdef ugen)) (list ugen))
   ugen)
 
+;;; documentation ---------------------------------------------------------
+
+(defun sc-help-file (sc-name)
+  (find-if #'uiop:file-exists-p
+	   (mapcar (lambda (dir)
+		     (make-pathname :name sc-name :type "schelp" :defaults dir))
+		   *sc-help-paths*)))
+
+(defun parse-description (text)
+  "Return the 'description' section of a SCDoc helpfile, stripped of tags."
+  (ppcre:regex-replace-all
+   ;; remove double spaces
+   "  " 
+   (ppcre:regex-replace-all
+    ;; remove SCDoc tags
+    ;; TODO: better treatment of lists, notes and footnotes
+    "(?mi)\\w+::\\b|::|Classes/|^subsection::\\s+|^list::\\s+"
+    (alexandria:when-let
+	((description (nth-value 1 (ppcre:scan-to-strings
+				    ;; select everything between "description::" and "classmethods::",
+				    ;; ignoring leading and trailing whitespace
+				    "(?sim)(?<=^description::$)(?:\\s*)(.*?)(?:\\s*)(?=^classmethods::$)"
+				    text))))
+      (aref description 0))
+    "")
+   " "))
+
+(defun read-ugen-description (sc-name)
+  "Read the description of SuperCollider UGen SC-NAME from its helpfile."
+  (alexandria:when-let ((file (sc-help-file sc-name)))
+    (parse-description (alexandria:read-file-into-string file
+							 :external-format :utf-8))))
+
 
 ;;; -------------------------------------------------------------------------------------------
 ;;;  definition synth
@@ -335,4 +368,5 @@
 					    ,inputs))))
 			  (declare (ignorable new))
 			  ,@(cdr func)))
-		      (export ',ugen-name))))))))
+		      (export ',ugen-name)
+		      (setf (documentation ',ugen-name 'function) (read-ugen-description ,(second name))))))))))

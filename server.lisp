@@ -49,6 +49,13 @@
 					    (uiop:get-folder-path :local-appdata)))
   "The directory where the scsyndef files for synthdefs are saved.")
 
+(defvar *sc-help-paths*
+  (mapcar (lambda (dir)
+	    (merge-pathnames (make-pathname :directory '(:relative :back "HelpSource" "Classes"))
+			     dir))
+	  *sc-plugin-paths*)
+  "A list of directories where helpfiles for SuperCollider UGens will be searched.")
+
 ;;; -------------------------------------------------------
 ;;; Server - base class
 ;;; -------------------------------------------------------
