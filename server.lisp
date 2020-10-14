@@ -62,15 +62,16 @@
 
 (defclass server ()
   ((name :initarg :name :initform "" :reader name)
+   (server-options :initarg :server-options :reader server-options)
    (server-lock :initform (bt:make-lock) :reader server-lock)
    (id :initform (list #-sbcl 999 #+sbcl 1000)
        :reader id)
    (buffers :initarg :buffers :accessor buffers)
    (audio-buses :initarg :audio-buses :accessor audio-buses)
-   (control-buses :initarg :control-buses :accessor control-buses))
+   (control-buses :initarg :control-buses :accessor control-buses)
+   (tempo-clock :accessor tempo-clock)
+   (node-proxy-table :accessor node-proxy-table))
   (:documentation "This is base class for the scsynth server. This library includes realtime server, NRT server, and internal server (not yet implemented)."))
-
-
 
 (defun get-next-id (server)
   #+ccl (ccl::atomic-incf (car (id server)))
@@ -145,17 +146,12 @@
 (defvar *all-rt-servers* nil)
 
 (defclass rt-server (server)
-  ((server-options
-    :initarg :server-options
-    :reader server-options)
-   (server-time-stamp
+  ((server-time-stamp
     :initarg :server-time-stamp
     :initform #'unix-time
     :accessor server-time-stamp)
    (scheduler
     :accessor scheduler)
-   (tempo-clock
-    :accessor tempo-clock)
    (sc-thread
     :initform nil
     :accessor sc-thread)
@@ -175,9 +171,7 @@
     :allocation :class)
    (node-watcher
     :initform nil
-    :accessor node-watcher)
-   (node-proxy-table
-    :accessor node-proxy-table)))
+    :accessor node-watcher)))
 
 (defmethod initialize-instance :after ((self rt-server) &key)
   (push self *all-rt-servers*)
@@ -463,6 +457,12 @@
 (defclass nrt-server (server)
   ((streams :initarg :streams :initform nil :accessor streams)))
 
+(defmethod boot-p ((server nrt-server))
+  t)
+
+(defmethod sc-reply-thread ((server nrt-server))
+  (bt:current-thread))
+
 (defmethod send-message ((server nrt-server) &rest msg)
   (send-bundle server 0.0d0 msg))
 
@@ -470,11 +470,21 @@
   (declare (type double-float time))
   (push (list (- time osc::+unix-epoch+) list-of-messages) (streams server)))
 
-(defmacro with-rendering ((output-files &key (pad nil) (keep-osc-file nil) (format :int24) (sr 44100)) &body body)
+(defmacro with-rendering ((output-files &key (pad nil) (keep-osc-file nil) (format :int24) (sr 44100)
+					  (clock-bpm 60.0) (num-of-output 2)) &body body)
   (alexandria:with-gensyms (osc-file file-name non-realtime-stream message)
     `(let* ((,file-name (full-pathname ,output-files))
 	    (,osc-file (cat (subseq ,file-name 0 (position #\. ,file-name)) ".osc"))
-	    (*s* (make-instance 'nrt-server :name "NRTSynth" :streams nil)))
+	    (*s* (make-instance 'nrt-server :name "NRTSynth" :streams nil
+				:server-options (make-server-options))))
+       (setf (buffers *s*) (make-array (server-options-num-sample-buffers (server-options *s*))
+			     :initial-element nil)
+	     (tempo-clock *s*) (make-instance 'tempo-clock
+				 :bpm ,clock-bpm
+				 :base-beats 0.0d0
+				 :base-seconds 0.0d0
+				 :beat-dur (/ 60.0d0 ,clock-bpm))
+	     (node-proxy-table *s*) (make-hash-table))
        (make-group :id 1 :pos :head :to 0)
        ,@body
        (when ,pad (send-bundle *s* (* 1.0d0 ,pad) (list "/c_set" 0 0)))
@@ -490,6 +500,7 @@
 					  #-windows "~{~a~^:~}"
 					  #+windows "~{~a~^;~}"
 					  (mapcar #'full-pathname *sc-plugin-paths*))
+			     "-o" (write-to-string ,num-of-output)
 			     "-N" ,osc-file
 			     "_" ,file-name ,(write-to-string sr) (string-upcase (pathname-type ,file-name))
 			     (ecase ,format
@@ -634,7 +645,9 @@
 
 ;;; scheduler
 (defun callback (time f &rest args)
-  (apply #'sched-add (scheduler *s*) time f args))
+  (if (typep *s* 'rt-server)
+      (apply #'sched-add (scheduler *s*) time f args)
+    (apply f args)))
 
 (defun now ()
   (sched-time (scheduler *s*)))
@@ -663,7 +676,9 @@
   (* (beat-dur (tempo-clock *s*)) beat))
 
 (defun clock-add (beat function &rest args)
-  (tempo-clock-add (tempo-clock *s*) beat (lambda () (apply function args))))
+  (if (typep *s* 'rt-server)
+      (tempo-clock-add (tempo-clock *s*) beat (lambda () (apply function args)))
+    (apply function args)))
 
 (defun clock-clear ()
   (tempo-clock-clear (tempo-clock *s*)))
