@@ -471,19 +471,20 @@
   (push (list (- time osc::+unix-epoch+) list-of-messages) (streams server)))
 
 (defmacro with-rendering ((output-files &key (pad nil) (keep-osc-file nil) (format :int24) (sr 44100)
-					  (clock-bpm 60.0) (num-of-output 2)) &body body)
-  (alexandria:with-gensyms (osc-file file-name non-realtime-stream message)
-    `(let* ((,file-name (full-pathname ,output-files))
+					  (clock-bpm (if *s* (clock-bpm) 60.0d0)) (num-of-output 2)) &body body)
+  (alexandria:with-gensyms (osc-file file-name non-realtime-stream message bpm)
+    `(let* ((,bpm ,clock-bpm)
+	    (,file-name (full-pathname ,output-files))
 	    (,osc-file (cat (subseq ,file-name 0 (position #\. ,file-name)) ".osc"))
 	    (*s* (make-instance 'nrt-server :name "NRTSynth" :streams nil
 				:server-options (make-server-options))))
        (setf (buffers *s*) (make-array (server-options-num-sample-buffers (server-options *s*))
 			     :initial-element nil)
 	     (tempo-clock *s*) (make-instance 'tempo-clock
-				 :bpm ,clock-bpm
+				 :bpm ,bpm
 				 :base-beats 0.0d0
 				 :base-seconds 0.0d0
-				 :beat-dur (/ 60.0d0 ,clock-bpm))
+				 :beat-dur (/ 60.0d0 ,bpm))
 	     (node-proxy-table *s*) (make-hash-table))
        (make-group :id 1 :pos :head :to 0)
        ,@body
