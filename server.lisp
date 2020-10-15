@@ -248,14 +248,15 @@
 
 (defmethod server-quit ((rt-server rt-server))
   (unless (boot-p rt-server) (error "SuperCollider server is not running."))
-  (dolist (f *server-quit-hooks*)
-    (funcall f))
   (send-message rt-server "/quit")
   (thread-wait (lambda () (not (boot-p rt-server))))
   (setf (node-watcher rt-server) nil)
   (sched-stop (scheduler rt-server))
   (tempo-clock-stop (tempo-clock rt-server))
-  (cleanup-server rt-server))
+  (cleanup-server rt-server)
+  (dolist (f *server-quit-hooks*)
+    (funcall f))
+  rt-server)
 
 (defun add-reply-responder (cmd handler)
   (install-reply-responder *s* cmd handler))
