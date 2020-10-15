@@ -230,6 +230,7 @@
     (cleanup-server rt-server)
     (error "Server failed to boot."))
   (when (boot-p rt-server)
+    (setf (node-watcher rt-server) (list 0))
     (send-message rt-server "/notify" 1)
     (sched-run (scheduler rt-server))
     (tempo-clock-run (tempo-clock rt-server))
