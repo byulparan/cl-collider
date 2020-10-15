@@ -352,14 +352,14 @@
 (defmacro proxy (key body &key id (gain 1.0) (fade 0.5) (pos :head) (to 1) (out-bus 0))
   (alexandria:with-gensyms (node node-alive-p d-key)
     `(let* ((,node (gethash ,key (node-proxy-table *s*)))
-	    (,node-alive-p (is-playing-p ,node)))
+	    (,node-alive-p (when ,node (if (typep *s* 'nrt-server) t (is-playing-p ,node)))))
        ,(if body
 	    (alexandria:once-only (id fade)
 	      `(labels ((clear-node ()
 			  (when ,node-alive-p
 			    (if (getf (meta ,node) :is-signal-p) (ctrl ,node :gate 0 :fade ,fade)
 			      (free ,node)))))
-		 (when (is-playing-p ,id)
+		 (when (and (typep *s* 'rt-server) (is-playing-p ,id))
 		   (error  "already running id ~d~%" ,id))
 		 (let ((,d-key (string-downcase ,key)))
 		   (set-synthdef-metadata ,d-key :name ,d-key)
