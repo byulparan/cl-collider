@@ -617,6 +617,7 @@
 				 (incf (group-id server)))))
 	   (group (make-instance 'group :server server :id group-id :pos pos :to target-id)))
       (message-distribute group (list "/g_new" group-id (node-to-pos pos) target-id) server)
+      (sync server)
       group)))
 
 (defun server-query-all-nodes (&optional (rt-server *s*))
