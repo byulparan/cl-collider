@@ -112,3 +112,8 @@
   (when (alexandria:featurep :swank)
     (load (asdf:system-relative-pathname :cl-collider "swank-extensions.lisp"))))
 
+;; conditionally load slynk extensions
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (when (alexandria:featurep :slynk)
+    (load (asdf:system-relative-pathname :cl-collider "slynk-extensions.lisp"))))
+
