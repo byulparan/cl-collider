@@ -215,7 +215,6 @@
     (<= 'sc::<=~)
     (max 'sc::max~)
     (min 'sc::min~)
-    (if 'sc::if~)
     (logand 'sc::logand~)
     (logior 'sc::logior~)
     (ash 'sc::ash~)

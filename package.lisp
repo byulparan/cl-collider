@@ -29,6 +29,7 @@
 	   #:with-controls
 	   #:play
 	   #:proxy
+	   #:if~
 	   #:clip
 	   #:fold
 	   #:wrap
