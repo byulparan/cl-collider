@@ -17,6 +17,7 @@
     :initarg :socket
     :reader socket)
    (listening-thread
+    :initform nil
     :accessor listening-thread)
    (local-port
     :initarg :local-port
@@ -74,6 +75,7 @@
     (values)))
 
 (defun close-device (osc-device)
+  (assert (eql (status osc-device) :running) nil "~a not running" osc-device)
   (let* ((socket (socket osc-device)))
     (when (listening-thread osc-device)
       (let* ((msg (osc:encode-message "/done" "/quit")))
