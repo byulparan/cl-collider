@@ -211,7 +211,7 @@
 	#+lisworks (mp:semaphore-acquire semaphore)))))
 
 (defmethod server-boot ((rt-server rt-server))
-  (when (boot-p rt-server) (error "SuperCollider server already running."))
+  (assert (not (boot-p rt-server)) nil "~a already running." rt-server)
   (bootup-server-process rt-server)
   (initialize-server-responder rt-server)
   (labels ((bootup ()
@@ -250,7 +250,7 @@
   rt-server)
 
 (defmethod server-quit ((rt-server rt-server))
-  (unless (boot-p rt-server) (error "SuperCollider server is not running."))
+  (assert (boot-p rt-server) nil "~a is not running." rt-server)
   (send-message rt-server "/quit")
   (thread-wait (lambda () (not (boot-p rt-server))))
   (setf (node-watcher rt-server) nil)
@@ -408,12 +408,12 @@
 
 (defmethod server-quit ((rt-server external-server))
   (if (just-connect-p rt-server) (progn
-				   (assert (boot-p rt-server) nil "SuperCollider server is not running.")
+				   (assert (boot-p rt-server) nil "~a is not running." rt-server)
 				   (send-message rt-server "/notify" 0)
 				   (setf (boot-p rt-server) nil)
 				   (sc-osc:close-device (osc-device rt-server))
 				   (sched-stop (scheduler rt-server)))
-      (call-next-method)))
+    (call-next-method)))
 
 
 (defmethod install-reply-responder ((rt-server external-server) cmd-name f)
