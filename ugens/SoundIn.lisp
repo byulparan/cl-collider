@@ -1,4 +1,3 @@
-
 (in-package #:sc)
 
 (defun sound-in-prim (chan-offset bus mul add)
