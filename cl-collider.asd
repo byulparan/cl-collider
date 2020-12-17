@@ -41,7 +41,7 @@
 	       (:file "ugens/FreeVerb")
 	       (:file "ugens/Hilbert")
 	       (:file "ugens/IEnvGen")
-	       (:file "ugens/io")
+	       (:file "ugens/InOut")
 	       (:file "ugens/InfoUGens")
 	       (:file "ugens/Line")
 	       (:file "ugens/MacUGens")

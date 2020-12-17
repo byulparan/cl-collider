@@ -1,6 +1,4 @@
-
 (in-package #:sc)
-
 
 (defugen (in "In")
     (&optional (bus 0) (chanls 1))
@@ -75,9 +73,6 @@
   :check-fn (lambda (ugen) (abstract-out-check ugen 1)))
 
 
-
-
-
 (defugen (local-out "LocalOut") (channels-array)
   ((:ar (let ((channels (replace-zeroes-with-silence (alexandria:ensure-list channels-array))))
 	  (apply #'multinew new 'abstract-out channels)
@@ -85,7 +80,6 @@
    (:kr (progn (apply #'multinew new 'abstract-out (alexandria:ensure-list channels-array))
 	  0)))
   :check-fn (lambda (ugen) (abstract-out-check ugen 0)))
-
 
 
 (defugen (x-out "XOut") (bus xfade channels-array)
