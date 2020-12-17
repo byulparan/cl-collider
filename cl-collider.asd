@@ -45,7 +45,7 @@
 	       (:file "ugens/InfoUGens")
 	       (:file "ugens/Line")
 	       (:file "ugens/MacUGens")
-	       (:file "ugens/machine-listening")
+	       (:file "ugens/MachineListening")
 	       (:file "ugens/MoogFF")
 	       (:file "ugens/Noise")
 	       (:file "ugens/Osc")
