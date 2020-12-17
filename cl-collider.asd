@@ -54,7 +54,6 @@
 	       (:file "ugens/Poll")
 	       (:file "ugens/SoundIn")
 	       (:file "ugens/Splay")
-	       (:file "ugens/pmosc")
 	       (:file "ugens/TestUGens")
 	       (:file "ugens/Trig")
 	       (:file "ugens/distortion")
