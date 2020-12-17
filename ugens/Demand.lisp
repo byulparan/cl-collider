@@ -1,4 +1,3 @@
-
 (in-package #:sc)
 
 (defugen (demand "Demand") (trig reset demand-ugens)

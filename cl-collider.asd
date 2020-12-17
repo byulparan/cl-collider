@@ -32,7 +32,7 @@
 	       (:file "ugens/Chaos")
 	       (:file "ugens/Compander")
 	       (:file "ugens/Delay")
-	       (:file "ugens/Demands")
+	       (:file "ugens/Demand")
 	       (:file "ugens/DiskIO")
 	       (:file "ugens/EnvGen")
 	       (:file "ugens/FFT")
