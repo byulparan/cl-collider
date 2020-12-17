@@ -29,16 +29,6 @@
 	   #:with-controls
 	   #:play
 	   #:proxy
-	   #:if~
-	   #:clip
-	   #:fold
-	   #:wrap
-	   #:range
-	   #:exp-range
-	   #:lin-lin
-	   #:lin-exp
-	   #:exp-lin
-	   #:exp-exp
 
 	   #:with-rendering
 
@@ -151,8 +141,18 @@
 	   #:product
 	   #:dup
 	   #:==
+	   #:if~
+	   #:clip
 	   #:clip2
-	   
+	   #:fold
+	   #:wrap
+	   #:range
+	   #:exp-range
+	   #:lin-lin
+	   #:lin-exp
+	   #:exp-lin
+	   #:exp-exp
+
 	   #:env-shape-number
 	   #:env
 	   #:triangle

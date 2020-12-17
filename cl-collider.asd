@@ -59,7 +59,6 @@
 	       (:file "ugens/Splay")
 	       (:file "ugens/TestUGens")
 	       (:file "ugens/Trig")
-	       (:file "ugens/math")
 	       (:file "ugens/extras/envfollow")
 	       (:file "ugens/extras/mdapiano")
 	       (:file "ugens/extras/joshpv")
