@@ -1,4 +1,3 @@
-
 (in-package #:sc)
 
 (defun as-audio-rate-input (input)

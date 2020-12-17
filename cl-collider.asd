@@ -31,7 +31,7 @@
 	       (:file "ugens/BufIO")
 	       (:file "ugens/Chaos")
 	       (:file "ugens/Compander")
-	       (:file "ugens/Delay")
+	       (:file "ugens/Delays")
 	       (:file "ugens/Demand")
 	       (:file "ugens/DiskIO")
 	       (:file "ugens/EnvGen")
