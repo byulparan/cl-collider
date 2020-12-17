@@ -1,6 +1,3 @@
-
-;;; ...from [Osc.sc FSinOsc.sc]
-
 (in-package #:sc)
 
 (defugen (osc "Osc")
@@ -97,8 +94,6 @@
   (lin-lin ugen (minval ugen) 1.0 lo hi))
 
 
-
-
 (defugen (lf-pulse "LFPulse")
     (&optional (freq 440.0) (iphase 0.0) (width 0.5) (mul 1.0) (add 0.0))
   ((:ar
@@ -113,6 +108,15 @@
     (madd (multinew new 'pure-ugen freq iphase width) mul add))
    (:kr
     (madd (multinew new 'pure-ugen freq iphase width) mul add))))
+
+
+(defugen (impulse "Impulse")
+    (&optional (freq 440.0) (phase 0.0) (mul 1.0) (add 0.0))
+  ((:ar
+    (madd (multinew new 'pure-ugen freq phase) mul add))
+   (:kr
+    (madd (multinew new 'pure-ugen freq phase) mul add)))
+  :signal-range :unipolar)
 
 
 (defugen (sync-saw "SyncSaw")
