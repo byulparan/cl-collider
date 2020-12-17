@@ -1,4 +1,3 @@
-
 (in-package #:sc)
 
 (defugen (crossover-distortion "CrossoverDistortion")
