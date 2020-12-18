@@ -55,6 +55,7 @@
 	       (:file "ugens/Osc")
 	       (:file "ugens/PSinGrain")
 	       (:file "ugens/Pan")
+	       (:file "ugens/PhysicalModel")
 	       (:file "ugens/PitchShift")
 	       (:file "ugens/Pluck")
 	       (:file "ugens/Poll")
