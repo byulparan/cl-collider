@@ -139,10 +139,10 @@
 	       (min-freq 440.0) (max-freq 660.0) (amp-scale 0.5) (dur-scale 0.5)
 	       (init-cps 12) knum (mul 1.0) (add 1.0))
   ((:ar (madd (multinew new 'ugen amp-dist dur-dist ad-param dd-param min-freq
-			max-freq amp-scale dur-scale init-cps knum)
+			max-freq amp-scale dur-scale init-cps (if knum knum init-cps))
 	      mul add))
    (:kr (madd (multinew new 'ugen amp-dist dur-dist ad-param dd-param min-freq
-			max-freq amp-scale dur-scale init-cps knum)
+			max-freq amp-scale dur-scale init-cps (if knum knum init-cps))
 	      mul add))))
 
 (defugen (gendy5 "Gendy5")
@@ -150,10 +150,10 @@
 	       (min-freq 440.0) (max-freq 660.0) (amp-scale 0.5) (dur-scale 0.5)
 	       (init-cps 12) knum (mul 1.0) (add 1.0))
   ((:ar (madd (multinew new 'ugen amp-dist dur-dist ad-param dd-param min-freq
-			max-freq amp-scale dur-scale init-cps knum)
+			max-freq amp-scale dur-scale init-cps (if knum knum init-cps))
 	      mul add))
    (:kr (madd (multinew new 'ugen amp-dist dur-dist ad-param dd-param min-freq
-			max-freq amp-scale dur-scale init-cps knum)
+			max-freq amp-scale dur-scale init-cps (if knum knum init-cps))
 	      mul add))))
 
 (defugen (tgrains2 "TGrains2")
