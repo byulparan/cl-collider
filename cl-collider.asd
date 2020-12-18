@@ -69,4 +69,5 @@
 	       (:file "ugens/sc3-plugins/mcldbufferugens")
 	       (:file "ugens/sc3-plugins/pitchdetection")
 	       (:file "ugens/sc3-plugins/ladspa")
+	       (:file "ugens/sc3-plugins/BhobUGens")
 	       (:file "ugens/sc3-plugins/DistortionPlugins")))
