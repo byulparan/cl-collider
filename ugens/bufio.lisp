@@ -1,4 +1,3 @@
-
 (in-package #:sc)
 
 (defugen (play-buf "PlayBuf")
@@ -14,19 +13,6 @@
   ((:ar (progn (when (< chanls 2) (error "TGrains needs at least two channels."))
 	       (multinew new 'multiout-ugen chanls trigger bufnum rate center-pos dur pan amp interp)))))
 
-(defugen (tgrains2 "TGrains2")
-    (chanls &optional (trigger 0) (bufnum 0) (rate 1) (center-pos 0)
-	    (dur .1) (pan 0) (amp .1) (attk .5) (dec .5) (interp 4))
-  ((:ar (progn (when (< chanls 2) (error "TGrains needs at least two channels."))
-	       (multinew new 'multiout-ugen chanls trigger bufnum rate center-pos dur pan amp
-			 attk dec interp)))))
-
-(defugen (tgrains3 "TGrains3")
-    (chanls &optional (trigger 0) (bufnum 0) (rate 1) (center-pos 0)
-	    (dur .1) (pan 0.0) (amp .1) (attk .5) (dec .5) (window 1) (interp 4))
-  ((:ar (progn (when (< chanls 2) (error "TGrains needs at least two channels."))
-	       (multinew new 'multiout-ugen chanls trigger bufnum rate center-pos dur pan amp
-			 attk dec window interp)))))
 
 (defugen (buf-rd "BufRd")
     (chanls &optional (bufnum 0) (phase 0.0) (loop 1) (interp 2))
