@@ -53,6 +53,7 @@
 	       (:file "ugens/MoogFF")
 	       (:file "ugens/Noise")
 	       (:file "ugens/Osc")
+	       (:file "ugens/PSinGrain")
 	       (:file "ugens/Pan")
 	       (:file "ugens/PitchShift")
 	       (:file "ugens/Pluck")
