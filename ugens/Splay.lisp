@@ -1,4 +1,3 @@
-
 (in-package #:sc)
 
 (defun splay-new (rate spread level center level-comp &rest in-array)

@@ -1,6 +1,3 @@
-
-;;; ...from [Pan.sc]
-
 (in-package #:sc)
 
 (defugen (pan2 "Pan2") (in &optional (pos 0.0) (level 1.0))

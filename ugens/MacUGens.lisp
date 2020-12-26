@@ -1,4 +1,3 @@
-
 (in-package #:sc)
 
 (defugen (mouse-x "MouseX") (&optional (minval 0) (maxval 1) (warp :linear) (lag 0.2))

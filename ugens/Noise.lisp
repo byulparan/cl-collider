@@ -1,4 +1,3 @@
-
 (in-package #:sc)
 
 (defugen (rand-seed "RandSeed") (&optional (trig 0.0) (seed 56789))

@@ -1,4 +1,3 @@
-
 (in-package #:sc)
 
 (defugen (hilbert "Hilbert") (in &optional (mul 1.0) (add 0.0))

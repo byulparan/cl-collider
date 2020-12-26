@@ -1,6 +1,4 @@
-
 (in-package #:sc)
-
 
 (defugen (amplitude "Amplitude")
     (&optional (in 0.0) &key (attack-time 0.01) (release-time 0.01) (mul 1.0) (add 0.0))

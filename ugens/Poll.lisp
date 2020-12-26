@@ -1,4 +1,3 @@
-
 (in-package #:sc)
 
 (defclass poll-ugen (ugen)

@@ -1,4 +1,3 @@
-
 (in-package #:sc)
 
 (defugen (info-ugen-base "InfoUGenBase") ()
