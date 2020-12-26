@@ -1,5 +1,4 @@
 ;;; simple utillity and wrap ccl & sbcl's function.
-
 (in-package #:sc)
 (named-readtables:in-readtable :sc)
 
