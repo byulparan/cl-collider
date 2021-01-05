@@ -459,6 +459,9 @@
 ;;; -------------------------------------------------------
 ;;; Non Realtime Server
 ;;; -------------------------------------------------------
+
+(defvar *nrt-pad* nil)
+
 (defclass nrt-server (server)
   ((streams :initarg :streams :initform nil :accessor streams)))
 
@@ -491,32 +494,33 @@
 				 :base-seconds 0.0d0
 				 :beat-dur (/ 60.0d0 ,bpm))
 	     (node-proxy-table *s*) (make-hash-table))
-       (make-group :id 1 :pos :head :to 0)
-       ,@body
-       (when ,pad (send-bundle *s* (* 1.0d0 ,pad) (list "/c_set" 0 0)))
-       (with-open-file (,non-realtime-stream ,osc-file :direction :output :if-exists :supersede
-						       :element-type '(unsigned-byte 8))
-	 (dolist (,message (sort (streams *s*)  #'<= :key #'car))
-	   (when (and ,pad (> (car ,message) ,pad)) (return))
-	   (let ((,message (sc-osc::encode-bundle (second ,message) (car ,message))))
-	     (write-sequence (osc::encode-int32 (length ,message)) ,non-realtime-stream)
-	     (write-sequence ,message ,non-realtime-stream))))
-       (sc-program-run (full-pathname *sc-synth-program*)
-		       (list "-U" (format nil
-					  #-windows "~{~a~^:~}"
-					  #+windows "~{~a~^;~}"
-					  (mapcar #'full-pathname *sc-plugin-paths*))
-			     "-o" (write-to-string ,num-of-output)
-			     "-N" ,osc-file
-			     "_" ,file-name ,(write-to-string sr) (string-upcase (pathname-type ,file-name))
-			     (ecase ,format
-			       (:int16 "int16")
-			       (:int24 "int24")
-			       (:float "float")
-			       (:double "double"))))
-       (unless ,keep-osc-file
-	 (delete-file ,osc-file))
-       (values))))
+       (let* ((*nrt-pad* ,pad))
+	 (make-group :id 1 :pos :head :to 0)
+	 ,@body
+	 (when *nrt-pad* (send-bundle *s* (* 1.0d0 *nrt-pad*) (list "/c_set" 0 0)))
+	 (with-open-file (,non-realtime-stream ,osc-file :direction :output :if-exists :supersede
+							 :element-type '(unsigned-byte 8))
+	   (dolist (,message (sort (streams *s*)  #'<= :key #'car))
+	     (when (and ,pad (> (car ,message) ,pad)) (return))
+	     (let ((,message (sc-osc::encode-bundle (second ,message) (car ,message))))
+	       (write-sequence (osc::encode-int32 (length ,message)) ,non-realtime-stream)
+	       (write-sequence ,message ,non-realtime-stream))))
+	 (sc-program-run (full-pathname *sc-synth-program*)
+			 (list "-U" (format nil
+					    #-windows "~{~a~^:~}"
+					    #+windows "~{~a~^;~}"
+					    (mapcar #'full-pathname *sc-plugin-paths*))
+			       "-o" (write-to-string ,num-of-output)
+			       "-N" ,osc-file
+			       "_" ,file-name ,(write-to-string sr) (string-upcase (pathname-type ,file-name))
+			       (ecase ,format
+				 (:int16 "int16")
+				 (:int24 "int24")
+				 (:float "float")
+				 (:double "double"))))
+	 (unless ,keep-osc-file
+	   (delete-file ,osc-file))
+	 (values)))))
 
 
 ;;; -------------------------------------------------------
@@ -654,7 +658,10 @@
 (defun callback (time f &rest args)
   (if (typep *s* 'rt-server)
       (apply #'sched-add (scheduler *s*) time f args)
-    (apply f args)))
+    (if *nrt-pad* (when (< time *nrt-pad*)
+		    (apply f args))
+      (apply f args))))
+
 
 (defun now ()
   (sched-time (scheduler *s*)))
@@ -685,7 +692,9 @@
 (defun clock-add (beat function &rest args)
   (if (typep *s* 'rt-server)
       (tempo-clock-add (tempo-clock *s*) beat (lambda () (apply function args)))
-    (apply function args)))
+    (if *nrt-pad* (when (< (clock-dur beat) *nrt-pad*)
+		    (apply function args))
+      (apply function args))))
 
 (defun clock-clear ()
   (tempo-clock-clear (tempo-clock *s*)))
