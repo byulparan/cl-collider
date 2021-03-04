@@ -213,6 +213,7 @@
     (< 'sc::<~)
     (> 'sc::>~)
     (<= 'sc::<=~)
+    (>= 'sc::>=~)
     (max 'sc::max~)
     (min 'sc::min~)
     (logand 'sc::logand~)
