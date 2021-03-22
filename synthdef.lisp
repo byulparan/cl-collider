@@ -4,6 +4,7 @@
 (defclass synthdef ()
   ((name :initarg :name :accessor name)
    (controls :initarg :controls :initform nil :accessor controls)
+   (named-controls :initform nil :accessor named-controls)
    (control-names :initarg :control-names :initform nil :accessor control-names)
    (control-ugen-count :accessor control-ugen-count :initform 0)
    (children :initform nil :accessor children)
@@ -189,6 +190,46 @@
 				:control)
 		,@body)
       `(progn ,@body)))
+
+(defun named-control (name rate &optional value lag)
+  (let* ((name (string-downcase name))
+	 (rate (ecase rate
+		 (:kr :control)
+		 (:ar :audio)
+		 (:tr :trig)))
+	 (reg-control (cadr (assoc name (named-controls *synthdef*) :test #'string=)))
+	 (fixed-lag t))
+    (when (and value lag)
+      (when (and (consp lag) (numberp value))
+	(error "Single control with multiple lag values is not supported."))
+      (when (and (consp lag) (consp value) (/= (length lag) (length value)))
+	(error "Number of control values does not match the number of lag values."))
+      (when (and (consp value) (atom lag))
+	(setf lag (make-list (length value) :initial-element lag))))
+    (setf lag (alexandria:ensure-list lag))
+    (setf fixed-lag (every #'numberp lag))
+    (if reg-control (progn
+		      (assert (eql rate (getf reg-control :rate)))
+		      (when value (assert (equalp (alexandria:ensure-list (floatfy value))
+						  (getf reg-control :value))))
+		      (when lag (assert (equalp lag (getf reg-control :lag))))
+		      (getf reg-control :ugen))
+      (let* ((value (alexandria:ensure-list (floatfy (if value value 0.0))))
+	     (ugen-name (ecase rate
+			  (:control (if (and lag fixed-lag) "LagControl" "Control"))
+			  (:audio "AudioControl")
+			  (:trig "Trigcontrol")))
+	     (ugen (unbubble (ugen-new ugen-name rate 'control #'identity :bipolar
+				       value (control-ugen-count *synthdef*) lag))))
+	(when (and (eql rate :audio) lag) (setf ugen (lag.ar ugen lag)))
+	(when (and (eql rate :control) lag (not fixed-lag)) (setf ugen (lag.kr ugen lag)))
+	(alexandria:appendf (controls *synthdef*) value)
+	(alexandria:appendf (control-names *synthdef*) (list (list name (control-ugen-count *synthdef*))))
+	(incf (control-ugen-count *synthdef*) (length value))
+	(push (list name (list :rate rate :value value :lag lag :ugen ugen)) (named-controls *synthdef*))
+	ugen))))
+
+
 
 ;;; build  --------------------------------------------------------------------------------------
 

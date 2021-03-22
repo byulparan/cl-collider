@@ -27,6 +27,7 @@
 	   #:get-synthdef-metadata
 	   #:synthdef-metadata
 	   #:with-controls
+	   #:named-control
 	   #:play
 	   #:proxy
 
