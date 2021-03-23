@@ -122,8 +122,8 @@
     (loop for control in (first inputs)
 	  collect (unbubble (loop repeat (length (alexandria:ensure-list control))
 				  collect (make-instance 'proxy-output :source ugen
-								       :rate (rate ugen)
-								       :output-index i)
+							 :rate (rate ugen)
+							 :output-index i)
 				  do (incf i))))))
 
 
@@ -189,45 +189,57 @@
 						params))
 				:control)
 		,@body)
-      `(progn ,@body)))
+    `(progn ,@body)))
+
 
 (defun named-control (name rate &optional value lag)
+  (when (and (consp lag) (find 0 lag :test #'equalp)) (error "'lagTime' has bad input"))
+  (when (eql rate :tr) (setf lag nil))
   (let* ((name (string-downcase name))
+	 (lag (if (and (numberp lag) (zerop lag)) nil lag))
 	 (rate (ecase rate
 		 (:kr :control)
 		 (:ar :audio)
 		 (:tr :trig)))
-	 (reg-control (cadr (assoc name (named-controls *synthdef*) :test #'string=)))
-	 (fixed-lag t))
-    (when (and value lag)
-      (when (and (consp lag) (numberp value))
-	(error "Single control with multiple lag values is not supported."))
-      (when (and (consp lag) (consp value) (/= (length lag) (length value)))
-	(error "Number of control values does not match the number of lag values."))
-      (when (and (consp value) (atom lag))
-	(setf lag (make-list (length value) :initial-element lag))))
-    (setf lag (alexandria:ensure-list lag))
-    (setf fixed-lag (every #'numberp lag))
-    (if reg-control (progn
-		      (assert (eql rate (getf reg-control :rate)))
-		      (when value (assert (equalp (alexandria:ensure-list (floatfy value))
-						  (getf reg-control :value))))
-		      (when lag (assert (equalp lag (getf reg-control :lag))))
-		      (getf reg-control :ugen))
-      (let* ((value (alexandria:ensure-list (floatfy (if value value 0.0))))
-	     (ugen-name (ecase rate
-			  (:control (if (and lag fixed-lag) "LagControl" "Control"))
-			  (:audio "AudioControl")
-			  (:trig "Trigcontrol")))
-	     (ugen (unbubble (ugen-new ugen-name rate 'control #'identity :bipolar
-				       value (control-ugen-count *synthdef*) lag))))
-	(when (and (eql rate :audio) lag) (setf ugen (lag.ar ugen lag)))
-	(when (and (eql rate :control) lag (not fixed-lag)) (setf ugen (lag.kr ugen lag)))
-	(alexandria:appendf (controls *synthdef*) value)
-	(alexandria:appendf (control-names *synthdef*) (list (list name (control-ugen-count *synthdef*))))
-	(incf (control-ugen-count *synthdef*) (length value))
-	(push (list name (list :rate rate :value value :lag lag :ugen ugen)) (named-controls *synthdef*))
-	ugen))))
+	 (reg-control (cadr (assoc name (named-controls *synthdef*) :test #'string=))))
+    (if reg-control (let* ((ugen (getf reg-control :ugen))
+			   (fixed-lag (getf reg-control :fixed-lag)))
+		      (assert (eql rate (getf reg-control :rate)) nil
+			      "NamedControl: cannot have more than one set of rates in the same control.")
+		      (when value
+			(assert (equalp (alexandria:ensure-list (floatfy value))
+					(getf reg-control :value)) nil
+					"NamedControl: cannot have more than one set of default values in the same control."))
+		      (when (and lag fixed-lag)
+			(assert (equalp (alexandria:ensure-list lag) (getf reg-control :lag)) nil
+				"NamedControl: cannot have more than one set of fixed lag values in the same control."))
+		      (cond ((and lag (not fixed-lag) (equal rate :control)) (lag.kr ugen lag))
+			    ((and lag (not fixed-lag) (equal rate :audio)) (lag.ar ugen lag))
+			    (t ugen)))
+      (let* ((fixed-lag (and lag (every #'numberp (alexandria:ensure-list lag)))))
+	(when (and (eql rate :control) value fixed-lag)
+	  (when (and (numberp value) (consp lag) (/= 1 (length lag)))
+	    (error "Single control with multiple lag values is not supported."))
+	  (when (and (consp value) (consp lag) (/= (length lag) (length value)))
+	    (error "Number of control values does not match the number of lag values."))
+	  (when (and (consp value) (atom lag))
+	    (setf lag (make-list (length value) :initial-element lag))))
+	(let* ((value (alexandria:ensure-list (floatfy (if value value 0.0))))
+	       (lag (alexandria:ensure-list lag))
+	       (lag (if fixed-lag (subseq lag 0 (length value)) lag))
+	       (ugen-name (ecase rate
+			    (:control (if fixed-lag "LagControl" "Control"))
+			    (:audio "AudioControl")
+			    (:trig "TrigControl")))
+	       (ugen (unbubble (ugen-new ugen-name (if (eql rate :trig) :control rate) 'control #'identity :bipolar
+					 value (control-ugen-count *synthdef*) lag))))
+	  (alexandria:appendf (controls *synthdef*) value)
+	  (alexandria:appendf (control-names *synthdef*) (list (list name (control-ugen-count *synthdef*))))
+	  (incf (control-ugen-count *synthdef*) (length value))
+	  (push (list name (list :rate rate :value value :lag lag :fixed-lag fixed-lag :ugen ugen)) (named-controls *synthdef*))
+	  (when (and (eql rate :audio) lag) (setf ugen (lag.ar ugen lag)))
+	  (when (and (eql rate :control) lag (not fixed-lag)) (setf ugen (lag.kr ugen lag)))
+	  ugen)))))
 
 
 
@@ -265,18 +277,18 @@
 (defun convert-code (form &optional head)
   (cond ((null form) nil)
 	((atom form) (if head
-		(convert-code-table form)
-		form))
-     ((position (car form) (list 'let 'let*)) ;; avoid converting names of local bindings
-      `(,(car form) ,(mapcar (lambda (item)
-                               (if (atom item)
-                                   item
-                                   `(,(car item) ,@(convert-code (cdr item)))))
-                             (cadr form))
-        ,@(convert-code (cddr form))))
-     ((position (car form) (list 'destructuring-bind))
-      `(,(car form) ,(cadr form) ,(caddr form)
-         ,@(convert-code (cdddr form))))
+			 (convert-code-table form)
+		       form))
+	((position (car form) (list 'let 'let*)) ;; avoid converting names of local bindings
+	 `(,(car form) ,(mapcar (lambda (item)
+				  (if (atom item)
+                                      item
+                                    `(,(car item) ,@(convert-code (cdr item)))))
+				(cadr form))
+           ,@(convert-code (cddr form))))
+	((position (car form) (list 'destructuring-bind))
+	 `(,(car form) ,(cadr form) ,(caddr form)
+           ,@(convert-code (cdddr form))))
 	(t (cons (convert-code (car form) t)
 		 (mapcar #'convert-code (cdr form))))))
 
@@ -290,7 +302,7 @@
   (let ((metadata (gethash (as-keyword (if (typep synth 'node) (name synth) synth)) *synthdef-metadata*)))
     (if key
         (getf metadata (as-keyword key))
-        metadata)))
+      metadata)))
 
 (defun get-synthdef-metadata (synth &optional key)
   "Deprecated alias for `synthdef-metadata'."
@@ -338,10 +350,10 @@
                   (nth (mod indx (length lists)) lists))
                 (,outlets (f bus result gain lag)
                   (if (numberp gain) (funcall f bus (*~ result (var-lag.kr gain lag)))
-                      (loop with bus = (alexandria:ensure-list bus)
-                         with gain = (alexandria:ensure-list gain)
-                         for i from 0 below (max (length bus) (length gain))
-                         do (funcall f (,seqs i bus) (*~ (var-lag.kr (,seqs i gain) lag) result))))))
+                    (loop with bus = (alexandria:ensure-list bus)
+                          with gain = (alexandria:ensure-list gain)
+                          for i from 0 below (max (length bus) (length gain))
+                          do (funcall f (,seqs i bus) (*~ (var-lag.kr (,seqs i gain) lag) result))))))
          (let ((,result ,(convert-code body)))
            (unless (numberp ,result)
              (setf ,is-signal-p t)
@@ -372,9 +384,9 @@
          (new-synth (make-instance 'node :server *s* :id next-id :name name-string :pos pos :to to))
          (parameter-names (mapcar (lambda (param) (string-downcase (car param))) (getf (get-synthdef-metadata name) :controls)))
          (args (loop :for (arg val) :on args :by #'cddr
-		  :for pos = (position (string-downcase arg) parameter-names :test #'string-equal)
-		  :unless (null pos)
-		  :append (list (string-downcase (nth pos parameter-names)) val))))
+		     :for pos = (position (string-downcase arg) parameter-names :test #'string-equal)
+		     :unless (null pos)
+		       :append (list (string-downcase (nth pos parameter-names)) val))))
     (message-distribute new-synth
                         (apply #'make-synth-msg *s* name-string next-id to pos args)
                         *s*)))
@@ -385,10 +397,10 @@
         ((listp form)
          (if (eq (car form) 'with-controls)
              (cadr form)
-             (loop :for i :in (cdr form)
-                :for res = (get-controls-list i)
-                :unless (null res)
-                :return res)))))
+           (loop :for i :in (cdr form)
+                 :for res = (get-controls-list i)
+                 :unless (null res)
+                   :return res)))))
 
 (defmacro proxy (key body &key id (gain 1.0) (fade 0.5) (pos :head) (to 1) (out-bus 0))
   (alexandria:with-gensyms (node node-alive-p d-key)
