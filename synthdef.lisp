@@ -193,6 +193,7 @@
 
 
 (defun named-control (name rate &optional value lag)
+  "A NamedControl directly combines a ControlName and a Control UGen conveniently. Also this makes it safe even if several identical controls exist"
   (when (and (consp lag) (find 0 lag :test #'equalp)) (error "'lagTime' has bad input"))
   (when (eql rate :tr) (setf lag nil))
   (let* ((name (string-downcase name))
@@ -242,6 +243,9 @@
 	  (pushnew (list name (unbubble value)) (synthdef-metadata (name *synthdef*) :controls))
 	  ugen)))))
 
+(defun kr (name &optional value lag)
+  "shortcut for named-control(control rate)"
+  (named-control name :kr value lag))
 
 
 ;;; build  --------------------------------------------------------------------------------------

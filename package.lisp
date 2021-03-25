@@ -28,6 +28,7 @@
 	   #:synthdef-metadata
 	   #:with-controls
 	   #:named-control
+	   #:kr
 	   #:play
 	   #:proxy
 
