@@ -8,11 +8,11 @@
 	       #:alexandria
 	       #:cffi
 	       #:bordeaux-threads
-	       #:pileup
+	       #-ecl #:pileup #+ecl #:cl-heap
 	       #:flexi-streams
 	       #:split-sequence
 	       #:named-readtables
-	       #-lispworks #:simple-inferiors
+	       #-(or ecl lispworks) #:simple-inferiors
 	       #:cl-ppcre)
   :serial t
   :components ((:file "package")

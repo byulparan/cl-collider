@@ -50,12 +50,12 @@
 
 
 (defun sc-program-run (program options)
-  #-lispworks
+  #+(or ecl lispworks)
+  (uiop:run-program (format nil "~{~s ~}" (cons program options))
+		    :output :interactive)
+  #-(or ecl lispworks)
   (simple-inferiors:run program options
-  		                :output t :copier :line)
-  #+lispworks
-  (system:run-shell-command (format nil "~{~s ~}" (cons program options))))
-
+		                :output t :copier :line))
 
 #+windows
 (defun find-port (sc-thread port)

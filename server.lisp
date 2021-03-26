@@ -450,7 +450,10 @@
 	     (server-quit server))))
   #+ccl (push #'cleanup-server ccl::*lisp-cleanup-functions*)
   #+sbcl (push #'cleanup-server sb-ext:*exit-hooks*)
-  #+ecl (push #'cleanup-server si:*exit-hooks*)
+  #+ecl (push (lambda ()
+		(let* ((thead (bt:make-thread #'cleanup-server)))
+		  (bt:join-thread thread)))
+	      si:*exit-hooks*)
   #+lispworks (lispworks:define-action "Confirm when quitting image" "cleanup scsynth"
 		#'(lambda () (cleanup-server) t)))
 
