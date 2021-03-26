@@ -8,7 +8,7 @@
 	       #:alexandria
 	       #:cffi
 	       #:bordeaux-threads
-	       #-ecl #:pileup #+ecl #:cl-heap
+	       #:pileup
 	       #:flexi-streams
 	       #:split-sequence
 	       #:named-readtables
