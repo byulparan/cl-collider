@@ -32,7 +32,7 @@ If you have your own additional libraries, please report me. I will add here.
 (in-package :sc-user)
 (named-readtables:in-readtable :sc)
 
-;; please check   *sc-synth-program*, *sc-plugin-paths*, *sc-synthdefs-path*
+;; please check *sc-synth-program*, *sc-plugin-paths*, *sc-synthdefs-path*
 ;; if you have different path then set to
 ;;
 ;; (setf *sc-synth-program* "/path/to/scsynth")
@@ -148,7 +148,7 @@ mybuffer
 
 ;; e.g.
 (proxy :blah (sin-osc.ar 440))
-(free  :blah)
+(free :blah)
 
 
 ;; then when you are done

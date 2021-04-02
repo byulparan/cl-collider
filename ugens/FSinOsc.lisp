@@ -56,7 +56,7 @@
 	(let ((len (length specificationsArrayRef)))
 	  (unless (= 3 len)
 	    (alexandria:appendf specificationsArrayRef (make-list (- 3 len)))))
-	(multinew new 'klank  input freq-scale freq-offset decay-scale
+	(multinew new 'klank input freq-scale freq-offset decay-scale
 		  (unbubble (mapcar #'(lambda (lst) (make-array (length lst) :initial-contents lst))
 				    (lst-operation (mapcar #'flop-argument specificationsArrayRef))))))))
 

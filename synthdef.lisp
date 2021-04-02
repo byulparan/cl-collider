@@ -248,41 +248,50 @@
   (named-control name :kr value lag))
 
 
-;;; build  --------------------------------------------------------------------------------------
+;;; build --------------------------------------------------------------------------------------
 
-(defun convert-code-table (atom)
-  (case atom
-    (abs 'sc::abs~)
-    (floor 'sc::floor~)
-    (ceil 'sc::ceil~)
-    (sqrt 'sc::sqrt~)
-    (exp 'sc::exp~)
-    (sin 'sc::sin~)
-    (cos 'sc::cos~)
-    (tan 'sc::tan~)
-    (tanh 'sc::tanh~)
-    (expt 'sc::expt~)
-    (+ 'sc::+~)
-    (- 'sc::-~)
-    (* 'sc::*~)
-    (/ 'sc::/~)
-    (mod 'sc::mod~)
-    (round 'sc::round~)
-    (< 'sc::<~)
-    (> 'sc::>~)
-    (<= 'sc::<=~)
-    (>= 'sc::>=~)
-    (max 'sc::max~)
-    (min 'sc::min~)
-    (logand 'sc::logand~)
-    (logior 'sc::logior~)
-    (ash 'sc::ash~)
-    (t atom)))
+(defvar *synthdef-function-table* '((abs sc::abs~)
+				    (floor sc::floor~)
+				    (ceil sc::ceil~)
+				    (sqrt sc::sqrt~)
+				    (exp sc::exp~)
+				    (sin sc::sin~)
+				    (cos sc::cos~)
+				    (tan sc::tan~)
+				    (tanh sc::tanh~)
+				    (expt sc::expt~)
+				    (+ sc::+~)
+				    (- sc::-~)
+				    (* sc::*~)
+				    (/ sc::/~)
+				    (mod sc::mod~)
+				    (round sc::round~)
+				    (< sc::<~)
+				    (> sc::>~)
+				    (<= sc::<=~)
+				    (>= sc::>=~)
+				    (max sc::max~)
+				    (min sc::min~)
+				    (logand sc::logand~)
+				    (logior sc::logior~)
+				    (ash sc::ash~))
+  "Table mapping function names to their synthdef-compatible equivalents. Used by `convert-code' and `synthdef-equivalent-function' to convert lisp functions in synthdef bodies to ugen functions.")
+
+(defun synthdef-equivalent-function (function)
+  "Get the synthdef-compatible equivalent of FUNCTION from `*synthdef-function-table*'. If FUNCTION is not found in the table, return it unchanged."
+  (or (cadr (assoc function *synthdef-function-table*))
+      function))
+
+(defun (setf synthdef-equivalent-function) (value function)
+  "Set the synthdef-compatible equivalent of FUNCTION to VALUE in `*synthdef-function-table*'. If VALUE is nil, remove the entry for FUNCTION from the table."
+  (if value
+      (push (list function value) *synthdef-function-table*)
+      (alexandria:removef *synthdef-function-table* function :key #'car)))
 
 (defun convert-code (form &optional head)
   (cond ((null form) nil)
 	((atom form) (if head
-			 (convert-code-table form)
+			 (synthdef-equivalent-function form)
 		       form))
 	((position (car form) (list 'let 'let*)) ;; avoid converting names of local bindings
 	 `(,(car form) ,(mapcar (lambda (item)
@@ -309,27 +318,28 @@
         (getf metadata (as-keyword key))
       metadata)))
 
-(defun get-synthdef-metadata (synth &optional key)
-  "Deprecated alias for `synthdef-metadata'."
-  (synthdef-metadata synth key))
+(uiop:with-deprecation (:style-warning)
+  (defun get-synthdef-metadata (synth &optional key)
+    "Deprecated alias for `synthdef-metadata'."
+    (synthdef-metadata synth key)))
 
 (defun (setf synthdef-metadata) (value synth key)
   "Set a metadatum for the synthdef SYNTH."
   (setf (getf (gethash (as-keyword synth) *synthdef-metadata*) (as-keyword key)) value))
 
-(defun set-synthdef-metadata (synth key value)
-  "Deprecated alias for `(setf synthdef-metadata)'."
-  (setf (synthdef-metadata synth key) value))
+(uiop:with-deprecation (:style-warning)
+  (defun set-synthdef-metadata (synth key value)
+    "Deprecated alias for `(setf synthdef-metadata)'."
+    (setf (synthdef-metadata synth key) value)))
 
 (defmacro defsynth (name params &body body)
   (setf params (mapcar (lambda (param) (if (consp param) param (list param 0.0))) params))
   (alexandria:with-gensyms (synthdef)
     `(progn
-       (set-synthdef-metadata ',name :name ',name)
-       (set-synthdef-metadata ',name :controls
-                              (mapcar (lambda (param) (append (list (car param)) (cdr param)))
-                                      ',params))
-       (set-synthdef-metadata ',name :body ',body)
+       (setf (synthdef-metadata ',name :name) ',name
+	     (synthdef-metadata ',name :controls) (mapcar (lambda (param) (append (list (car param)) (cdr param)))
+							  ',params)
+	     (synthdef-metadata ',name :body) ',body)
        (let* ((,synthdef (make-instance 'synthdef :name ,(string-downcase name)))
 	      (*synthdef* ,synthdef))
 	 (with-controls (,@params)
@@ -387,7 +397,7 @@
          (to (or (getf args :to) 1))
          (pos (or (getf args :pos) :head))
          (new-synth (make-instance 'node :server *s* :id next-id :name name-string :pos pos :to to))
-         (parameter-names (mapcar (lambda (param) (string-downcase (car param))) (getf (get-synthdef-metadata name) :controls)))
+         (parameter-names (mapcar (lambda (param) (string-downcase (car param))) (synthdef-metadata name :controls)))
          (args (loop :for (arg val) :on args :by #'cddr
 		     :for pos = (position (string-downcase arg) parameter-names :test #'string-equal)
 		     :unless (null pos)
@@ -418,12 +428,12 @@
 			    (if (getf (meta ,node) :is-signal-p) (ctrl ,node :gate 0 :fade ,fade)
 			      (free ,node)))))
 		 (when (and (typep *s* 'rt-server) (is-playing-p ,id))
-		   (error  "already running id ~d~%" ,id))
+		   (error "already running id ~d~%" ,id))
 		 (let ((,d-key (string-downcase ,key)))
-		   (set-synthdef-metadata ,d-key :name ,d-key)
+		   (setf (synthdef-metadata ,d-key :name) ,d-key)
 		   (let ((controls (get-controls-list ',body)))
-		     (set-synthdef-metadata ,d-key :controls (mapcar (lambda (param) (append (list (car param)) (cdr param))) controls)))
-		   (set-synthdef-metadata ,d-key :body ',body))
+		     (setf (synthdef-metadata ,d-key :controls) (mapcar (lambda (param) (append (list (car param)) (cdr param))) controls)))
+		   (setf (synthdef-metadata ,d-key :body) ',body))
 		 (let ((*temp-synth-name* (string-downcase ,key)))
 		   (prog1 (setf (gethash ,key (node-proxy-table *s*))
 			    (play ,body :id ,id :out-bus ,out-bus :fade ,fade :to ,to :pos ,pos :gain ,gain))

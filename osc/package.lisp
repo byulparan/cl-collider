@@ -1,6 +1,6 @@
 (defpackage #:sc-osc
   (:use #:cl)
-  (:export  
+  (:export
   	   #:osc-device
   	   #:send-message
   	   #:send-bundle

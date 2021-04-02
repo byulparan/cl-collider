@@ -11,43 +11,43 @@
 
 (defugen (rand "Rand")
     (&optional (lo 0.0) (hi 1.0))
-  ((:ir (multinew new  'ugen lo hi))))
+  ((:ir (multinew new 'ugen lo hi))))
 
 (defugen (i-rand "IRand")
     (&optional (lo 0) (hi 127))
-  ((:ir (multinew new  'ugen lo hi))))
+  ((:ir (multinew new 'ugen lo hi))))
 
 (defugen (t-rand "TRand")
     (&optional (lo 0.0) (hi 1.0) (trig 0.0))
-  ((:ar (multinew new  'ugen lo hi trig))
-   (:kr (multinew new  'ugen lo hi trig))))
+  ((:ar (multinew new 'ugen lo hi trig))
+   (:kr (multinew new 'ugen lo hi trig))))
 
 (defugen (ti-rand "TIRand")
     (&optional (lo 0.0) (hi 127) (trig 0.0))
-  ((:kr (multinew new  'ugen lo hi trig))
-   (:ar (multinew new  'ugen lo hi trig))))
+  ((:kr (multinew new 'ugen lo hi trig))
+   (:ar (multinew new 'ugen lo hi trig))))
 
 (defugen (lin-rand "LinRand")
     (&optional (lo 0.0) (hi 1.0) (minmax 0.0))
-  ((:ir (multinew new  'ugen lo hi minmax))))
+  ((:ir (multinew new 'ugen lo hi minmax))))
 
 (defugen (n-rand "NRand")
     (&optional (lo 0.0) (hi 1.0) (n 0.0))
-  ((:ir (multinew new  'ugen lo hi n))))
+  ((:ir (multinew new 'ugen lo hi n))))
 
 (defugen (exp-rand "ExpRand")
     (&optional (lo 0.01) (hi 1.0))
-  ((:ir (multinew new  'ugen lo hi))))
+  ((:ir (multinew new 'ugen lo hi))))
 
 (defugen (t-exp-rand "TExpRand")
     (&optional (lo 0.01) (hi 1.0) (trig 0.0))
-  ((:ar (multinew new  'ugen lo hi trig))
-   (:kr (multinew new  'ugen lo hi trig))))
+  ((:ar (multinew new 'ugen lo hi trig))
+   (:kr (multinew new 'ugen lo hi trig))))
 
 (defugen (coin-gate "CoinGate")
     (prob in)
-  ((:ar (multinew new  'ugen prob in))
-   (:kr (multinew new  'ugen prob in))))
+  ((:ar (multinew new 'ugen prob in))
+   (:kr (multinew new 'ugen prob in))))
 
 (defugen (tw-index "TWindex")
     (in array &optional (normalize 0.0))

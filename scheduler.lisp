@@ -171,7 +171,7 @@
 		    (handler-case
 			(let* ((run-p t))
 			  (loop while run-p do
-			    (loop :while  (pileup:heap-empty-p (in-queue scheduler))
+			    (loop :while (pileup:heap-empty-p (in-queue scheduler))
 				  :do (condition-wait (condition-var scheduler) (mutex scheduler)))
 			    (loop :while (not (pileup:heap-empty-p (in-queue scheduler)))
 				  :do (let ((timeout (- (sched-event-timestamp (pileup:heap-top (in-queue scheduler))) (sched-time scheduler))))

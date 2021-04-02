@@ -43,7 +43,7 @@
           (slot-value buffer 'chanls) chanls
           (slot-value buffer 'server) server)
     (with-sync-or-call-handle (server buffer "/b_alloc" complete-handler) 
-      (apply #'send-message server (list "/b_alloc" bufnum  (floor frames) (floor chanls)
+      (apply #'send-message server (list "/b_alloc" bufnum (floor frames) (floor chanls)
 					 (sc-osc::encode-message "/b_query" bufnum))))))
 
 (defun buffer-read (path &key bufnum (server *s*))
