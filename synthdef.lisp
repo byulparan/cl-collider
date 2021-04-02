@@ -309,27 +309,28 @@
         (getf metadata (as-keyword key))
       metadata)))
 
-(defun get-synthdef-metadata (synth &optional key)
-  "Deprecated alias for `synthdef-metadata'."
-  (synthdef-metadata synth key))
+(uiop:with-deprecation (:style-warning)
+  (defun get-synthdef-metadata (synth &optional key)
+    "Deprecated alias for `synthdef-metadata'."
+    (synthdef-metadata synth key)))
 
 (defun (setf synthdef-metadata) (value synth key)
   "Set a metadatum for the synthdef SYNTH."
   (setf (getf (gethash (as-keyword synth) *synthdef-metadata*) (as-keyword key)) value))
 
-(defun set-synthdef-metadata (synth key value)
-  "Deprecated alias for `(setf synthdef-metadata)'."
-  (setf (synthdef-metadata synth key) value))
+(uiop:with-deprecation (:style-warning)
+  (defun set-synthdef-metadata (synth key value)
+    "Deprecated alias for `(setf synthdef-metadata)'."
+    (setf (synthdef-metadata synth key) value)))
 
 (defmacro defsynth (name params &body body)
   (setf params (mapcar (lambda (param) (if (consp param) param (list param 0.0))) params))
   (alexandria:with-gensyms (synthdef)
     `(progn
-       (set-synthdef-metadata ',name :name ',name)
-       (set-synthdef-metadata ',name :controls
-                              (mapcar (lambda (param) (append (list (car param)) (cdr param)))
-                                      ',params))
-       (set-synthdef-metadata ',name :body ',body)
+       (setf (synthdef-metadata ',name :name) ',name
+	     (synthdef-metadata ',name :controls) (mapcar (lambda (param) (append (list (car param)) (cdr param)))
+							  ',params)
+	     (synthdef-metadata ',name :body) ',body)
        (let* ((,synthdef (make-instance 'synthdef :name ,(string-downcase name)))
 	      (*synthdef* ,synthdef))
 	 (with-controls (,@params)
@@ -387,7 +388,7 @@
          (to (or (getf args :to) 1))
          (pos (or (getf args :pos) :head))
          (new-synth (make-instance 'node :server *s* :id next-id :name name-string :pos pos :to to))
-         (parameter-names (mapcar (lambda (param) (string-downcase (car param))) (getf (get-synthdef-metadata name) :controls)))
+         (parameter-names (mapcar (lambda (param) (string-downcase (car param))) (synthdef-metadata name :controls)))
          (args (loop :for (arg val) :on args :by #'cddr
 		     :for pos = (position (string-downcase arg) parameter-names :test #'string-equal)
 		     :unless (null pos)
@@ -420,10 +421,10 @@
 		 (when (and (typep *s* 'rt-server) (is-playing-p ,id))
 		   (error "already running id ~d~%" ,id))
 		 (let ((,d-key (string-downcase ,key)))
-		   (set-synthdef-metadata ,d-key :name ,d-key)
+		   (setf (synthdef-metadata ,d-key :name) ,d-key)
 		   (let ((controls (get-controls-list ',body)))
-		     (set-synthdef-metadata ,d-key :controls (mapcar (lambda (param) (append (list (car param)) (cdr param))) controls)))
-		   (set-synthdef-metadata ,d-key :body ',body))
+		     (setf (synthdef-metadata ,d-key :controls) (mapcar (lambda (param) (append (list (car param)) (cdr param))) controls)))
+		   (setf (synthdef-metadata ,d-key :body) ',body))
 		 (let ((*temp-synth-name* (string-downcase ,key)))
 		   (prog1 (setf (gethash ,key (node-proxy-table *s*))
 			    (play ,body :id ,id :out-bus ,out-bus :fade ,fade :to ,to :pos ,pos :gain ,gain))
