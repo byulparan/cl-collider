@@ -186,12 +186,12 @@
     (buffer &optional (propsc .25) (prophfe .25) (prophfc .25) (propsf .25)
 	    (threshold 1.0) (waittime .04))
   ((:ar
-    (multinew new  'pv-chain-ugen buffer propsc prophfe prophfc propsf threshold waittime))))
+    (multinew new 'pv-chain-ugen buffer propsc prophfe prophfc propsf threshold waittime))))
 
 (defugen (pv-hainsworth-foote "PV_HainsworthFoote")
     (buffer &optional (proph 0.0) (propf 0.0) (threshold 1.0) (waittime 0.04))
   ((:ar
-    (multinew new  'pv-chain-ugen buffer proph propf threshold waittime))))
+    (multinew new 'pv-chain-ugen buffer proph propf threshold waittime))))
 
 
 (defugen (running-sum "RunningSum")

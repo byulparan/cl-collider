@@ -17,20 +17,20 @@
 ;; default path are which build target from source
 (defvar *sc-synth-program*
   #+darwin (or (find-if #'uiop:file-exists-p '("/Applications/SuperCollider/SuperCollider.app/Contents/Resources/scsynth"
-                                               "/Applications/SuperCollider.app/Contents/Resources/scsynth"))
-               (sc-path-not-found-warning))	
+					       "/Applications/SuperCollider.app/Contents/Resources/scsynth"))
+	       (sc-path-not-found-warning))
   #+linux (handler-case
-            (uiop:run-program "which scsynth" :output :line)
+	      (uiop:run-program "which scsynth" :output :line)
             (t (c)
-               (warn "SuperCollider was not found in the system path.")
-               nil))
+	      (warn "SuperCollider was not found in the system path.")
+	      nil))
   #+windows (merge-pathnames *win-sc-dir* #P"scsynth.exe")
   "The path to the scsynth binary.")
 
 (setf *sc-plugin-paths*
   #+darwin (list (or (find-if #'uiop:truename* '("/Applications/SuperCollider/SuperCollider.app/Contents/Resources/plugins/"
                                                  "/Applications/SuperCollider.app/Contents/Resources/plugins/")))
-	      "~/Library/Application\ Support/SuperCollider/Extensions/")    
+	      "~/Library/Application\ Support/SuperCollider/Extensions/")
   #+linux (remove-if-not
             #'uiop:directory-exists-p
             (list
@@ -290,7 +290,7 @@
      "/synced"
      (lambda (id)
        (case id
-	 (-1  (setf (boot-p rt-server) t))
+	 (-1 (setf (boot-p rt-server) t))
 	 (otherwise (let ((semaphore (id-map-free-object (sync-id-map rt-server) id)))
 		      #+ccl (ccl:signal-semaphore semaphore)
 		      #+sbcl (sb-thread:signal-semaphore semaphore)
@@ -503,7 +503,7 @@
 	 (when *nrt-pad* (send-bundle *s* (* 1.0d0 *nrt-pad*) (list "/c_set" 0 0)))
 	 (with-open-file (,non-realtime-stream ,osc-file :direction :output :if-exists :supersede
 							 :element-type '(unsigned-byte 8))
-	   (dolist (,message (sort (streams *s*)  #'<= :key #'car))
+	   (dolist (,message (sort (streams *s*) #'<= :key #'car))
 	     (when (and ,pad (> (car ,message) ,pad)) (return))
 	     (let ((,message (sc-osc::encode-bundle (second ,message) (car ,message))))
 	       (write-sequence (osc::encode-int32 (length ,message)) ,non-realtime-stream)

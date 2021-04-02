@@ -248,7 +248,7 @@
   (named-control name :kr value lag))
 
 
-;;; build  --------------------------------------------------------------------------------------
+;;; build --------------------------------------------------------------------------------------
 
 (defun convert-code-table (atom)
   (case atom
@@ -418,7 +418,7 @@
 			    (if (getf (meta ,node) :is-signal-p) (ctrl ,node :gate 0 :fade ,fade)
 			      (free ,node)))))
 		 (when (and (typep *s* 'rt-server) (is-playing-p ,id))
-		   (error  "already running id ~d~%" ,id))
+		   (error "already running id ~d~%" ,id))
 		 (let ((,d-key (string-downcase ,key)))
 		   (set-synthdef-metadata ,d-key :name ,d-key)
 		   (let ((controls (get-controls-list ',body)))

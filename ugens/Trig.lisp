@@ -98,7 +98,7 @@
    (:kr (multinew new 'ugen trig div start)))
   :check-fn #'check-same-rate-as-first-input)
 
-(defugen (toggle-ff "ToggleFF")  (&optional (trig 0.0))
+(defugen (toggle-ff "ToggleFF") (&optional (trig 0.0))
   ((:ar (multinew new 'ugen trig))
    (:kr (multinew new 'ugen trig))))
 

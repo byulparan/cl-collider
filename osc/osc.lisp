@@ -55,7 +55,7 @@
 	(dolist (x (sc-make-type-tags data))
 	  (write-to-vector x)))
       (cat lump
-	   (osc::pad (osc::padding-length (length lump))))))     
+	   (osc::pad (osc::padding-length (length lump))))))
 
 (defconstant +2^32+ (expt 2 32))
 

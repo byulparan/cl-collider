@@ -95,7 +95,7 @@
 
 (defugen (buf-allpass-l "BufAllpassL")
     (&optional (buf 0) (in 0.0) (delay 0.2) (decay 1.0) (mul 1.0) (add 0.0))
-  ((:ar (madd (multinew new 'pure-ugen  buf (as-audio-rate-input in) delay decay) mul add))))
+  ((:ar (madd (multinew new 'pure-ugen buf (as-audio-rate-input in) delay decay) mul add))))
 
 (defugen (buf-allpass-c "BufAllpassC")
     (&optional (buf 0) (in 0.0) (delay 0.2) (decay 1.0) (mul 1.0) (add 0.0))

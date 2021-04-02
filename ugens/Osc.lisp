@@ -132,12 +132,12 @@
   ((:ar
     (madd (multinew new 'pure-ugen bufnum in) mul add))
    (:kr
-    (madd (multinew new 'pure-ugen  bufnum in) mul add))))
+    (madd (multinew new 'pure-ugen bufnum in) mul add))))
 
 (defugen (wrap-index "WrapIndex")
     (bufnum &optional (in 0.0) (mul 1.0) (add 0.0))
   ((:ar
-    (madd (multinew new 'pure-ugen  bufnum in) mul add))
+    (madd (multinew new 'pure-ugen bufnum in) mul add))
    (:kr
     (madd (multinew new 'pure-ugen bufnum in) mul add))))
 
@@ -146,7 +146,7 @@
   ((:ar
     (madd (multinew new 'pure-ugen bufnum in) mul add))
    (:kr
-    (madd (multinew new 'pure-ugen  bufnum in) mul add))))
+    (madd (multinew new 'pure-ugen bufnum in) mul add))))
 
 (defugen (detect-index "DetectIndex")
     (bufnum &optional (in 0.0) (mul 1.0) (add 0.0))

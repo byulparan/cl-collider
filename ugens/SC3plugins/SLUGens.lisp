@@ -13,7 +13,7 @@
   ((:ar (madd (multinew new 'ugen reset rate newx newy bufnum) mul add))))
 
 (defugen (breakcore "Breakcore")
-    (&optional (bufnum 0.0) capturein  capturetrigger (duration 0.1) ampdropout)
+    (&optional (bufnum 0.0) capturein capturetrigger (duration 0.1) ampdropout)
   ((:ar (multinew new 'ugen bufnum capturein capturetrigger duration ampdropout))))
 
 (defugen (max "Max")
