@@ -274,7 +274,6 @@
 
 (defclass proxy-output (ugen)
   ((source :initarg :source :reader source)
-   (rate :initarg :rate :accessor rate)
    (output-index :initarg :output-index :reader output-index)))
 
 (defmethod print-object ((c proxy-output) stream)
