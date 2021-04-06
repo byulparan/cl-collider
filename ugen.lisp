@@ -86,19 +86,16 @@
     (0 :scalar)
     (3 :demand)))
 
+(defmethod rate ((ugen t))
+  (error "can't available input: ~a" ugen))
+
 (defmethod rate ((ugen number))
   :scalar)
 
-(defmethod rate ((ugen list))
-  (if (null ugen)
-      :scalar
-      (let ((rate-lst (mapcar #'(lambda (u) (string (rate u))) (alexandria:flatten ugen))))
-        (let ((ret (intern (first (sort rate-lst #'string-lessp)) :keyword)))
-          ret))))
-
-(defmethod rate ((ugen t))
-  (if (eq ugen t) :scalar))
-
+(defmethod rate ((ugen cons))
+  (let ((rate-lst (mapcar #'(lambda (u) (string (rate u))) (alexandria:flatten ugen))))
+    (let ((ret (intern (first (sort rate-lst #'string-lessp)) :keyword)))
+      ret)))
 
 (defun act (act)
   (ecase act
