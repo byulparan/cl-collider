@@ -23,7 +23,7 @@
 
 (defgeneric (setf width-first-ugens) (value synthdef))
 
-(defgeneric add-constant (synthdef float))
+(defgeneric add-constant (synthdef const))
 
 (defgeneric available (synthdef))
 (defgeneric (setf available) (value synthdef))

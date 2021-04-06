@@ -41,9 +41,12 @@
   (dolist (ugen (children synthdef))
     (funcall (check-fn ugen) ugen)))
 
-(defmethod add-constant ((synthdef synthdef) (const float))
+(defmethod add-constant ((synthdef synthdef) (const single-float))
   (unless (find const (constants synthdef))
     (alexandria:appendf (constants synthdef) (list const))))
+
+(defmethod add-constant ((synthdef synthdef) (const t))
+  (error "can't available input: ~a" const))
 
 (defmethod collect-constants ((synthdef synthdef))
   (dolist (ugen (children synthdef))
