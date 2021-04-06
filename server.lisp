@@ -98,6 +98,9 @@
 (defmethod floatfy ((object cons))
   (mapcar #'floatfy object))
 
+(defmethod floatfy ((object string))
+  object)
+
 (defgeneric is-local-p (server)
   (:documentation "The scsynth server can run across the network.
  If the server is running on the local machine, return T, otherwise NIL."))
