@@ -209,11 +209,11 @@
     (write-sequence (map '(array (unsigned-byte 8) (*)) #'char-code string) vec)))
 
 (defmethod input-spec ((ugen ugen))
-  (labels ((input-spec (in)
-	     (if (typep in 'ugen) (list (synth-index (source in))
-				  (output-index in))
-		 (list -1 (position (floatfy in) (constants (synthdef ugen)))))))
-    (mapcar #'input-spec (inputs ugen))))
+  (mapcar (lambda (in)
+	    (if (typep in 'ugen)
+		(list (synth-index (source in)) (output-index in))
+	        (list -1 (position (floatfy in) (constants (synthdef ugen))))))
+	  (inputs ugen)))
 
 (defmethod write-def-ugen-version1 ((ugen ugen) stream)
   (write-sequence (make-pstring (name ugen)) stream)
