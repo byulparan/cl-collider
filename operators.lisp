@@ -305,8 +305,7 @@
 
 (defmethod new1 ((ugen muladd) &rest inputs)
   (setf (inputs ugen) inputs)
-  (setf (rate ugen) (apply #'max (mapcar #'rate-number inputs)))
-  (setf (rate ugen) (case (rate ugen) (2 :audio) (1 :control) (0 :scalar)))
+  (setf (rate ugen) (number-rate (apply #'max (mapcar #'rate-number inputs))))
   (destructuring-bind (in mul add) inputs
     (when (equalp mul 0.0) (return-from new1 add))
     (let ((minus (if (equalp mul -1.0) t nil))
