@@ -346,19 +346,14 @@
 
 (defmacro defugen (name args function &key (check-fn '(lambda (ugen) ugen))
 					(signal-range :bipolar))
-  (labels ((get-rate (rate)
-	     (alexandria:if-let ((val (case rate
-					(:ar :audio)
-					(:kr :control)
-					(:ir :scalar))))
-	       val rate)))
+  (flet ((get-rate (rate) (case rate
+			    (:ar :audio) (:kr :control) (:ir :scalar)
+			    (otherwise rate))))
     (alexandria:with-gensyms (cls inputs)
       `(progn
 	 ,@(loop for func in function
 		 collect
-		 (let* ((ugen-name (intern
-				    (if (eql (car func) :ar) (cat (string-upcase (car name)) "." (string-upcase (car func)))
-					(cat (string-upcase (car name)) "." (string-upcase (car func)))))))
+		 (let ((ugen-name (intern (cat (string-upcase (car name)) "." (string-upcase (car func))))))
 		   `(progn
 		      (defun ,ugen-name ,args
 			(let ((new (lambda (,cls &rest ,inputs)
