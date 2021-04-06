@@ -167,10 +167,6 @@
     (unless (typep input 'ugen)
       (add-constant (synthdef ugen) (floatfy input)))))
 
-(defmethod collect-constants ((ugen t))
-  (add-constant (synthdef ugen) (cond ((null ugen) 0.0)
-                                      ((eq t ugen) 1.0))))
-
 (defmethod optimize-graph ((ugen ugen)))
 
 (defmethod perform-dead-code-elimination ((ugen ugen))
