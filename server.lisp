@@ -87,10 +87,7 @@
   (:documentation "All data that is sent to the server must be in Float32 format. This function converts lisp objects to Float32."))
 
 (defmethod floatfy ((object t))
-  (cond
-    ((null object) 0.0)
-    ((eq t object) 1.0)
-    (t object)))
+  (error "can't available input: ~a" object))
 
 (defmethod floatfy ((number number))
   (float number))
@@ -98,7 +95,7 @@
 (defmethod floatfy ((number double-float))
   (coerce number 'single-float))
 
-(defmethod floatfy ((object list))
+(defmethod floatfy ((object cons))
   (mapcar #'floatfy object))
 
 (defgeneric is-local-p (server)
