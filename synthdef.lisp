@@ -401,7 +401,7 @@
          (args (loop :for (arg val) :on args :by #'cddr
 		     :for pos = (position (string-downcase arg) parameter-names :test #'string-equal)
 		     :unless (null pos)
-		       :append (list (string-downcase (nth pos parameter-names)) val))))
+		       :append (list (string-downcase (nth pos parameter-names)) (floatfy val)))))
     (message-distribute new-synth
                         (apply #'make-synth-msg *s* name-string next-id to pos args)
                         *s*)))

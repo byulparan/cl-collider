@@ -566,13 +566,14 @@
 (defun make-synth-msg (rt-server name id to pos &rest args)
   (with-node (to target server)
     (assert (eql rt-server server) nil "Target server is not synth's server. (/= ~a ~a)" server rt-server)
-    (apply #'list 9 name id (node-to-pos pos) target (mapcar #'floatfy args))))
+    (apply #'list 9 name id (node-to-pos pos) target args)))
 
 (defun ctrl (node &rest param &key &allow-other-keys)
-  (with-node (node id server)          ;; /n_set == 15
-    (message-distribute node (cons 15 (cons id (mapcar #'(lambda (p) (cond ((symbolp p) (string-downcase p)) ;key
-								       (t (floatfy p)))) ;value
-						       param))) server)))
+  (with-node (node id server)
+    (let* ((args (loop :for (key val) :on param :by #'cddr
+		       :append (list (string-downcase key) (floatfy val)))))
+      (message-distribute node (cons 15 (cons id args)) server))))
+
 (defun map-bus (node &rest param &key &allow-other-keys)
   "Map a bus or buses onto the specified controls of a node."
   (with-node (node id server)
