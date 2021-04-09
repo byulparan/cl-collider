@@ -377,7 +377,7 @@
           'external-server (name self) (host self) (port self)))
 
 (defun all-running-servers ()
-  (remove-if-not #'(lambda (server) (boot-p server)) *all-rt-servers*))
+  (remove-if-not #'boot-p *all-rt-servers*))
 
 (defmethod is-local-p ((rt-server external-server))
   (string= (host rt-server) "127.0.0.1"))
