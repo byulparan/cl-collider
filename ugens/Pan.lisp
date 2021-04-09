@@ -7,7 +7,7 @@
 
 (defugen (lin-pan2 "LinPan2") (in &optional (pos 0.0) (level 1.0))
   ((:ar (multinew new 'multiout-ugen 2 in pos level))
-   (:kr (multinew new 'multiout-ugen 2 'pan2 in pos level)))
+   (:kr (multinew new 'multiout-ugen 2 in pos level)))
   :check-fn (lambda (ugen) (check-n-inputs ugen 1)))
 
 (defugen (pan4 "Pan4") (in &optional (x-pos 0.0) (y-pos 0.0) (level 1.0))
