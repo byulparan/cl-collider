@@ -574,7 +574,7 @@
 (defun ctrl (node &rest param &key &allow-other-keys)
   (with-node (node id server)
     (let* ((args (loop :for (key val) :on param :by #'cddr
-		       :append (list (string-downcase key) (floatfy val)))))
+		       :append (list (if (numberp key) key (string-downcase key)) (floatfy val)))))
       (message-distribute node (cons 15 (cons id args)) server))))
 
 (defun map-bus (node &rest param &key &allow-other-keys)
