@@ -126,62 +126,153 @@
 
 
 (defun buffer-get (buffer index &optional action)
-  (let ((bufnum (bufnum buffer))
-	(server (server buffer)))
-    (let* ((result nil)
-	   (handle (if action action (lambda (value) (setf result value)))))
-      (bt:with-lock-held ((server-lock server))
-	(let* ((handlers (gethash (list "/b_set" bufnum index) (buffer-get-handlers server))))
-	  (setf (gethash (list "/b_set" bufnum index) (buffer-get-handlers server)) (append handlers (list handle)))))
-      (send-message server "/b_get" bufnum index)
-      (unless action
-	(sync (server buffer))
-	result))))
+  "Get the frame at INDEX from BUFFER. ACTION can be a function of one argument that is called on the result; without it, the value is simply returned.
 
-(defun buffer-getn (buffer start frames &optional action)
-  (assert (>= (frames buffer) (+ start frames)) nil "Buffer index ~a out of range (buffer size: ~a)" (+ start frames) (frames buffer))
-  (assert (>= 400 frames) nil "requested frames too large. use `buffer-load-to-list` or `buffer-get-to-list`.")
-  (let ((bufnum (bufnum buffer))
-	(server (server buffer)))
-    (let* ((result nil)
-	   (handle (if action action (lambda (value) (setf result value)))))
-      (bt:with-lock-held ((server-lock server))
-	(let* ((handlers (gethash (list "/b_setn" bufnum start frames) (buffer-get-handlers server))))
-	  (setf (gethash (list "/b_setn" bufnum start frames) (buffer-get-handlers server))
-	    (append handlers (list handle)))))
-      (send-message server "/b_getn" bufnum start frames)
-      (unless action
-	(sync (server buffer))
-	result))))
+To get more than one frame from a buffer, functions like `buffer-to-list' and `buffer-to-array' are generally preferred. Additionally, since this function is synchronous, it should not be called in the reply thread."
+  (let* ((bufnum (bufnum buffer))
+	 (server (server buffer))
+	 (result nil)
+	 (handle (or action (lambda (value) (setf result value)))))
+    (bt:with-lock-held ((server-lock server))
+      (let* ((handlers (gethash (list "/b_set" bufnum index) (buffer-get-handlers server))))
+	(setf (gethash (list "/b_set" bufnum index) (buffer-get-handlers server)) (append handlers (list handle)))))
+    (send-message server "/b_get" bufnum index)
+    (unless action
+      (sync (server buffer))
+      result)))
 
-(defun buffer-get-to-list (buffer &optional (start 0) (frames (slot-value buffer 'frames)))
-  "Get a list of the frames of BUFFER. Unlike `buffer-get-list', this function is not limited by OSC packet size and can return any number of frames, though it may be slower.
+(defun buffer-getn (buffer start end &optional action)
+  "Get a list of the frames of BUFFER, from START up to END. ACTION can be a function of one argument that is called on the result; without it, the list of frames is simply returned.
+
+Note that the number of frames this function can get is limited by network packet size (which in this implementation is a maximum of 400), so in most cases it is recommended to use functions like `buffer-to-list' or `buffer-to-array' instead. Additionally, since this function is synchronous, it should not be called in the reply thread."
+  (let* ((frames (- end start))
+	 (bufnum (bufnum buffer))
+	 (server (server buffer))
+	 (result nil)
+	 (handle (or action (lambda (value) (setf result value)))))
+    (check-type start (integer 0))
+    (assert (>= (* (chanls buffer) (frames buffer)) end)
+	    (end)
+	    "Buffer index ~a out of range (~a frames * ~a channels = ~a)."
+	    end (frames buffer) (chanls buffer) (* (frames buffer) (chanls buffer)))
+    (assert (> end start)
+	    (start end)
+	    "Invalid range requested (START (~a) must be greater than END (~a))."
+	    start end)
+    (assert (>= 400 frames)
+	    nil
+	    "Number of requested frames too large (~a requested, <= 400 supported). Use `buffer-get-to-list', `buffer-load-to-list', `buffer-get-to-array', or `buffer-load-to-array' instead."
+	    frames)
+    (bt:with-lock-held ((server-lock server))
+      (let ((handlers (gethash (list "/b_setn" bufnum start frames) (buffer-get-handlers server))))
+	(setf (gethash (list "/b_setn" bufnum start frames) (buffer-get-handlers server))
+	      (append handlers (list handle)))))
+    (send-message server "/b_getn" bufnum start frames)
+    (unless action
+      (sync (server buffer))
+      result)))
+
+(defun buffer-get-to-list (buffer &optional (start 0) (end (* (chanls buffer) (frames buffer))))
+  "Get a flat list of the frames of BUFFER, from START up to END, defaulting to the entire buffer.
+
+Unlike `buffer-getn', this function is not limited by OSC packet size and can return any number of frames, though it may be slower since it has to make multiple requests over OSC. `buffer-load-to-list' returns the same results and may be faster in setups where it is supported, but `buffer-to-list' should be preferred since it automatically picks the fastest available function.
 
 Note that this is a synchronous function, so you should not call it in the reply thread."
-  (let ((end (+ start frames)))
-    (assert (>= (frames buffer) end) nil "Buffer index ~a out of range (buffer size: ~a)" (+ start frames) (frames buffer))
-    (loop :while (< start end)
-       :append
-         (let ((dec (min 400 (- end start))))
-           (prog1
-               (buffer-getn buffer start dec)
-             (incf start dec))))))
+  (check-type start (integer 0))
+  (assert (>= (* (chanls buffer) (frames buffer)) end)
+	  (end)
+	  "Buffer index ~a out of range (~a frames * ~a channels = ~a)"
+	  end (frames buffer) (chanls buffer) (* (frames buffer) (chanls buffer)))
+  (loop :for s :from start :upto end :by 400
+	:for e := (min end (+ s 400))
+	:append (buffer-getn buffer s e)))
 
-(defun buffer-load-to-list (buffer &optional (start 0) (frames (slot-value buffer 'frames)))
-  "Write BUFFER to a temporary file, then load the values back into a list and return it. The values are from index START and for the number of FRAMES, if provided, or otherwise until the end of the buffer. ACTION is a function which will be passed the resulting list as an argument and evaluated once the file has been read. This is synchronous function, do not call in reply thread."
-  (assert (is-local-p (server buffer)) nil "This function only work on localhost server.")
-  (when frames (assert (>= (frames buffer) (+ start frames)) nil
-		       "Buffer index ~a out of range (buffer size: ~a)"
-		       (+ start frames) (frames buffer)))
+(defun buffer-load-to-list (buffer &optional (start 0) (end (* (chanls buffer) (frames buffer))))
+  "Write BUFFER to a temporary file, then load the frames from START up to END into a list and return it.
+
+Returns the same results as `buffer-get-to-list' but the use of a temporary file rather than multiple OSC requests means it may be faster in setups where it is supported (i.e. local servers). Generally `buffer-to-list' is preferred since it automatically picks the fastest available function.
+
+Note that this is a synchronous function, so you should not call it in the reply thread."
+  (assert (is-local-p (server buffer)) nil "This function only works on local servers.")
+  (check-type start (integer 0))
+  (assert (>= (* (chanls buffer) (frames buffer)) end)
+	  (end)
+	  "Buffer index ~a out of range (~a frames * ~a channels = ~a)"
+	  end (frames buffer) (chanls buffer) (* (frames buffer) (chanls buffer)))
   (uiop:with-temporary-file (:stream file
 			     :pathname path
 			     :type "raw"
 			     :element-type '(unsigned-byte 32))
-    (buffer-write buffer path :format :float :frames (or frames -1) :start-frame start)
+    (buffer-write buffer path :format :float :frames (- end start) :start-frame start)
     (file-position file 0)
     (loop :for frame := (read-byte file nil)
 	  :while frame
 	  :collect (ieee-floats:decode-float32 frame))))
+
+(defun buffer-to-list (buffer &optional (start 0) (end (* (chanls buffer) (frames buffer))) get-function)
+  "Get a flat list of BUFFER's frames in the range from START up to END, defaulting to the entire buffer. GET-FUNCTION is the function used to acquire the list of frames (usually either `buffer-get-to-list' or `buffer-load-to-list'); it defaults to the fastest one available.
+
+This function (and `buffer-get-to-list', `buffer-load-to-list') simply returns a flat list of the frames in the format SuperCollider stores them in (i.e. interlaced). It may be preferrable to use `buffer-to-array' instead as it automatically divides up the frames into an array of channels.
+
+Additionally, since this is a synchronous function, you should not call it in the reply thread."
+  (funcall (or get-function
+	       (if (is-local-p (server buffer))
+		   #'buffer-load-to-list
+		   #'buffer-get-to-list))
+	   buffer start end))
+
+(defun buffer-to-array (buffer &optional (start 0) (end (frames buffer)) channels get-function)
+  "Get an array of CHANNELS containing the frames of BUFFER, from START up to END, defaulting to the entire buffer. GET-FUNCTION is the function used to acquire the list of frames; it defaults to the fastest one available.
+
+Unlike the `buffer-to-list' functions, this function divides up the frames into their respective channels rather than returning them exactly as they appear in SuperCollider's buffer format (i.e. interlaced).
+
+Note that this is a synchronous function, so you should not call it in the reply thread."
+  (check-type start (integer 0))
+  (assert (>= (frames buffer) end) (end)
+	  "Buffer index ~a out of range (buffer size: ~a)"
+	  end (frames buffer))
+  (check-type channels (or (integer 0) list))
+  (let* ((buf-channels (chanls buffer))
+	 (get-function (or get-function (if (is-local-p (server buffer))
+					    #'buffer-load-to-list
+					    #'buffer-get-to-list)))
+	 (channels (or channels (alexandria:iota buf-channels)))
+	 (channels-list (alexandria:ensure-list channels))
+	 (start-frame (* buf-channels start))
+	 (end-frame (* buf-channels end))
+	 (total-frames (- end-frame start-frame))
+	 (num-frames (- end start))
+	 (array (make-array (if (listp channels)
+				(list (length channels) num-frames)
+				(list num-frames))
+			    :element-type 'single-float))
+	 (frames (funcall get-function buffer start-frame total-frames)))
+    (loop :for frame :in frames
+	  :for idx :from 0
+	  :for chan-num := (mod idx buf-channels)
+	  :for frame-num := (truncate (/ idx buf-channels))
+	  :for chan-pos := (position chan-num channels-list)
+	  :if chan-pos
+	    :do (if (listp channels)
+		    (setf (aref array chan-pos frame-num) frame)
+		    (setf (aref array frame-num) frame)))
+    array))
+
+(defun buffer-get-to-array (buffer &optional (start 0) (end (frames buffer)) channels)
+  "Get an array of CHANNELS containing the frames of BUFFER, from START up to END, defaulting to the entire buffer.
+
+Similar to `buffer-load-to-array' but uses multiple OSC requests to download the buffer, for situations (i.e. non-local servers) where using a temporary file is not possible. Generally `buffer-to-array' is preferred since it automatically picks the fastest available function.
+
+Additionally, since this is a synchrnous function, you should not call it in the reply thread."
+  (buffer-to-array buffer start end channels #'buffer-get-to-list))
+
+(defun buffer-load-to-array (buffer &optional (start 0) (end (frames buffer)) channels)
+  "Get an array of CHANNELS containing the frames of BUFFER, from START up to END, defaulting to the entire buffer.
+
+Similar to `buffer-get-to-array' but uses a temporary file a la `buffer-load-to-list', meaning it may be faster in setups (i.e. local servers) that support it. Generally `buffer-to-array' is preferred since it automatically picks the fastest available function.
+
+Additionally, since this is a synchrnous function, you should not call it in the reply thread."
+  (buffer-to-array buffer start end channels #'buffer-load-to-list))
 
 (defun buffer-set (buffer index value)
   (send-message (server buffer) "/b_set" (bufnum buffer) index value)
