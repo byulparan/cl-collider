@@ -154,6 +154,8 @@
 	   #:wrap
 	   #:range
 	   #:exp-range
+	   #:unipolar
+	   #:bipolar
 	   #:lin-lin
 	   #:lin-exp
 	   #:exp-lin
