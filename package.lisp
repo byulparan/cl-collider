@@ -95,6 +95,10 @@
 	   #:buffer-getn
 	   #:buffer-get-to-list
 	   #:buffer-load-to-list
+	   #:buffer-to-list
+	   #:buffer-get-to-array
+	   #:buffer-load-to-array
+	   #:buffer-to-array
 	   #:buffer-set
 	   #:buffer-setn
 	   #:buffer-zero
