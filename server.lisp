@@ -84,10 +84,10 @@
 
 ;;; declare generic function for realtime server
 (defgeneric floatfy (object)
-  (:documentation "All data that is sent to the server must be in Float32 format. This function converts lisp objects to Float32."))
+  (:documentation "Convert OBJECT to a 32-bit float that the server can understand."))
 
 (defmethod floatfy ((object t))
-  (error "can't available input: ~a" object))
+  (error "Can't floatfy ~s" object))
 
 (defmethod floatfy ((number number))
   (float number))
@@ -488,14 +488,14 @@
 	    (,file-name (full-pathname ,output-files))
 	    (,osc-file (cat (subseq ,file-name 0 (position #\. ,file-name)) ".osc"))
 	    (*s* (make-instance 'nrt-server :name "NRTSynth" :streams nil
-				:server-options (make-server-options))))
+					    :server-options (make-server-options))))
        (setf (buffers *s*) (make-array (server-options-num-sample-buffers (server-options *s*))
-			     :initial-element nil)
+				       :initial-element nil)
 	     (tempo-clock *s*) (make-instance 'tempo-clock
-				 :bpm ,bpm
-				 :base-beats 0.0d0
-				 :base-seconds 0.0d0
-				 :beat-dur (/ 60.0d0 ,bpm))
+					      :bpm ,bpm
+					      :base-beats 0.0d0
+					      :base-seconds 0.0d0
+					      :beat-dur (/ 60.0d0 ,bpm))
 	     (node-proxy-table *s*) (make-hash-table))
        (let* ((*nrt-pad* ,pad))
 	 (make-group :id 1 :pos :head :to 0)

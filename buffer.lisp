@@ -263,7 +263,7 @@ Note that this is a synchronous function, so you should not call it in the reply
 
 Similar to `buffer-load-to-array' but uses multiple OSC requests to download the buffer, for situations (i.e. non-local servers) where using a temporary file is not possible. Generally `buffer-to-array' is preferred since it automatically picks the fastest available function.
 
-Additionally, since this is a synchrnous function, you should not call it in the reply thread."
+Additionally, since this is a synchronous function, you should not call it in the reply thread."
   (buffer-to-array buffer start end channels #'buffer-get-to-list))
 
 (defun buffer-load-to-array (buffer &optional (start 0) (end (frames buffer)) channels)
@@ -271,7 +271,7 @@ Additionally, since this is a synchrnous function, you should not call it in the
 
 Similar to `buffer-get-to-array' but uses a temporary file a la `buffer-load-to-list', meaning it may be faster in setups (i.e. local servers) that support it. Generally `buffer-to-array' is preferred since it automatically picks the fastest available function.
 
-Additionally, since this is a synchrnous function, you should not call it in the reply thread."
+Additionally, since this is a synchronous function, you should not call it in the reply thread."
   (buffer-to-array buffer start end channels #'buffer-load-to-list))
 
 (defun buffer-set (buffer index value)
