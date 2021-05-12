@@ -192,7 +192,7 @@
 						params))
 				:control)
 		,@body)
-    `(progn ,@body)))
+      `(progn ,@body)))
 
 
 (defun named-control (name rate &optional value lag)
@@ -295,12 +295,12 @@
   (cond ((null form) nil)
 	((atom form) (if head
 			 (synthdef-equivalent-function form)
-		       form))
+			 form))
 	((position (car form) (list 'let 'let*)) ;; avoid converting names of local bindings
 	 `(,(car form) ,(mapcar (lambda (item)
 				  (if (atom item)
                                       item
-                                    `(,(car item) ,@(convert-code (cdr item)))))
+				      `(,(car item) ,@(convert-code (cdr item)))))
 				(cadr form))
            ,@(convert-code (cddr form))))
 	((position (car form) (list 'destructuring-bind))
@@ -406,8 +406,8 @@
 		     :unless (null pos)
 		       :append (list (string-downcase (nth pos parameter-names)) (floatfy val)))))
     (message-distribute new-synth
-                        (apply #'make-synth-msg *s* name-string next-id to pos args)
-                        *s*)))
+			(apply #'make-synth-msg *s* name-string next-id to pos args)
+			*s*)))
 
 (defun get-controls-list (form)
   "Scan FORM for (with-controls ...) and return the list of controls if it exists, or NIL otherwise."

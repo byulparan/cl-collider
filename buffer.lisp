@@ -172,7 +172,7 @@ Note that the number of frames this function can get is limited by network packe
       (sync (server buffer))
       result)))
 
-(defun buffer-get-to-list (buffer &optional (start 0) (end (* (chanls buffer) (frames buffer))))
+(defun buffer-get-to-list (buffer &key (start 0) (end (* (chanls buffer) (frames buffer))))
   "Get a flat list of the frames of BUFFER, from START up to END, defaulting to the entire buffer.
 
 Unlike `buffer-getn', this function is not limited by OSC packet size and can return any number of frames, though it may be slower since it has to make multiple requests over OSC. `buffer-load-to-list' returns the same results and may be faster in setups where it is supported, but `buffer-to-list' should be preferred since it automatically picks the fastest available function.
@@ -187,7 +187,7 @@ Note that this is a synchronous function, so you should not call it in the reply
 	:for e := (min end (+ s 400))
 	:append (buffer-getn buffer s e)))
 
-(defun buffer-load-to-list (buffer &optional (start 0) (end (* (chanls buffer) (frames buffer))))
+(defun buffer-load-to-list (buffer &key (start 0) (end (* (chanls buffer) (frames buffer))))
   "Write BUFFER to a temporary file, then load the frames from START up to END into a list and return it.
 
 Returns the same results as `buffer-get-to-list' but the use of a temporary file rather than multiple OSC requests means it may be faster in setups where it is supported (i.e. local servers). Generally `buffer-to-list' is preferred since it automatically picks the fastest available function.
@@ -209,7 +209,7 @@ Note that this is a synchronous function, so you should not call it in the reply
 	  :while frame
 	  :collect (ieee-floats:decode-float32 frame))))
 
-(defun buffer-to-list (buffer &optional (start 0) (end (* (chanls buffer) (frames buffer))) get-function)
+(defun buffer-to-list (buffer &key (start 0) (end (* (chanls buffer) (frames buffer))) get-function)
   "Get a flat list of BUFFER's frames in the range from START up to END, defaulting to the entire buffer. GET-FUNCTION is the function used to acquire the list of frames (usually either `buffer-get-to-list' or `buffer-load-to-list'); it defaults to the fastest one available.
 
 This function (and `buffer-get-to-list', `buffer-load-to-list') simply returns a flat list of the frames in the format SuperCollider stores them in (i.e. interlaced). It may be preferrable to use `buffer-to-array' instead as it automatically divides up the frames into an array of channels.
@@ -221,7 +221,7 @@ Additionally, since this is a synchronous function, you should not call it in th
 		   #'buffer-get-to-list))
 	   buffer start end))
 
-(defun buffer-to-array (buffer &optional (start 0) (end (frames buffer)) channels get-function)
+(defun buffer-to-array (buffer &key (start 0) (end (frames buffer)) channels get-function)
   "Get an array of CHANNELS containing the frames of BUFFER, from START up to END, defaulting to the entire buffer. GET-FUNCTION is the function used to acquire the list of frames; it defaults to the fastest one available.
 
 Unlike the `buffer-to-list' functions, this function divides up the frames into their respective channels rather than returning them exactly as they appear in SuperCollider's buffer format (i.e. interlaced).
@@ -258,20 +258,20 @@ Note that this is a synchronous function, so you should not call it in the reply
 		    (setf (aref array frame-num) frame)))
     array))
 
-(defun buffer-get-to-array (buffer &optional (start 0) (end (frames buffer)) channels)
+(defun buffer-get-to-array (buffer &key (start 0) (end (frames buffer)) channels)
   "Get an array of CHANNELS containing the frames of BUFFER, from START up to END, defaulting to the entire buffer.
 
 Similar to `buffer-load-to-array' but uses multiple OSC requests to download the buffer, for situations (i.e. non-local servers) where using a temporary file is not possible. Generally `buffer-to-array' is preferred since it automatically picks the fastest available function.
 
-Additionally, since this is a synchrnous function, you should not call it in the reply thread."
+Additionally, since this is a synchronous function, you should not call it in the reply thread."
   (buffer-to-array buffer start end channels #'buffer-get-to-list))
 
-(defun buffer-load-to-array (buffer &optional (start 0) (end (frames buffer)) channels)
+(defun buffer-load-to-array (buffer &key (start 0) (end (frames buffer)) channels)
   "Get an array of CHANNELS containing the frames of BUFFER, from START up to END, defaulting to the entire buffer.
 
 Similar to `buffer-get-to-array' but uses a temporary file a la `buffer-load-to-list', meaning it may be faster in setups (i.e. local servers) that support it. Generally `buffer-to-array' is preferred since it automatically picks the fastest available function.
 
-Additionally, since this is a synchrnous function, you should not call it in the reply thread."
+Additionally, since this is a synchronous function, you should not call it in the reply thread."
   (buffer-to-array buffer start end channels #'buffer-load-to-list))
 
 (defun buffer-set (buffer index value)
