@@ -219,7 +219,7 @@ Additionally, since this is a synchronous function, you should not call it in th
 	       (if (is-local-p (server buffer))
 		   #'buffer-load-to-list
 		   #'buffer-get-to-list))
-	   buffer start end))
+	   buffer :start start :end end))
 
 (defun buffer-to-array (buffer &key (start 0) (end (frames buffer)) channels get-function)
   "Get an array of CHANNELS containing the frames of BUFFER, from START up to END, defaulting to the entire buffer. GET-FUNCTION is the function used to acquire the list of frames; it defaults to the fastest one available.
@@ -238,15 +238,12 @@ Note that this is a synchronous function, so you should not call it in the reply
 					    #'buffer-get-to-list)))
 	 (channels (or channels (alexandria:iota buf-channels)))
 	 (channels-list (alexandria:ensure-list channels))
-	 (start-frame (* buf-channels start))
-	 (end-frame (* buf-channels end))
-	 (total-frames (- end-frame start-frame))
 	 (num-frames (- end start))
 	 (array (make-array (if (listp channels)
 				(list (length channels) num-frames)
 				(list num-frames))
 			    :element-type 'single-float))
-	 (frames (funcall get-function buffer start-frame total-frames)))
+	 (frames (funcall get-function buffer :start start :end end)))
     (loop :for frame :in frames
 	  :for idx :from 0
 	  :for chan-num := (mod idx buf-channels)
@@ -331,18 +328,18 @@ When NORMALIZE is T, the peak amplitude of the wave is normalized to 1.0. If WAV
                    (a1 (nth-wrap (1+ i) list)))
                (list (- (* 2 a0) a1) (- a1 a0)))))
 
-(defun buffer-read-as-wavetable (path)
+(defun buffer-read-as-wavetable (path &key bufnum (server *s*))
   "Read a soundfile located at PATH as a wavetable."
-  (let* ((tmp-buf (prog1 (buffer-read path)
+  (let* ((tmp-buf (prog1 (buffer-read path :server server)
                     (sync)))
          (full-path (slot-value tmp-buf 'path))
          (file-frames (slot-value tmp-buf 'frames))
-         (powers-of-two (mapcar (lambda (x) (expt 2 (1+ x))) (alexandria:iota 16)))
+         (powers-of-two '#.(mapcar (lambda (x) (expt 2 x)) (alexandria:iota 16 :start 1)))
          (num-frames (nth (position-if (lambda (x) (>= x file-frames)) powers-of-two) powers-of-two))
          (frames (prog1
-                     (buffer-get-to-list tmp-buf)
+                     (buffer-to-list tmp-buf)
                    (buffer-free tmp-buf)))
-         (buffer (buffer-alloc (* 2 num-frames))))
+         (buffer (buffer-alloc (* 2 num-frames) :bufnum bufnum :server server)))
     (buffer-setn buffer (list-in-wavetable-format (coerce (linear-resample frames num-frames) 'vector)))
     (setf (slot-value buffer 'path) full-path)
     buffer))
