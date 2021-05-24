@@ -157,8 +157,8 @@ Note that the number of frames this function can get is limited by network packe
 	    end (frames buffer) (chanls buffer) (* (frames buffer) (chanls buffer)))
     (assert (> end start)
 	    (start end)
-	    "Invalid range requested (START (~a) must be greater than END (~a))."
-	    start end)
+	    "Invalid range requested (END (~a) must be greater than START (~a))."
+	    end start)
     (assert (>= 400 frames)
 	    nil
 	    "Number of requested frames too large (~a requested, <= 400 supported). Use `buffer-get-to-list', `buffer-load-to-list', `buffer-get-to-array', or `buffer-load-to-array' instead."
@@ -183,7 +183,7 @@ Note that this is a synchronous function, so you should not call it in the reply
 	  (end)
 	  "Buffer index ~a out of range (~a frames * ~a channels = ~a)"
 	  end (frames buffer) (chanls buffer) (* (frames buffer) (chanls buffer)))
-  (loop :for s :from start :upto end :by 400
+  (loop :for s :from start :below end :by 400
 	:for e := (min end (+ s 400))
 	:append (buffer-getn buffer s e)))
 
