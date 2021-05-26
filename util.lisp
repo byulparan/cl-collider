@@ -96,15 +96,17 @@
         (+ (* (elt list floor) (- 1 fl-diff))
            (* (elt list ceiling) fl-diff)))))
 
-(defun linear-resample (list new-size)
-  "Using linear interpolation, resample the values of LIST to a new list of size NEW-SIZE."
-  (let* ((old-size (length list))
-         ;; this.size - 1 / (newSize - 1).max(1);
-         (factor (/ (1- old-size) (max (1- new-size) 1))))
-    (if (= old-size new-size)
-        list
-        (loop :for i :from 0 :below new-size
-           :collect (blend-nth (* i factor) list)))))
+(defun linear-resample (sequence length)
+  "Using linear interpolation, resample the values of SEQUENCE to a new list or vector of length LENGTH."
+  (let ((old-length (length sequence)))
+    (if (= old-length length)
+        sequence
+	(let ((factor (/ (1- old-length) (max (1- length) 1)))
+	      (res (etypecase sequence
+		     (list (make-list length))
+		     (vector (make-array (list length))))))
+	  (dotimes (i length res)
+	    (setf (elt res i) (blend-nth (* i factor) sequence)))))))
 
 ;; conditionally load swank extensions
 (eval-when (:compile-toplevel :load-toplevel :execute)
