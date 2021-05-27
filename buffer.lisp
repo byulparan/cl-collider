@@ -321,12 +321,15 @@ When NORMALIZE is T, the peak amplitude of the wave is normalized to 1.0. If WAV
   (sync server))
 
 ;; see http://doc.sccode.org/Classes/Wavetable.html#Advanced%20notes:%20wavetable%20format
-(defun list-in-wavetable-format (list)
-  "Convert a list of numbers LIST to SuperCollider's wavetable format."
-  (loop :for i :from 0 :below (length list)
-     :append (let ((a0 (nth-wrap i list))
-                   (a1 (nth-wrap (1+ i) list)))
-               (list (- (* 2 a0) a1) (- a1 a0)))))
+(defun vector-in-wavetable-format (sequence)
+  "Convert a sequence of numbers to a vector in SuperCollider's wavetable format."
+  (let* ((len (length sequence))
+	 (vec (make-array (list (* len 2)))))
+    (dotimes (i len vec)
+      (let ((a0 (nth-wrap i sequence))
+	    (a1 (nth-wrap (1+ i) sequence)))
+	(setf (elt vec (* i 2)) (- (* 2 a0) a1)
+	      (elt vec (1+ (* i 2))) (- a1 a0))))))
 
 (defun buffer-read-as-wavetable (path &key bufnum (server *s*))
   "Read a soundfile located at PATH as a wavetable."
@@ -335,11 +338,12 @@ When NORMALIZE is T, the peak amplitude of the wave is normalized to 1.0. If WAV
          (full-path (slot-value tmp-buf 'path))
          (file-frames (slot-value tmp-buf 'frames))
          (powers-of-two '#.(mapcar (lambda (x) (expt 2 x)) (alexandria:iota 16 :start 1)))
-         (num-frames (nth (position-if (lambda (x) (>= x file-frames)) powers-of-two) powers-of-two))
-         (frames (prog1
-                     (buffer-to-list tmp-buf)
+         (num-frames (nth (or (position-if (lambda (x) (>= x file-frames)) powers-of-two)
+			      15)
+			  powers-of-two))
+         (frames (prog1 (buffer-to-array tmp-buf :channels 0)
                    (buffer-free tmp-buf)))
          (buffer (buffer-alloc (* 2 num-frames) :bufnum bufnum :server server)))
-    (buffer-setn buffer (list-in-wavetable-format (coerce (linear-resample frames num-frames) 'vector)))
+    (buffer-setn buffer (coerce (vector-in-wavetable-format (linear-resample frames num-frames)) 'list))
     (setf (slot-value buffer 'path) full-path)
     buffer))
