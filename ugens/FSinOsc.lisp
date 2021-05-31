@@ -22,8 +22,9 @@
   (assert (every #'numberp (alexandria:flatten lst)) nil
 	  "Klang/Klank do not support UGens as arguments. Use Dyn-Klang/Dyn-Klank instead.")
   (unless lst (setf lst (list (ecase type
-				(:amp 1.0)
-				(:phase 0.0)))))
+				(:amps 1.0)
+				(:times 1.0)
+				(:phases 0.0)))))
   (flop lst))
 
 (defclass klang (ugen) ())
@@ -43,7 +44,7 @@
 	(multinew new 'klang freq-scale freq-offset 
 		  (unbubble (mapcar #'(lambda (lst) (make-array (length lst) :initial-contents lst))
 				    (lst-operation (mapcar #'flop-argument specificationsArrayRef
-							   (list :freq :amp :phase)))))))))
+							   (list :freqs :amps :phases)))))))))
 
 (defclass klank (ugen) ())
 
@@ -62,7 +63,7 @@
 	(multinew new 'klank input freq-scale freq-offset decay-scale
 		  (unbubble (mapcar #'(lambda (lst) (make-array (length lst) :initial-contents lst))
 				    (lst-operation (mapcar #'flop-argument specificationsArrayRef
-							   (list :freq :amp :phase)))))))))
+							   (list :freqs :amps :times)))))))))
 
 
 (defclass dyn-klank (ugen) ())
