@@ -35,12 +35,8 @@
 			       (sleep .01))))))
 
 (defun full-pathname (path)
-  "returning absoulte full-pathname of path"
-  (let* ((directory (uiop:truenamize (uiop:pathname-directory-pathname path)))
-	 (filename (pathname-name path))
-	 (filetype (pathname-type path)))
-    (when directory
-      (format nil "~a~@[~a~]~@[.~a~]" (namestring directory) filename filetype))))
+  "Get the absolute pathname of PATH."
+  (uiop:native-namestring path))
 
 (defmethod cat ((sequence string) &rest sequences)
   (apply #'concatenate 'string sequence sequences))
