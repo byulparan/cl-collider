@@ -291,6 +291,31 @@
       (push (list function value) *synthdef-function-table*)
       (alexandria:removef *synthdef-function-table* function :key #'car)))
 
+(defun synthdef-embeddable-body (synth args)
+  "Make an \"embeddable\" synthdef body, to allow `synth' to be used inside `synthdef'."
+  (let* ((body (synthdef-metadata synth :body))
+	 (args-keys (loop :for (k v) :on args :by #'cddr :collect k))
+	 (unprovided-args (append
+			   (loop :for (k v) :on args :by #'cddr
+				 :for rk := (intern (symbol-name k))
+				 :unless (eql rk v)
+				   :collect (list rk v))
+			   (mapcan (lambda (c)
+				     (unless (or (string= (car c) 'out)
+						 (member (car c) args-keys :test #'string=))
+				       (list (if (string= (car c) 'amp)
+						 (list (car c) 1) ;; default to full volume for embedded synths
+						 c))))
+				   (synthdef-metadata synth :controls)))))
+    (labels ((parse-item (body)
+               (if (listp body)
+                   (if (member (car body) (list 'out.ar 'out.kr 'replace-out.ar 'replace-out.kr 'x-out.ar 'x-out.kr 'scope-out.ar 'scope-out.kr 'scope-out2.ar 'scope-out2.kr))
+		       (caddr body)
+		       (mapcar #'parse-item body))
+		   body)))
+      `(let (,@unprovided-args)
+	 ,@(parse-item body)))))
+
 (defun convert-code (form &optional head)
   (cond ((null form) nil)
 	((atom form) (if head
@@ -303,9 +328,18 @@
 				      `(,(car item) ,@(convert-code (cdr item)))))
 				(cadr form))
            ,@(convert-code (cddr form))))
-	((position (car form) (list 'destructuring-bind))
+	((eql (car form) 'destructuring-bind)
 	 `(,(car form) ,(cadr form) ,(caddr form)
            ,@(convert-code (cdddr form))))
+	((eql (car form) 'synth)
+	 (let ((synth (cadr form))
+	       (args (cddr form)))
+	   (convert-code
+	    (synthdef-embeddable-body (if (and (listp synth)
+					       (eql 'quote (car synth)))
+					  (cadr synth)
+					  synth)
+				      args))))
 	(t (cons (convert-code (car form) t)
 		 (mapcar #'convert-code (cdr form))))))
 
