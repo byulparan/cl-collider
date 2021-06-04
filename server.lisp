@@ -440,7 +440,6 @@
 				  :server-options server-options
 				  :host host
 				  :port port
-                  :buffers (make-array (server-options-num-sample-buffers server-options) :initial-element nil)
 				  :just-connect-p just-connect-p))
 
 
