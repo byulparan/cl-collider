@@ -264,7 +264,7 @@
 						 (funcall (sched-event-task (pileup:heap-pop (in-queue tempo-clock)))))
 					(setf run-p nil)
 					(return)))))
-		      (error (c) (format t "~&Error \"~a\" in Tempo-Clock thread~%" c)
+		      (error (c) (format t "~&Error \"~a\" in TempoClock thread~%" c)
 			(finish-output)
 			(run)))))
 	   (set-thread-realtime-priority)
