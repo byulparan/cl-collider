@@ -57,7 +57,7 @@
       (sync server)
       buffer)))
 
-(defun buffer-read-channel (path &key (channels -1) bufnum (server *s*))
+(defun buffer-read-channel (path &key channels bufnum (server *s*))
   (let ((file-path (full-pathname path)))
     (assert (probe-file file-path) (path) "File does not exist: ~a" file-path)
     (let* ((buffer (get-next-buffer server bufnum))
