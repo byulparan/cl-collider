@@ -277,7 +277,7 @@
 (defmethod tempo-clock-beats ((tempo-clock tempo-clock))
   (secs-to-beats tempo-clock (sched-time tempo-clock)))
 
-(defun tempo-clock-add (tempo-clock beats f &rest args)
+(defmethod tempo-clock-add ((tempo-clock tempo-clock) beats f &rest args)
   (with-recursive-lock-held ((mutex tempo-clock))
     (pileup:heap-insert (make-sched-event :timestamp beats
 				   :task (lambda () (apply f args)))
@@ -305,7 +305,7 @@
   (if new-bpm (tempo-clock-set-bpm tempo-clock new-bpm)
     (bpm tempo-clock)))
 
-(defun tempo-clock-clear (tempo-clock)
+(defmethod tempo-clock-clear ((tempo-clock tempo-clock))
   (with-recursive-lock-held ((mutex tempo-clock))
     (with-slots (in-queue) tempo-clock
       (loop :until (pileup:heap-empty-p in-queue)
