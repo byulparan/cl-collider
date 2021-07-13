@@ -407,7 +407,7 @@
                           for i from 0 below (max (length bus) (length gain))
                           do (funcall f (,seqs i bus) (*~ (var-lag.kr (,seqs i gain) lag) result))))))
          (let ((,result ,(convert-code body)))
-           (unless (numberp ,result)
+           (unless (eql :scalar (rate ,result))
              (setf ,is-signal-p t)
              (destructuring-bind (,dt ,buses ,gate ,gain-sym ,lag-sym)
                  (make-control (list (list "fade" ,fade) (list "out-bus" ,out-bus)
