@@ -355,6 +355,7 @@
         (getf metadata (as-keyword key))
       metadata)))
 
+#-ecl
 (uiop:with-deprecation (:style-warning)
   (defun get-synthdef-metadata (synth &optional key)
     "Deprecated alias for `synthdef-metadata'."
@@ -364,6 +365,7 @@
   "Set a metadatum for the synthdef SYNTH."
   (setf (getf (gethash (as-keyword synth) *synthdef-metadata*) (as-keyword key)) value))
 
+#-ecl
 (uiop:with-deprecation (:style-warning)
   (defun set-synthdef-metadata (synth key value)
     "Deprecated alias for `(setf synthdef-metadata)'."
