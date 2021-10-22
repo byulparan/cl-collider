@@ -356,4 +356,5 @@
 			  (declare (ignorable new))
 			  ,@(cdr func)))
 		      (export ',ugen-name)
+		      #-lispworks
 		      (setf (documentation ',ugen-name 'function) (read-ugen-description ,(second name))))))))))
