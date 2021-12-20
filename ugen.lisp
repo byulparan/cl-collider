@@ -282,9 +282,11 @@
   (when (> (channels ugen) 0)
     (unbubble
      (loop repeat (channels ugen) for index from 0
-	   collect (make-instance 'proxy-output :source ugen
-						:rate (rate ugen)
-						:output-index index)))))
+	   collect (make-instance 'proxy-output
+		     :source ugen
+		     :signal-range (signal-range ugen)
+		     :rate (rate ugen)
+		     :output-index index)))))
 
 (defmethod num-outputs ((ugen multiout-ugen))
   (channels ugen))

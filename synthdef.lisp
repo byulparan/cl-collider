@@ -124,9 +124,11 @@
   (let ((i 0))
     (loop for control in (first inputs)
 	  collect (unbubble (loop repeat (length (alexandria:ensure-list control))
-				  collect (make-instance 'proxy-output :source ugen
-							 :rate (rate ugen)
-							 :output-index i)
+				  collect (make-instance 'proxy-output
+					    :source ugen
+					    :rate (rate ugen)
+					    :signal-range (signal-range ugen)
+					    :output-index i)
 				  do (incf i))))))
 
 
