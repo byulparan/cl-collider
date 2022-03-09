@@ -22,6 +22,7 @@ If you have your own additional libraries, please report me. I will add here.
 - [sc-extensions](https://github.com/byulparan/sc-extensions) - extension library
 - [cl-patterns](https://github.com/defaultxr/cl-patterns) - patterns/sequencing library
 - [bdef](https://github.com/defaultxr/bdef) - file/buffer management/convenience library
+- [sc-vst](https://github.com/byulparan/sc-vst) - VSTPlugin support library
 
 ## Usage:
 - package: `sc`, `sc-user` (use this package)
