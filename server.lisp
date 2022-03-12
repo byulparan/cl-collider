@@ -712,10 +712,4 @@
   `(clock-add (+ ,beat (* (sched-ahead (tempo-clock *s*)) (/ (clock-bpm) 60.0d0)))
 	     (lambda () ,@body)))
 
-(defun at-synth (beat name &rest param &key &allow-other-keys)
-  (clock-add beat
-	     (lambda ()
-	       (at (beats-to-secs (tempo-clock *s*) beat)
-		 (apply (if (or (keywordp name) (typep name 'node)) #'ctrl #'synth) name param)))))
-
 
