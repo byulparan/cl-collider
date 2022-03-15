@@ -13,8 +13,10 @@ It is an experimental project, so changes to the API are possible.
 ## Dependencies:
 
 - [SuperCollider](http://supercollider.github.io) - compatible with 3.9 and 3.8.
+- [Jack](https://jackaudio.org/) - Only on GNU/Linux and BSD distributions.
 - [Quicklisp](http://www.quicklisp.org)
 - [ClozureCL](http://www.clozure.com/clozurecl.html) or [SBCL](http://www.sbcl.org) or [ECL](https://common-lisp.net/project/ecl/)
+- [net-tools](https://net-tools.sourceforge.io/) - On Windows, scsynth should bind to a port before sending a message to CL.
 
 ## Contrib:
 If you have your own additional libraries, please report me. I will add here.
