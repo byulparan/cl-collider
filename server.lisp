@@ -703,21 +703,13 @@
   (tempo-clock-clear (tempo-clock *s*)))
 
 
+
 (defmacro at-beat (beat &body body)
   `(at (beats-to-secs (tempo-clock *s*) ,beat)
      ,@body))
 
-
-(defun at-synth (beat name &rest param &key &allow-other-keys)
-  (clock-add beat
-	     (lambda ()
-	       (at (beats-to-secs (tempo-clock *s*) beat)
-		 (apply (if (or (keywordp name) (typep name 'node)) #'ctrl #'synth) name param)))))
+(defmacro at-task (beat &body body)
+  `(clock-add (+ ,beat (* (sched-ahead (tempo-clock *s*)) (/ (clock-bpm) 60.0d0)))
+	     (lambda () ,@body)))
 
 
-(defun at-task (beat fun &rest args)
-  (clock-add beat
-	     (lambda ()
-	       (callback (+ (sched-ahead (tempo-clock *s*))
-			    (beats-to-secs (tempo-clock *s*) beat))
-			 (lambda () (apply fun args))))))
