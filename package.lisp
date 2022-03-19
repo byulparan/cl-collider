@@ -49,7 +49,6 @@
 	   #:sync
 	   
 	   #:at
-	   #:bye
 	   #:free
 	   #:release
 	   #:ctrl

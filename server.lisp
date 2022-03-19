@@ -584,11 +584,6 @@
                                                                 param))
                         server)))
 
-(defun bye (node)
-  "Deprecated function; use `free' instead."
-  (warn "#'bye is deprecated; please use #'free instead.")
-  (free node))
-
 (defmethod free ((node node))
   (with-node (node id server)
     (message-distribute node (list "/n_free" id) server)))
