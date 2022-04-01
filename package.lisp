@@ -31,6 +31,7 @@
 	   #:kr
 	   #:play
 	   #:proxy
+	   #:proxy-ctrl
 
 	   #:with-rendering
 

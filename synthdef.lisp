@@ -439,11 +439,8 @@
          (to (or (getf args :to) 1))
          (pos (or (getf args :pos) :head))
          (new-synth (make-instance 'node :server *s* :id next-id :name name-string :pos pos :to to))
-         (parameter-names (mapcar (lambda (param) (string-downcase (car param))) (synthdef-metadata name :controls)))
          (args (loop :for (arg val) :on args :by #'cddr
-		     :for pos = (position (string-downcase arg) parameter-names :test #'string-equal)
-		     :unless (null pos)
-		       :append (list (string-downcase (nth pos parameter-names)) (floatfy val)))))
+		     :append (list (string-downcase arg) (floatfy val)))))
     (message-distribute new-synth
 			(apply #'make-synth-msg *s* name-string next-id to pos args)
 			*s*)))
@@ -482,6 +479,21 @@
 		     (clear-node)))))
           `(when ,node-alive-p
 	     (free ,node))))))
+
+(defun proxy-ctrl (key &rest params &key &allow-other-keys)
+  (let* ((node (gethash key (node-proxy-table *s*)))
+	 (node-alive-p (and node (if (typep *s* 'nrt-server) t (is-playing-p node)))))
+    (assert node nil "can't find proxy ~a" key)
+    (let* ((fade-time (getf (meta node) :fade-time)))
+      (flet ((clear-node ()
+	       (if fade-time  (ctrl node :gate 0 :fade (or (getf params :fade) fade-time))
+		 (free node))))
+	(let* ((new-node  (apply #'synth key params)))
+	  (setf (meta new-node) (list :fade-time fade-time))
+	  (prog1
+	      (setf (gethash key (node-proxy-table *s*)) new-node)
+	    (when node-alive-p
+	      (clear-node))))))))
 
 
 ;;; ======================================================================
