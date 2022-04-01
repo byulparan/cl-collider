@@ -397,9 +397,9 @@
 
 (defmacro play (body &key id (out-bus 0) (gain 1.0) (lag 1.0) (fade 0.02) (to 1) (pos :head))
   (alexandria:with-gensyms (synthdef result dt buses gate gain-sym lag-sym
-                                     start-val env node-id name is-signal-p outlets seqs node)
+                                     start-val env node-id name fade-time outlets seqs node)
     `(let* ((,name *temp-synth-name*)
-            (,is-signal-p nil)
+            (,fade-time nil)
             (,synthdef (make-instance 'synthdef :name ,name))
             (*synthdef* ,synthdef))
        (labels ((,seqs (indx lists)
@@ -412,7 +412,7 @@
                           do (funcall f (,seqs i bus) (*~ (var-lag.kr (,seqs i gain) lag) result))))))
          (let ((,result ,(convert-code body)))
            (unless (eql :scalar (rate ,result))
-             (setf ,is-signal-p t)
+             (setf ,fade-time ,fade)
              (destructuring-bind (,dt ,buses ,gate ,gain-sym ,lag-sym)
                  (make-control (list (list "fade" ,fade) (list "out-bus" ,out-bus)
 				     (list "gate" 1.0) (list "gain" ,gain) (list "lag" ,lag)) :control)
@@ -426,7 +426,8 @@
                        (t (error "Play: ~a is not a UGen." ,result))))))))
        (build-synthdef ,synthdef)
        (let* ((,node-id (or ,id (get-next-id *s*)))
-              (,node (make-instance 'node :server *s* :id ,node-id :name *temp-synth-name* :pos ,pos :to ,to :meta (list :is-signal-p ,is-signal-p))))
+              (,node (make-instance 'node :server *s* :id ,node-id :name *temp-synth-name* :pos ,pos :to ,to
+				    :meta (list :fade-time ,fade-time))))
          (recv-synthdef ,synthdef ,node (apply 'sc-osc::encode-message (make-synth-msg *s* ,name ,node-id ,to ,pos)))
          (sync)
          ,node))))
@@ -466,7 +467,7 @@
 	    (alexandria:once-only (id fade)
 	      `(labels ((clear-node ()
 			  (when ,node-alive-p
-			    (if (getf (meta ,node) :is-signal-p) (ctrl ,node :gate 0 :fade ,fade)
+			    (if (getf (meta ,node) :fade-time) (ctrl ,node :gate 0 :fade ,fade)
 			      (free ,node)))))
 		 (when (and (typep *s* 'rt-server) (is-playing-p ,id))
 		   (error "already running id ~d~%" ,id))
