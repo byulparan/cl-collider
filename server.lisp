@@ -534,7 +534,7 @@
    (pos :initarg :pos :reader pos)
    (to :initarg :to :reader to)
    (name :initarg :name :reader name)
-   (meta :initarg :meta :initform nil :reader meta)))
+   (meta :initarg :meta :initform nil :accessor meta)))
 
 (defmethod print-object ((node node) stream)
   (format stream "#<~s :server ~s :id ~s :name ~s>" 'node (server node) (id node) (name node)))
