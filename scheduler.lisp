@@ -244,24 +244,33 @@
       (bt:make-thread
        (lambda ()
 	 (setf *random-state* (make-random-state t))
-	 (set-thread-realtime-priority)
-	 (loop :with sched-interval = .01
-	       :with run-p = t
-	       :while run-p
-	       :for time = (unix-time)
-	       :do  (with-recursive-lock-held ((mutex tempo-clock))
-		      (loop :while (and (not (pileup:heap-empty-p (in-queue tempo-clock)))
-				   (>= time
-				       (- (beats-to-secs tempo-clock (sched-event-timestamp
-								      (pileup:heap-top (in-queue tempo-clock))))
-					  (sched-ahead tempo-clock))))
-			    :do (handler-case (when (eql 'ensure-scheduler-stop-quit
-							 (funcall (sched-event-task (pileup:heap-pop (in-queue tempo-clock)))))
-						(setf run-p nil)
-						(return))
-				  (error (c) (format t "~&Error \"~a\" in TempoClock thread~%" c)
-				    (finish-output)))))
-		    (sleep sched-interval)))
+	 (labels ((run ()
+		    (handler-case
+			(let* ((run-p t))
+			  (loop while run-p do
+			    (loop :while (pileup:heap-empty-p (in-queue tempo-clock))
+				  :do (condition-wait (condition-var tempo-clock) (mutex tempo-clock)))
+			    (loop :while (not (pileup:heap-empty-p (in-queue tempo-clock)))
+				  :do (let ((timeout (- (- (beats-to-secs tempo-clock (sched-event-timestamp (pileup:heap-top (in-queue tempo-clock))))
+							   (sched-ahead tempo-clock))
+							(unix-time))))
+					(unless (plusp timeout) (return))
+					(condition-wait (condition-var tempo-clock) (mutex tempo-clock) :timeout timeout)))
+			    (loop :while (and (not (pileup:heap-empty-p (in-queue tempo-clock)))
+					      (>= (unix-time)
+						  (- (beats-to-secs tempo-clock (sched-event-timestamp (pileup:heap-top (in-queue tempo-clock))))
+						     (sched-ahead tempo-clock))))
+				  :do (when (eql 'ensure-scheduler-stop-quit ;; it's magic code. it seems chagne..
+						 (funcall (sched-event-task (pileup:heap-pop (in-queue tempo-clock)))))
+					(setf run-p nil)
+					(return)))))
+		      (error (c) (format t "~&Error \"~a\" in TempoClock thread~%" c)
+			(finish-output)
+			(run)))))
+	   (set-thread-realtime-priority)
+	   (bt:with-lock-held ((mutex tempo-clock))
+	     (setf (sched-status tempo-clock) :running)
+	     (run))))
        :name (format nil "~@[~a ~]TempoClock thread" (sched-name tempo-clock))))
     :running))
 
@@ -271,8 +280,9 @@
 (defmethod tempo-clock-add ((tempo-clock tempo-clock) beats f &rest args)
   (with-recursive-lock-held ((mutex tempo-clock))
     (pileup:heap-insert (make-sched-event :timestamp beats
-				   :task (lambda () (apply f args)))
-		 (in-queue tempo-clock)))
+					  :task (lambda () (apply f args)))
+			(in-queue tempo-clock))
+    (bt:condition-notify (condition-var tempo-clock)))
   (values))
 
 (defmethod tempo-clock-stop ((tempo-clock tempo-clock))
@@ -288,7 +298,8 @@
 	(setf base-seconds (beats-to-secs tempo-clock in-beats)
 	      base-beats in-beats
 	      bpm new-bpm
-	      beat-dur (/ 60.0d0 new-bpm))))))
+	      beat-dur (/ 60.0d0 new-bpm))))
+    (bt:condition-notify (condition-var tempo-clock))))
 
 (defmethod tempo-clock-bpm ((tempo-clock tempo-clock) &optional new-bpm)
   (if new-bpm (tempo-clock-set-bpm tempo-clock new-bpm)
@@ -298,10 +309,10 @@
   (with-recursive-lock-held ((mutex tempo-clock))
     (with-slots (in-queue) tempo-clock
       (loop :until (pileup:heap-empty-p in-queue)
-	    :do (pileup:heap-pop in-queue)))))
+	    :do (pileup:heap-pop in-queue)))
+    (bt:condition-notify (condition-var tempo-clock))))
+
 
 (defmethod tempo-clock-quant ((tempo-clock tempo-clock) quant)
   (let* ((beats (secs-to-beats tempo-clock (+ (sched-ahead tempo-clock) (sched-time tempo-clock)))))
     (+ beats (- quant (mod beats quant)))))
-
-
