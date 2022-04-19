@@ -322,7 +322,7 @@
 	((description (nth-value 1 (ppcre:scan-to-strings
 				    ;; select everything between "description::" and "classmethods::",
 				    ;; ignoring leading and trailing whitespace
-				    "(?sim)(?<=^description::$)(?:\\s*)(.*?)(?:\\s*)(?=^classmethods::$)"
+				    "(?sim)(?<=^description::)(?:\\s*)(.*?)(?:\\s*)(?=^classmethods::)"
 				    text))))
       (aref description 0))
     "")
