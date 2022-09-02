@@ -261,7 +261,7 @@ Note that this is a synchronous function, so you should not call it in the reply
 Similar to `buffer-load-to-array' but uses multiple OSC requests to download the buffer, for situations (i.e. non-local servers) where using a temporary file is not possible. Generally `buffer-to-array' is preferred since it automatically picks the fastest available function.
 
 Additionally, since this is a synchronous function, you should not call it in the reply thread."
-  (buffer-to-array buffer start end channels #'buffer-get-to-list))
+  (buffer-to-array buffer :start start :end end :channels channels :get-function #'buffer-get-to-list))
 
 (defun buffer-load-to-array (buffer &key (start 0) (end (frames buffer)) channels)
   "Get an array of CHANNELS containing the frames of BUFFER, from START up to END, defaulting to the entire buffer.
