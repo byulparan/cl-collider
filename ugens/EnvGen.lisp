@@ -62,8 +62,12 @@
 
 (defmethod initialize-instance :after ((self env) &key)
   (with-slots (levels times curve-number release-node loop-node) self
-    (assert (= (1- (length levels)) (length times)))
-    (assert (>= (length times) (length curve-number)))))
+    (assert (= (1- (length levels)) (length times)) (levels times)
+	    "~D times were provided, but the envelope has ~D segments."
+	    (length times) (1- (length levels)))
+    (assert (>= (length times) (length curve-number)) (times curve-number)
+	    "~D curves were provided, but the envelope only has ~D segments."
+	    (length curve-number) (length times))))
 
 (defparameter +env-shape-table+
   (let ((table (make-hash-table)))
