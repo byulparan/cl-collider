@@ -43,6 +43,9 @@ If you have your own additional libraries, please report me. I will add here.
 ;; (setf *sc-plugin-paths* (list "/path/to/plugin_path" "/path/to/extension_plugin_path"))
 ;; (setf *sc-synthdefs-path* "/path/to/synthdefs_path")
 
+;; `*s*` defined the server for the entire session
+;; functions may use it internally.
+
 (setf *s* (make-external-server "localhost" :port 48800))
 (server-boot *s*)
 
