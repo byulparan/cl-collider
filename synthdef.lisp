@@ -440,6 +440,7 @@
          (pos (or (getf args :pos) :head))
          (new-synth (make-instance 'node :server *s* :id next-id :name name-string :pos pos :to to))
          (args (loop :for (arg val) :on args :by #'cddr
+		     :unless (member arg '(:id :to :pos))
 		     :append (list (string-downcase arg) (floatfy val)))))
     (message-distribute new-synth
 			(apply #'make-synth-msg *s* name-string next-id to pos args)
