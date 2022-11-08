@@ -454,7 +454,7 @@
 		(let* ((thead (bt:make-thread #'cleanup-server)))
 		  (bt:join-thread thread)))
 	      si:*exit-hooks*)
-  #+lispworks (lispworks:define-action "Confirm when quitting image" "cleanup scsynth"
+  #+lispworks (lispworks:define-action "When quitting image" "cleanup scsynth"
 		#'(lambda () (cleanup-server) t)))
 
 
