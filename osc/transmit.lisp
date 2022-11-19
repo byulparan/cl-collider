@@ -78,7 +78,7 @@
   (assert (eql (status osc-device) :running) nil "~a not running" osc-device)
   (let* ((socket (socket osc-device)))
     (when (listening-thread osc-device)
-      (let* ((msg (osc:encode-message "/done" "/quit")))
+      (let* ((msg (encode-message "/done" "/quit")))
 	(usocket:socket-send socket msg (length msg)
 			     :host "127.0.0.1"
 			     :port (usocket:get-local-port socket)))
