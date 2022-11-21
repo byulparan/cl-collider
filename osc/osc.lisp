@@ -104,13 +104,26 @@
 
 ;;; decode osc ------------------------------------------------------------
 
+;; this code from legacy osc package.
+(defun decode-uint64 (s)
+  "8 byte -> 64 bit unsigned int"
+  (let ((i (+ (ash (elt s 0) 56)
+	      (ash (elt s 1) 48)
+	      (ash (elt s 2) 40)
+	      (ash (elt s 3) 32)
+	      (ash (elt s 4) 24)
+	      (ash (elt s 5) 16)
+	      (ash (elt s 6) 8)
+	      (elt s 7))))
+    i))
+
 (defun decode-float64 (s)
-  (ieee-floats:decode-float64 (osc::decode-uint64 s)))
+  (ieee-floats:decode-float64 (decode-uint64 s)))
 
 (defun sc-decode-timetag (timetag)
   (if (equalp timetag #(0 0 0 0 0 0 0 1))
       1
-      (osc::decode-uint64 timetag)))
+      (decode-uint64 timetag)))
 
 (defun sc-decode-taged-data (data)
   (let ((div (position 0 data)))
