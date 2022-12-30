@@ -16,6 +16,9 @@
 	   #:+inf+
 	   
 	   #+linux #:jack-connect
+
+	   #:sched-ahead
+	   #:latency
 	   
 	   #:make-server-options
 	   #:server-options

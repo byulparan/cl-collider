@@ -70,6 +70,8 @@
    (buffers :initarg :buffers :accessor buffers)
    (audio-buses :initarg :audio-buses :accessor audio-buses)
    (control-buses :initarg :control-buses :accessor control-buses)
+   (sched-ahead :initarg :sched-ahead :initform 0.2d0 :accessor sched-ahead)
+   (latency :initarg :latency :initform 0.0d0 :accessor latency)
    (tempo-clock :accessor tempo-clock)
    (node-proxy-table :accessor node-proxy-table))
   (:documentation "This is base class for the scsynth server. This library includes realtime server, NRT server, and internal server (not yet implemented)."))
@@ -178,9 +180,11 @@
   (push self *all-rt-servers*)
   (setf (scheduler self) (make-instance 'scheduler
 			   :name (name self)
+			   :server self
 			   :timestamp (server-time-stamp self))
 	(tempo-clock self) (make-instance 'tempo-clock
 			     :name (name self)
+			     :server self
 			     :bpm 60.0d0
 			     :base-beats 0.0d0
 			     :base-seconds (unix-time)
@@ -428,7 +432,7 @@
 
 (defmethod send-bundle ((server external-server) time list-of-messages)
   (apply #'sc-osc:send-bundle
-	 time
+	 (+ time (latency server))
 	 (osc-device server)
 	 list-of-messages))
 
@@ -492,10 +496,11 @@
        (setf (buffers *s*) (make-array (server-options-num-sample-buffers (server-options *s*))
 				       :initial-element nil)
 	     (tempo-clock *s*) (make-instance 'tempo-clock
-					      :bpm ,bpm
-					      :base-beats 0.0d0
-					      :base-seconds 0.0d0
-					      :beat-dur (/ 60.0d0 ,bpm))
+				 :server *s*
+				 :bpm ,bpm
+				 :base-beats 0.0d0
+				 :base-seconds 0.0d0
+				 :beat-dur (/ 60.0d0 ,bpm))
 	     (node-proxy-table *s*) (make-hash-table))
        (let* ((*nrt-pad* ,pad))
 	 (make-group :id 1 :pos :head :to 0)
@@ -674,6 +679,7 @@
   (stop)
   (tempo-clock-stop (tempo-clock *s*))
   (setf (tempo-clock *s*) new-clock)
+  (setf (server new-clock) *s*)
   (tempo-clock-run (tempo-clock *s*)))
 
 (defun clock-bpm (&optional bpm)
@@ -705,7 +711,7 @@
      ,@body))
 
 (defmacro at-task (beat &body body)
-  `(clock-add (+ ,beat (* (sched-ahead (tempo-clock *s*)) (/ (clock-bpm) 60.0d0)))
+  `(clock-add (+ ,beat (* (sched-ahead (server (tempo-clock *s*))) (/ (clock-bpm) 60.0d0)))
 	     (lambda () ,@body)))
 
 

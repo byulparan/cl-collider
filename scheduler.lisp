@@ -119,6 +119,10 @@
     :initarg :name
     :initform nil
     :reader sched-name)
+   (server
+    :initarg :server
+    :initform nil
+    :accessor server)
    (mutex
     :reader mutex)
    (condition-var
@@ -133,10 +137,6 @@
    (status
     :initform :stop
     :accessor sched-status)
-   (ahead
-    :initarg :sched-ahead
-    :initform .2d0
-    :accessor sched-ahead)
    (timestamp
     :initarg :timestamp
     :initform #'unix-time
@@ -193,10 +193,10 @@
     :running))
 
 (defun sched-add (scheduler time f &rest args)
-  "Insert task and time-info to scheduler queue. scheduler have ahead of time value(default to 0.3).
- '(- time (sched-ahead scheduler)) is actual time it runs to f."
+  "Insert task and time-info to scheduler queue. server of scheduler have ahead of time value(default to 0.2).
+ '(- time (sched-ahead *s*)) is actual time it runs to f."
   (with-recursive-lock-held ((mutex scheduler))
-    (pileup:heap-insert (make-sched-event :timestamp (- time (sched-ahead scheduler))
+    (pileup:heap-insert (make-sched-event :timestamp (- time (sched-ahead (server scheduler)))
 				   :task (lambda () (apply f args)))
 		 (in-queue scheduler))
     (bt:condition-notify (condition-var scheduler)))
@@ -252,14 +252,14 @@
 				  :do (condition-wait (condition-var tempo-clock) (mutex tempo-clock)))
 			    (loop :while (not (pileup:heap-empty-p (in-queue tempo-clock)))
 				  :do (let ((timeout (- (- (beats-to-secs tempo-clock (sched-event-timestamp (pileup:heap-top (in-queue tempo-clock))))
-							   (sched-ahead tempo-clock))
+							   (sched-ahead (server tempo-clock)))
 							(unix-time))))
 					(unless (plusp timeout) (return))
 					(condition-wait (condition-var tempo-clock) (mutex tempo-clock) :timeout timeout)))
 			    (loop :while (and (not (pileup:heap-empty-p (in-queue tempo-clock)))
 					      (>= (unix-time)
 						  (- (beats-to-secs tempo-clock (sched-event-timestamp (pileup:heap-top (in-queue tempo-clock))))
-						     (sched-ahead tempo-clock))))
+						     (sched-ahead (server tempo-clock)))))
 				  :do (when (eql 'ensure-scheduler-stop-quit ;; it's magic code. it seems chagne..
 						 (funcall (sched-event-task (pileup:heap-pop (in-queue tempo-clock)))))
 					(setf run-p nil)
@@ -314,5 +314,5 @@
 
 
 (defmethod tempo-clock-quant ((tempo-clock tempo-clock) quant)
-  (let* ((beats (secs-to-beats tempo-clock (+ (sched-ahead tempo-clock) (sched-time tempo-clock)))))
+  (let* ((beats (secs-to-beats tempo-clock (+ (sched-ahead (server tempo-clock)) (sched-time tempo-clock)))))
     (+ beats (- quant (mod beats quant)))))
