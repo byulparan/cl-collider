@@ -644,9 +644,9 @@
 (defun stop (&optional (group 1) &rest groups)
   (sched-clear (scheduler *s*))
   (tempo-clock-clear (tempo-clock *s*))
+  (send-message *s* "/clearSched")
   (dolist (group (cons group groups))
-    (send-message *s* "/g_freeAll" group)
-    (send-message *s* "/clearSched"))
+    (send-message *s* "/g_freeAll" group))
   (dolist (hook *stop-hooks*)
     (funcall hook)))
 
