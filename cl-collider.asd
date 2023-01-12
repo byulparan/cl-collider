@@ -64,7 +64,6 @@
 	       (:file "ugens/TestUGens")
 	       (:file "ugens/Trig")
 	       (:file "ugens/SC3plugins/MCLDUGens")
-	       (:file "ugens/SC3plugins/MCLDBufferUGens")
 	       (:file "ugens/SC3plugins/BhobUGens")
 	       (:file "ugens/SC3plugins/DistortionPlugins")
 	       (:file "ugens/SC3plugins/JoshUGens")
