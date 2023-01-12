@@ -92,10 +92,11 @@
   ((:ar (multinew new 'ugen trig div start))
    (:kr (multinew new 'ugen trig div start))))
 
+
 (defugen (set-reset-ff "SetResetFF")
-    (&optional (trig 0.0) (div 2.0) (start 0.0))
-  ((:ar (multinew new 'ugen trig div start))
-   (:kr (multinew new 'ugen trig div start)))
+    (&optional (trig 0.0) (reset 0.0))
+  ((:ar (multinew new 'ugen trig reset))
+   (:kr (multinew new 'ugen trig reset)))
   :check-fn #'check-same-rate-as-first-input)
 
 (defugen (toggle-ff "ToggleFF") (&optional (trig 0.0))
