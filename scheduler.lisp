@@ -256,7 +256,7 @@
 							(unix-time))))
 					(unless (plusp timeout)
 					  (when (> (abs timeout) (sched-ahead (server tempo-clock)))
-					    (uiop:println (format nil "late!! ~a secs..what's wrong.." (abs timeout))))
+					    (uiop:println (format nil "late! ~a secs in TempoClock" (abs timeout))))
 					  (return))
 					(condition-wait (condition-var tempo-clock) (mutex tempo-clock) :timeout timeout)))
 			    (loop :while (and (not (pileup:heap-empty-p (in-queue tempo-clock)))
@@ -290,7 +290,9 @@
 
 (defmethod tempo-clock-stop ((tempo-clock tempo-clock))
   (when (eql (sched-status tempo-clock) :running)
-    (tempo-clock-add tempo-clock (tempo-clock-beats tempo-clock) (lambda () 'ensure-scheduler-stop-quit))
+    (tempo-clock-add tempo-clock (+ (* (sched-ahead *s*) .5 (reciprocal (beat-dur tempo-clock)))
+				    (tempo-clock-beats tempo-clock))
+		     (lambda () 'ensure-scheduler-stop-quit))
     (bt:join-thread (sched-thread tempo-clock))
     (setf (sched-status tempo-clock) :stop)))
 
