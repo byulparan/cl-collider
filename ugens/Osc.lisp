@@ -231,7 +231,7 @@
 
 
 (defugen (t-choose "TChoose") (trig array)
-  ((:ar (progn new (select.ar (ti-rand.kr 0 (1- (length array)) trig) array)))
+  ((:ar (progn new (select.ar (ti-rand.ar 0 (1- (length array)) trig) array)))
    (:kr (progn new (select.kr (ti-rand.kr 0 (1- (length array)) trig) array)))))
 
 (defugen (tw-choose "TWChoose") (trig array weights &optional (normalize 0))
