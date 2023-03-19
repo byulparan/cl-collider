@@ -417,7 +417,8 @@
 				   (send-message rt-server "/notify" 0)
 				   (setf (boot-p rt-server) nil)
 				   (sc-osc:close-device (osc-device rt-server))
-				   (sched-stop (scheduler rt-server)))
+				   (sched-stop (scheduler rt-server))
+				   (tempo-clock-stop (tempo-clock rt-server)))
     (call-next-method)))
 
 
