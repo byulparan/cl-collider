@@ -560,6 +560,7 @@
     (:tail 1)
     (:before 2)
     (:after 3)
+    (:replace 4)
     (t 0)))
 
 (defmacro with-node ((node id server) &body body)
