@@ -9,6 +9,8 @@
   "original function in cl-osc that return just vector type. but datagram socket is use (vector (unsigned 8))."
   (apply #'concatenate '(vector (unsigned-byte 8)) catatac))
 
+(defvar *immediate-timetag* (map '(vector (unsigned-byte 8)) #'identity (list 0 0 0 0 0 0 0 1)))
+
 ;;; encode osc ------------------------------------------------------------
 
 (defun encode-float64 (f)
@@ -67,7 +69,7 @@
     (cond
       ;; a 1bit timetag will be interpreted as 'imediately' 
       ((equalp utime :now)
-       #(0 0 0 0 0 0 0 1)) 
+       *immediate-timetag*) 
       ((numberp utime) (osc::encode-int64 (make-timetag utime)))
       (t (error "the time or subsecond given is not an integer or float")))))
 
@@ -104,6 +106,8 @@
 
 ;;; decode osc ------------------------------------------------------------
 
+
+
 ;; this code from legacy osc package.
 (defun decode-uint64 (s)
   "8 byte -> 64 bit unsigned int"
@@ -121,7 +125,7 @@
   (ieee-floats:decode-float64 (decode-uint64 s)))
 
 (defun sc-decode-timetag (timetag)
-  (if (equalp timetag #(0 0 0 0 0 0 0 1))
+  (if (equalp timetag *immediate-timetag*)
       1
       (decode-uint64 timetag)))
 
@@ -168,22 +172,25 @@
 	(cons (osc::decode-address (subseq message 0 x))
 	      (sc-decode-taged-data (subseq message x))))))
 
-(defun decode-bundle (data)
+(defun decode-bundle-iter (data)
   (let ((contents '()))
-    (if (equalp 35 (elt data 0))
+    (if (= 35 (elt data 0))
 	(let ((timetag (subseq data 8 16)) 
 	      (i 16)
 	      (bundle-length (length data)))
 	  (loop while (< i bundle-length)
-	     do (let ((mark (+ i 4))
-		      (size (osc::decode-int32
-			     (subseq data i (+ i 4)))))
-		  (if (eq size 0)
-		      (setf bundle-length 0)
-		      (push (decode-bundle
-			     (subseq data mark (+ mark size)))
-			    contents))
-		  (incf i (+ 4 size))))
+		do (let ((mark (+ i 4))
+			 (size (osc::decode-int32
+				(subseq data i (+ i 4)))))
+		     (if (eq size 0)
+			 (setf bundle-length 0)
+		       (push (decode-bundle-iter
+			      (subseq data mark (+ mark size)))
+			     contents))
+		     (incf i (+ 4 size))))
 	  (push timetag contents))
-	(decode-message data))))
+      (decode-message data))))
 
+(defun decode-bundle (data)
+  (if (= 35 (elt data 0)) (decode-bundle-iter data)
+    (list *immediate-timetag* (decode-message data))))
