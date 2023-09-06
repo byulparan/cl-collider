@@ -418,7 +418,7 @@
 				     (list "gate" 1.0) (list "gain" ,gain) (list "lag" ,lag)) :control)
                (let* ((,start-val (<=~ ,dt 0))
                       (,env (env-gen.kr
-                             (env (list ,start-val 1 0) (list 1,1) :lin 1) :gate ,gate :level-scale 1 :level-bias 0.0
+                             (env (list ,start-val 1 0) (list 1 1) :lin 1) :gate ,gate :level-scale 1 :level-bias 0.0
                              :time-scale ,dt :act :free)))
                  (setf ,result (*~ ,env ,result))
                  (cond ((eql :audio (rate ,result)) (,outlets 'out.ar ,buses ,result ,gain-sym ,lag-sym))
