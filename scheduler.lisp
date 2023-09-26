@@ -53,8 +53,10 @@
 (defun set-thread-realtime-priority ()
   "This function is made high priority to calling thread, and sched-policy set SCHED_RR."
   (cffi:with-foreign-objects ((param '(:pointer (:struct sched-param))))
-    (cffi:with-foreign-slots ((priority dummy) param (:struct sched-param))
-      (setf priority 76))
+    (let* ((max-priority (cffi:foreign-funcall "sched_get_priority_max" :int (cffi:foreign-enum-value 'sched-policy :sched_rr)
+									:int)))
+      (cffi:with-foreign-slots ((priority dummy) param (:struct sched-param))
+	(setf priority max-priority)))
     (cffi:foreign-funcall "pthread_setschedparam" :pointer (cffi:foreign-funcall "pthread_self" :pointer)
 						  :int (cffi:foreign-enum-value 'sched-policy :sched_rr)
 						  :pointer param)))
