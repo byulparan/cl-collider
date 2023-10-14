@@ -153,6 +153,9 @@
     :initarg :server-time-stamp
     :initform #'unix-time
     :accessor server-time-stamp)
+   (sample-rate
+    :initform nil
+    :accessor sample-rate)
    (scheduler
     :accessor scheduler)
    (sc-thread
@@ -236,6 +239,7 @@
   (when (boot-p rt-server)
     (setf (node-watcher rt-server) (list 0))
     (send-message rt-server "/notify" 1)
+    (send-message rt-server "/status")
     (sched-run (scheduler rt-server))
     (tempo-clock-run (tempo-clock rt-server))
     (sync rt-server)
@@ -258,6 +262,7 @@
   (send-message rt-server "/quit")
   (thread-wait (lambda () (not (boot-p rt-server))))
   (setf (node-watcher rt-server) nil)
+  (setf (sample-rate rt-server) nil)
   (sched-stop (scheduler rt-server))
   (tempo-clock-stop (tempo-clock rt-server))
   (cleanup-server rt-server)
@@ -288,9 +293,10 @@
     (add-reply-responder
      "/status.reply"
      (lambda (&rest args)
-       (setf (server-options-hardware-samplerate (server-options *s*)) (car (last args 2)))
-       (apply #'format t "~&UGens    : ~4d~&Synths   : ~4d~&Groups   : ~4d~&SynthDefs: ~4d~&% CPU (Average): ~a~&% CPU (Peak)   : ~a~&SampleRate (Nominal): ~a~&SampleRate (Actual) : ~a~%" (cdr args))
-       (force-output)))
+       (if (not (sample-rate *s*)) (setf (sample-rate *s*) (car (last args 2)))
+	 (progn
+	   (apply #'format t "~&UGens    : ~4d~&Synths   : ~4d~&Groups   : ~4d~&SynthDefs: ~4d~&% CPU (Average): ~a~&% CPU (Peak)   : ~a~&SampleRate (Nominal): ~a~&SampleRate (Actual) : ~a~%" (cdr args))
+	   (force-output)))))
     (add-reply-responder
      "/synced"
      (lambda (id)
