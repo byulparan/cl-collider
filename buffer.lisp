@@ -46,6 +46,11 @@
       (apply #'send-message server (list "/b_alloc" bufnum (floor frames) (floor chanls)
 					 (sc-osc::encode-message "/b_query" bufnum))))))
 
+(defun buffer-alloc-sequence  (sequence &key (server *s*))
+  (let* ((buffer (buffer-alloc (length sequence) :server server)))
+    (buffer-load buffer sequence)
+    buffer))
+
 (defun buffer-read (path &key bufnum (server *s*))
   (let ((file-path (full-pathname path)))
     (assert (probe-file file-path) (path) "File does not exist: ~a" file-path)
