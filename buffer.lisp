@@ -384,6 +384,28 @@ When NORMALIZE is T, the peak amplitude of the wave is normalized to 1.0. If WAV
 	(setf (elt vec (* i 2)) (- (* 2 a0) a1)
 	      (elt vec (1+ (* i 2))) (- a1 a0))))))
 
+
+(setf (symbol-function 'as-wavetable) #'vector-in-wavetable-format)
+
+(defun as-wavetable-no-wrap (sequence)
+  "Shaper requires wavetables without wrap. This method returns a wavetable in that format. To generate size N wavetable need N/2+1 signal values rather than N/2 because Buffer's add_wchebyshev calculates N/2+1 values whilst
+Signal's _SignalAddChebyshev calculates N/2!"
+  (let* ((len (length sequence))
+	 (newsig (make-array (* (1- len) 2)))
+	 next cur)
+    (setf cur (elt sequence 0))
+    (dotimes (i (1- len))
+      (let ((index (* 2 i)))
+	(setf next (elt sequence (+ i 1)))
+	(setf (aref newsig index) (- (* 2 cur) next)
+	      (aref newsig (1+ index)) (- next cur))
+	(setf cur next)))
+    newsig))
+
+
+
+
+
 (defun buffer-read-as-wavetable (path &key bufnum (server *s*))
   "Read a soundfile located at PATH as a wavetable."
   (let* ((tmp-buf (prog1 (buffer-read path :server server)

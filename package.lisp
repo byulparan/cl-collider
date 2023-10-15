@@ -117,7 +117,8 @@
 	   #:set-buf
 	   #:clear-buf
 	   #:local-buf-list
-
+	   #:as-wavetable
+	   #:as-wavetable-no-wrap
 	   
 	   #:bus-audio
 	   #:bus-control
