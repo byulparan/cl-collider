@@ -103,6 +103,7 @@
 	   #:buffer-to-array
 	   #:buffer-set
 	   #:buffer-setn
+	   #:buffer-load
 	   #:buffer-zero
 	   #:buffer-normalize
 	   #:buffer-dur

@@ -269,7 +269,10 @@ Additionally, since this is a synchronous function, you should not call it in th
 Similar to `buffer-get-to-array' but uses a temporary file a la `buffer-load-to-list', meaning it may be faster in setups (i.e. local servers) that support it. Generally `buffer-to-array' is preferred since it automatically picks the fastest available function.
 
 Additionally, since this is a synchronous function, you should not call it in the reply thread."
-  (buffer-to-array buffer start end channels #'buffer-load-to-list))
+  (buffer-to-array buffer :start start :end end :channels channels :get-function #'buffer-load-to-list))
+
+
+
 
 (defun buffer-set (buffer index value)
   (send-message (server buffer) "/b_set" (bufnum buffer) index value)
@@ -287,6 +290,52 @@ Additionally, since this is a synchronous function, you should not call it in th
 	  (apply #'send-message server (append (list "/b_setn" (bufnum buffer) (* repeat 1024) rest-message-len) msg)))))
     (sync (server buffer))
     buffer))
+
+
+(defun buffer-send-sequence (buffer sequence &key (start-frame 0))
+  "This allows for larger sequence than `buffer-setn'. This is not as safe as `buffer-load-sequence', above, but will work with servers on remote machines. The sample rate of the buffer will be the sample rate of the server on which it is created. Additionally, since this is a synchronous function, you should not call it in the reply thread."
+  (unless (listp sequence) (setf sequence (coerce sequence 'list)))
+  (when (> (+ start-frame (length sequence)) (frames buffer))
+    (warn "Sequence larger than available number of Frames"))
+  (multiple-value-bind (repeat rest-message-len)
+      (floor (length sequence) 1024)
+    (let ((server (server buffer)))
+      (dotimes (i repeat)
+	(let ((msg (subseq sequence (* i 1024) (+ (* i 1024) 1024))))
+	  (apply #'send-message server (append (list "/b_setn" (bufnum buffer) (+ start-frame (* i 1024)) 1024) msg))))
+      (unless (zerop rest-message-len)
+	(let ((msg (subseq sequence (* repeat 1024) (+ (* repeat 1024) rest-message-len))))
+	  (apply #'send-message server (append (list "/b_setn" (bufnum buffer) (+ start-frame (* repeat 1024)) rest-message-len) msg)))))
+    (sync (server buffer))
+    buffer))
+
+
+(defun buffer-load-sequence (buffer sequence &key (start-frame 0))
+  "This allows for larger sequence than `buffer-setn', above, and is in general the safest way to get a large sequence into a buffer. The sample rate of the buffer will be the sample rate of the server on which it was created. The number of channels and frames will have been determined when the buffer was allocated. You are responsible for making sure that the size of collection is not greater than numFrames, and for interleaving any data if needed. Additionally, since this is a synchronous function, you should not call it in the reply thread."
+  (let* ((server (server buffer)))
+    (assert (is-local-p server) nil "This function only works on local servers.")
+    (when (> (+ start-frame (length sequence)) (frames buffer))
+      (warn "Sequence larger than available number of Frames"))
+    (uiop:with-temporary-file (:stream stream
+			       :pathname pathname
+			       :element-type '(unsigned-byte 8))
+      (write-mono-fl32-wav stream (floor (sample-rate server)) sequence)
+      (close stream)
+      (send-message server "/b_read" (bufnum buffer) (namestring pathname) start-frame -1 0 0)
+      (sync server)
+      buffer)))
+
+
+(defun buffer-load (buffer sequence &key (start-frame 0) set-function)
+  "This allows for larger sequence than `buffer-setn',above, and is in general the safest way to get a large sequence into a buffer. Additionally, since this is a synchronous function, you should not call it in the reply thread."
+  (funcall (or set-function
+	       (if (is-local-p (server buffer))
+		   #'buffer-load-sequence
+		 #'buffer-send-sequence))
+	   buffer sequence :start-frame start-frame))
+
+
+
 
 
 (defun buffer-copy (bufnum-src bufnum-dst &optional (start-dst 0) (start-src 0) (nframes -1))
