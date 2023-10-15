@@ -114,3 +114,26 @@
   (when (alexandria:featurep :slynk)
     (load (asdf:system-relative-pathname :cl-collider "slynk-extensions.lisp"))))
 
+
+
+
+(defun write-mono-fl32-wav (stream sr sequence)
+  "write sequence data to wave file."
+  (write-sequence (flexi-streams:string-to-octets "RIFF") stream)
+  (write-sequence (nreverse (osc::encode-int32 (+ 36 (* 4 (length sequence))))) stream)
+  (write-sequence (flexi-streams:string-to-octets "WAVE") stream)
+  (write-sequence (flexi-streams:string-to-octets "fmt ") stream)
+  (write-sequence (nreverse (osc::encode-int32 16)) stream)
+  (write-byte 3 stream) (write-byte 0 stream)
+  (write-byte 1 stream) (write-byte 0 stream)
+  (write-sequence (nreverse (osc::encode-int32 sr)) stream)
+  (write-sequence (nreverse (osc::encode-int32 (* 4 sr))) stream)
+  (write-byte 4 stream) (write-byte 0 stream)
+  (write-byte 32 stream) (write-byte 0 stream)
+  (write-sequence (flexi-streams:string-to-octets "data") stream)
+  (write-sequence (nreverse (osc::encode-int32 (* 4 (length sequence)))) stream)
+  (dotimes (i (length sequence))
+    (write-sequence (nreverse (osc::encode-float32 (float (elt sequence i) 1.0))) stream)))
+
+
+
