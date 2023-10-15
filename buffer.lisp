@@ -278,17 +278,16 @@ Additionally, since this is a synchronous function, you should not call it in th
   (send-message (server buffer) "/b_set" (bufnum buffer) index value)
   (sync (server buffer)))
 
-(defun buffer-setn (buffer data)
-  (multiple-value-bind (repeat rest-message-len)
-      (floor (length data) 1024)
-    (let ((server (server buffer)))
-      (dotimes (i repeat)
-	(let ((msg (subseq data (* i 1024) (+ (* i 1024) 1024))))
-	  (apply #'send-message server (append (list "/b_setn" (bufnum buffer) (* i 1024) 1024) msg))))
-      (unless (zerop rest-message-len)
-	(let ((msg (subseq data (* repeat 1024) (+ (* repeat 1024) rest-message-len))))
-	  (apply #'send-message server (append (list "/b_setn" (bufnum buffer) (* repeat 1024) rest-message-len) msg)))))
-    (sync (server buffer))
+(defun buffer-setn (buffer &rest pair-of-index-and-value)
+  "Set a contiguous range of values in the buffer starting at the index startAt to be equal to the Array of floats or integers, values. The number of values set corresponds to the size of values. Additional pairs of starting indices and arrays of values may be included in the same message. (Floating-point values for index are truncated to integer.) Additionally, since this is a synchronous function, you should not call it in the reply thread."
+  (assert (evenp (length pair-of-index-and-value)))
+  (let* ((server (server buffer))
+	 (data nil))
+    (loop for (index value) on pair-of-index-and-value by #'cddr
+	  do (if (listp value) (push (list index (length value) value) data)
+	       (push (list index 1 value) data)))
+    (apply #'send-message server "/b_setn" (bufnum buffer) (alexandria:flatten (reverse data)))
+    (sync server)
     buffer))
 
 
@@ -393,6 +392,6 @@ When NORMALIZE is T, the peak amplitude of the wave is normalized to 1.0. If WAV
          (frames (prog1 (buffer-to-array tmp-buf :channels 0)
                    (buffer-free tmp-buf)))
          (buffer (buffer-alloc (* 2 num-frames) :bufnum bufnum :server server)))
-    (buffer-setn buffer (coerce (vector-in-wavetable-format (linear-resample frames num-frames)) 'list))
+    (buffer-load buffer (vector-in-wavetable-format (linear-resample frames num-frames)))
     (setf (slot-value buffer 'path) full-path)
     buffer))
