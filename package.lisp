@@ -62,10 +62,11 @@
 	   #:make-group
 	   #:server-query-all-nodes
 	   #:group-free-all
+	   #:free-all
 	   #:stop
 	   #:server-status
 	   #:*server-quit-hooks*
-	   #:*group-free-all-hooks*
+	   #:*free-all-hooks*
 	   #:*stop-hooks*
 
 	   #:now

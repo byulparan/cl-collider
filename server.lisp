@@ -243,7 +243,7 @@
     (sched-run (scheduler rt-server))
     (tempo-clock-run (tempo-clock rt-server))
     (sync rt-server)
-    (group-free-all rt-server)
+    (free-all rt-server)
     (let ((options (server-options rt-server)))
       (setf (id rt-server) (list #-sbcl 999 #+sbcl 1000)
 	    (group-id rt-server) 1
@@ -640,16 +640,21 @@
 (defun server-query-all-nodes (&optional (rt-server *s*))
   (send-message rt-server "/g_dumpTree" 0 0))
 
-(defvar *group-free-all-hooks* nil)
+(defun group-free-all (group)
+  "Frees all nodes in GROUP but not GROUP itself."
+  (with-node (group id server)
+    (send-message server "/g_freeAll" id)))
 
-(defun group-free-all (&optional (rt-server *s*))
+(defvar *free-all-hooks* nil)
+
+(defun free-all (&optional (rt-server *s*))
   (let ((*s* rt-server))
     (sched-clear (scheduler rt-server))
     (tempo-clock-clear (tempo-clock rt-server))
     (send-message rt-server "/g_freeAll" 0)
     (send-message rt-server "/clearSched")
     (make-group :id 1 :pos :head :to 0)
-    (dolist (hook *group-free-all-hooks*)
+    (dolist (hook *free-all-hooks*)
       (funcall hook))))
 
 (defvar *stop-hooks* nil)
