@@ -432,12 +432,19 @@
          (sync)
          ,node))))
 
-(defun synth (name &rest args)
-  "Start a synth by name."
+(defun synth (name &rest args &key id (pos :head) (to 1) &allow-other-keys)
+  "Start a synth by name.
+
+Optionally takes keyword arguments ID POS and HEAD.
+
+:ID specifies the synths id.
+
+:POS specifies the synths position in the node tree relative to the node passed
+via :TO, possible values are :HEAD, :TAIL, :BEFORE, :AFTER.
+
+:TO passes a node either as a `node' object or node id."
   (let* ((name-string (string-downcase (symbol-name name)))
-         (next-id (or (getf args :id) (get-next-id *s*)))
-         (to (or (getf args :to) 1))
-         (pos (or (getf args :pos) :head))
+         (next-id (or id (get-next-id *s*)))
          (new-synth (make-instance 'node :server *s* :id next-id :name name-string :pos pos :to to))
          (args (loop :for (arg val) :on args :by #'cddr
 		     :unless (member arg '(:id :to :pos))
