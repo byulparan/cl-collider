@@ -46,10 +46,17 @@
       (apply #'send-message server (list "/b_alloc" bufnum (floor frames) (floor chanls)
 					 (sc-osc::encode-message "/b_query" bufnum))))))
 
-(defun buffer-alloc-sequence  (sequence &key (server *s*))
-  (let* ((buffer (buffer-alloc (length sequence) :server server)))
-    (buffer-load buffer sequence)
-    buffer))
+(defun buffer-alloc-sequence (sequence &key (server *s*))
+  (if (is-local-p server)
+      (uiop:with-temporary-file (:stream stream
+				 :pathname pathname
+				 :element-type '(unsigned-byte 8))
+	(write-mono-fl32-wav stream (floor (sample-rate server)) sequence)
+	(close stream)
+	(buffer-read pathname))
+    (let* ((buffer (buffer-alloc (length sequence) :server server)))
+      (buffer-load buffer sequence)
+      buffer)))
 
 (defun buffer-read (path &key bufnum (server *s*))
   (let ((file-path (full-pathname path)))
