@@ -145,6 +145,7 @@
 
 (defgeneric sc-reply-thread (rt-server))
 
+(defvar *server-boot-hooks* nil)
 (defvar *server-quit-hooks* nil)
 (defvar *all-rt-servers* nil)
 
@@ -255,6 +256,8 @@
          :do (get-next-bus rt-server :audio 1 i))
       (loop :for i :below (server-options-num-input-bus options)
          :do (get-next-bus rt-server :audio 1 (+ i (server-options-num-output-bus options))))))
+  (dolist (f *server-boot-hooks*)
+    (funcall f))
   rt-server)
 
 (defmethod server-quit ((rt-server rt-server))
