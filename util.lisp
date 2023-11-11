@@ -36,7 +36,11 @@
 
 (defun full-pathname (path)
   "Get the absolute pathname of PATH."
-  (uiop:native-namestring path))
+  (uiop:native-namestring (uiop:ensure-pathname path :want-non-wild t)))
+
+(defun file-exists-p (filename)
+  "True if FILENAME names a file that exists. This function is needed to ensure characters like ? are not interpreted as Common Lisp pathname wildcards."
+  (probe-file (uiop:ensure-pathname filename :want-non-wild t)))
 
 (defmethod cat ((sequence string) &rest sequences)
   (apply #'concatenate 'string sequence sequences))
