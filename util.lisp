@@ -55,13 +55,13 @@
 		    :output :interactive)
   #-(or ecl lispworks)
   (simple-inferiors:run program options
-		                :output t :copier :line))
+			:output t :error t :copier :line))
 
 #+windows
 (defun find-port (sc-thread port)
   "in windows, scsynth program should be bind port before send message in CL"
   (labels ((netstat ()
-	     (let* ((result 
+	     (let* ((result
 		      (with-output-to-string (s)
 			(uiop:run-program "netstat -an" :output s :external-format :default))))
 	       (with-input-from-string (s result)
