@@ -60,7 +60,7 @@
 
 (defun buffer-read (path &key bufnum (server *s*))
   (let ((file-path (full-pathname path)))
-    (assert (probe-file file-path) (path) "File does not exist: ~a" file-path)
+    (assert (file-exists-p file-path) (path) "File does not exist: ~a" file-path)
     (let* ((buffer (get-next-buffer server bufnum))
 	   (bufnum (slot-value buffer 'bufnum)))
       (setf (slot-value buffer 'path) file-path
@@ -71,7 +71,7 @@
 
 (defun buffer-read-channel (path &key channels bufnum (server *s*))
   (let ((file-path (full-pathname path)))
-    (assert (probe-file file-path) (path) "File does not exist: ~a" file-path)
+    (assert (file-exists-p file-path) (path) "File does not exist: ~a" file-path)
     (let* ((buffer (get-next-buffer server bufnum))
 	   (bufnum (slot-value buffer 'bufnum)))
       (setf (slot-value buffer 'path) file-path
@@ -82,7 +82,7 @@
 
 (defun buffer-cue-soundfile (path &key (server *s*) (start-frame 0) (chanls 2) (frames 32768))
   (let* ((file-path (full-pathname path)))
-    (assert (probe-file file-path) (path) "File does not exist: ~a" file-path)
+    (assert (file-exists-p file-path) (path) "File does not exist: ~a" file-path)
     (let* ((buffer (buffer-alloc frames :chanls chanls :server server)))
       (send-message server "/b_read" (bufnum buffer) file-path start-frame frames 0 1
 		    (sc-osc::encode-message "/b_query" (bufnum buffer)))

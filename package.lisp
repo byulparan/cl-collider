@@ -65,6 +65,7 @@
 	   #:server-free-all
 	   #:stop
 	   #:server-status
+           #:*server-boot-hooks*
 	   #:*server-quit-hooks*
 	   #:*server-free-all-hooks*
 	   #:*stop-hooks*

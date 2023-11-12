@@ -12,7 +12,7 @@
 				   #'namestring)
 	       (uiop:subdirectories (uiop:getenv-pathname "ProgramFiles"))
 	       :from-end t)
-       (sc-path-not-found-warning)))
+      (sc-path-not-found-warning)))
 
 ;; default path are which build target from source
 (defvar *sc-synth-program*
@@ -20,27 +20,24 @@
 					       "/Applications/SuperCollider.app/Contents/Resources/scsynth"))
 	       (sc-path-not-found-warning))
   #+linux (handler-case
-	      (uiop:run-program "which scsynth" :output :line)
-            (t (c)
+	      (uiop:run-program '("which" "scsynth") :output :line)
+	    (t (c)
 	      (warn "SuperCollider was not found in the system path.")
 	      nil))
   #+windows (merge-pathnames *win-sc-dir* #P"scsynth.exe")
   "The path to the scsynth binary.")
 
 (setf *sc-plugin-paths*
-  #+darwin (list (or (find-if #'uiop:truename* '("/Applications/SuperCollider/SuperCollider.app/Contents/Resources/plugins/"
-                                                 "/Applications/SuperCollider.app/Contents/Resources/plugins/")))
-	      "~/Library/Application\ Support/SuperCollider/Extensions/")
-  #+linux (remove-if-not
-            #'uiop:directory-exists-p
-            (list
-              "/usr/local/lib/SuperCollider/plugins/"
-              "/usr/lib/SuperCollider/plugins/"
-              "/usr/local/share/SuperCollider/Extensions/"
-              "/usr/share/SuperCollider/Extensions/"))
-  #+windows (list (merge-pathnames #P"plugins/" *win-sc-dir*)
-		  (full-pathname (merge-pathnames #P"SuperCollider/Extensions/"
-						  (uiop:get-folder-path :local-appdata)))))
+      #+darwin (list (or (find-if #'uiop:truename* '("/Applications/SuperCollider/SuperCollider.app/Contents/Resources/plugins/"
+						     "/Applications/SuperCollider.app/Contents/Resources/plugins/")))
+		     "~/Library/Application\ Support/SuperCollider/Extensions/")
+      #+linux (remove-if-not #'uiop:directory-exists-p '("/usr/local/lib/SuperCollider/plugins/"
+							 "/usr/lib/SuperCollider/plugins/"
+							 "/usr/local/share/SuperCollider/Extensions/"
+							 "/usr/share/SuperCollider/Extensions/"))
+      #+windows (list (merge-pathnames #P"plugins/" *win-sc-dir*)
+		      (full-pathname (merge-pathnames #P"SuperCollider/Extensions/"
+						      (uiop:get-folder-path :local-appdata)))))
 
 (defvar *sc-synthdefs-path*
   #+darwin (full-pathname "~/Library/Application Support/SuperCollider/synthdefs/")
@@ -145,6 +142,7 @@
 
 (defgeneric sc-reply-thread (rt-server))
 
+(defvar *server-boot-hooks* nil)
 (defvar *server-quit-hooks* nil)
 (defvar *all-rt-servers* nil)
 
@@ -251,10 +249,12 @@
             (buffers rt-server) (make-array (server-options-num-sample-buffers options) :initial-element nil)
             (audio-buses rt-server) (make-array (server-options-num-audio-bus options) :initial-element nil)
             (control-buses rt-server) (make-array (server-options-num-control-bus options) :initial-element nil))
-      (loop :for i :below (server-options-num-output-bus options)
-         :do (get-next-bus rt-server :audio 1 i))
-      (loop :for i :below (server-options-num-input-bus options)
-         :do (get-next-bus rt-server :audio 1 (+ i (server-options-num-output-bus options))))))
+      (dotimes (i (server-options-num-output-bus options))
+	(get-next-bus rt-server :audio 1 i))
+      (dotimes (i (server-options-num-input-bus options))
+	(get-next-bus rt-server :audio 1 (+ i (server-options-num-output-bus options))))))
+  (dolist (f *server-boot-hooks*)
+    (funcall f))
   rt-server)
 
 (defmethod server-quit ((rt-server rt-server))
