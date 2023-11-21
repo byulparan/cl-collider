@@ -7,16 +7,6 @@
    (:kr
     (madd (multinew new 'ugen freq iphase) mul add))))
 
-;;;
-;; (defun assert-array-ref (array-ref)
-;;   (labels ((max-depth (lst &optional (rank 0)) 
-;; 	     (let ((lst (remove-if-not #'consp lst)))
-;; 	       (cond ((null lst) (1+ rank))
-;; 		     (t (max (max-depth (car lst) (+ rank 1))
-;; 			     (max-depth (cdr lst) rank)))))))
-;;     (let ((depth (apply #'max (mapcar #'max-depth array-ref))))
-;;       (assert (> 3 depth) nil
-;; 	      "too deep depth harm or amp or ring list. max depth is 2, but your max depth is ~a." depth))))
 
 (defun flop-argument (lst type)
   (assert (every #'numberp (alexandria:flatten lst)) nil
@@ -37,8 +27,7 @@
     (add-to-synth ugen)))
 
 (defugen (klang "Klang") (specificationsArrayRef &optional (freq-scale 1.0) (freq-offset 0.0))
-  ((:ar ;(assert-array-ref specificationsArrayRef)
-	(let ((len (length specificationsArrayRef)))
+  ((:ar (let ((len (length specificationsArrayRef)))
 	  (unless (= 3 len)
 	    (alexandria:appendf specificationsArrayRef (make-list (- 3 len)))))
 	(multinew new 'klang freq-scale freq-offset 
@@ -56,8 +45,7 @@
     (add-to-synth ugen)))
 
 (defugen (klank "Klank") (specificationsArrayRef input &optional (freq-scale 1.0) (freq-offset 0.0) (decay-scale 1.0))
-  ((:ar ;(assert-array-ref specificationsArrayRef)
-	(let ((len (length specificationsArrayRef)))
+  ((:ar (let ((len (length specificationsArrayRef)))
 	  (unless (= 3 len)
 	    (alexandria:appendf specificationsArrayRef (make-list (- 3 len)))))
 	(multinew new 'klank input freq-scale freq-offset decay-scale
@@ -85,11 +73,9 @@
 
 (defugen (dyn-klank "DynKlank")
     (array-ref input &optional (freq-scale 1.0) (freq-offset 0.0) (decay-scale 1.0))
-  ((:ar ;;(assert-array-ref array-ref)
-	(multinew new 'dyn-klank (make-array (length array-ref) :initial-contents array-ref)
+  ((:ar	(multinew new 'dyn-klank (make-array (length array-ref) :initial-contents array-ref)
 		  input freq-scale freq-offset decay-scale))
-   (:kr ;;(assert-array-ref array-ref)
-	(multinew new 'dyn-klank (make-array (length array-ref) :initial-contents array-ref)
+   (:kr	(multinew new 'dyn-klank (make-array (length array-ref) :initial-contents array-ref)
 		  input freq-scale freq-offset decay-scale))))
 
 (defclass dyn-klang (ugen) ())
@@ -109,11 +95,9 @@
 
 (defugen (dyn-klang "DynKlang")
     (array-ref &optional (freq-scale 1.0) (freq-offset 0.0))
-  ((:ar ;;(assert-array-ref array-ref)
-	(multinew new 'dyn-klang (make-array (length array-ref) :initial-contents array-ref)
+  ((:ar	(multinew new 'dyn-klang (make-array (length array-ref) :initial-contents array-ref)
 		  freq-scale freq-offset))
-   (:kr ;;(assert-array-ref array-ref)
-	(multinew new 'dyn-klang (make-array (length array-ref) :initial-contents array-ref)
+   (:kr	(multinew new 'dyn-klang (make-array (length array-ref) :initial-contents array-ref)
 		  freq-scale freq-offset))))
 
 
