@@ -9,8 +9,6 @@
 
 
 (defun flop-argument (lst type)
-  (assert (every #'numberp (alexandria:flatten lst)) nil
-	  "Klang/Klank do not support UGens as arguments. Use Dyn-Klang/Dyn-Klank instead.")
   (unless lst (setf lst (list (ecase type
 				(:amps 1.0)
 				(:times 1.0)
