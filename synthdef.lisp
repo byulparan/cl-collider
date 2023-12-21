@@ -464,7 +464,7 @@ via :TO, possible values are :HEAD, :TAIL, :BEFORE, :AFTER.
                  :unless (null res)
                    :return res)))))
 
-(defmacro proxy (key body &key id (gain 1.0) (fade 0.5) (pos :head) (to 1) (out-bus 0))
+(defmacro proxy (key body &key id (gain 1.0) (fade .5) (rel 2) (pos :head) (to 1) (out-bus 0))
   (alexandria:with-gensyms (node node-alive-p d-key)
     `(let* ((,node (gethash ,key (node-proxy-table *s*)))
 	    (,node-alive-p (when ,node (if (typep *s* 'nrt-server) t (is-playing-p ,node)))))
@@ -472,7 +472,7 @@ via :TO, possible values are :HEAD, :TAIL, :BEFORE, :AFTER.
 	    (alexandria:once-only (id fade)
 	      `(labels ((clear-node ()
 			  (when ,node-alive-p
-			    (if (getf (meta ,node) :fade-time) (ctrl ,node :gate 0 :fade ,fade)
+			    (if (getf (meta ,node) :fade-time) (ctrl ,node :gate 0 :fade (* ,fade ,rel))
 			      (free ,node)))))
 		 (when (and (typep *s* 'rt-server) (is-playing-p ,id))
 		   (error "already running id ~d~%" ,id))
