@@ -90,24 +90,28 @@
   (bt:make-thread
    (lambda ()
      (setf *random-state* (make-random-state t))
-     (let ((buffer (make-array 2048 :element-type '(unsigned-byte 8))))
-       (loop
-	 do #+ecl
-	    (setf buffer (make-array 2048 :element-type '(unsigned-byte 8))) ;; maybe This is ECL/USocket bug 
-	    (multiple-value-bind (buffer length host port)
-		(usocket:socket-receive (socket osc-device) buffer (length buffer))
-	      (declare (ignore host port length))
-	      (let* ((messages (cdr (decode-bundle buffer))))
-		(loop for message in messages
-		      for handler = (gethash (car message) (reply-handle-table osc-device))
-		      do (if handler (handler-case (progn (apply handler (cdr message))
-							  (when (and (string= (car message) "/done")
-								     (string= (second message) "/quit"))
-							    (return)))
-				       (error (c) (format t "Error ~a on received message ~s ~%" c (car message))))
-			   (if (and (string= (car message) "/done")
-				    (string= (second message) "/quit"))
-			       (return)
-			     (format t "Reply handler not found: ~a [ ~{~a ~}]~%" (car message) (cdr message))))))))))
+     (let ((running-p t)
+	   (buffer (make-array 2048 :element-type '(unsigned-byte 8))))
+       (loop while running-p
+	     do 
+	     #+ecl (setf buffer (make-array 2048 :element-type '(unsigned-byte 8))) ;; maybe This is ECL/USocket bug 
+		   (multiple-value-bind (buffer length host port)
+		       (usocket:socket-receive (socket osc-device) buffer (length buffer))
+		     (declare (ignore host port length))
+		     (let* ((messages (cdr (decode-bundle buffer))))
+		       (loop for message in messages
+			     for handler = (gethash (car message) (reply-handle-table osc-device))
+			     do (if handler (handler-case (progn (apply handler (cdr message))
+								 (when (and (string= (car message) "/done")
+									    (string= (second message) "/quit"))
+								   (setf running-p nil)
+								   (return)))
+					      (error (c) (format t "Error ~a on received message ~s ~%" c (car message))))
+				  (if (and (string= (car message) "/done")
+					   (string= (second message) "/quit"))
+				      (progn
+					(setf running-p nil)
+					(return))
+				    (format t "Reply handler not found: ~a [ ~{~a ~}]~%" (car message) (cdr message))))))))))
    :name (format nil "OSC device receive thread")))
 
