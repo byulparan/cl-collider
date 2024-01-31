@@ -107,8 +107,15 @@
 (defgeneric free (object)
   (:documentation "Free a node or buffer on the server."))
 
-(defgeneric sr (buffer))
-(defgeneric (setf sr) (sr buffer))
+(defgeneric sr (object))
+(defgeneric (setf sr) (sr object))
+
+(defmethod sr ((server server))
+  (sample-rate server))
+
+(defmethod (setf sr) (sr (server server))
+  (setf (sample-rate server) sr))
+
 (defgeneric chanls (buffer))
 (defgeneric (setf chanls) (chanls buffer))
 (defgeneric frames (buffer))
