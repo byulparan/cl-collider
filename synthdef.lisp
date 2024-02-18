@@ -149,10 +149,17 @@
 			   lag-value))
 		       controls)))))
 
-(defun make-control (params rate)
-  (assert (and (every #'stringp (mapcar #'first params))
-  	       (every #'numberp (alexandria:flatten (mapcar #'second params)))
-	       (every #'(lambda (rate) (or (not rate) (find rate (list :ar :tr :lag)))) (mapcar #'third params))))
+(defun make-control (params)
+  (dolist (param params)
+    (destructuring-bind (name value &optional rate lag-value)
+	param
+      (assert (stringp name) (name) "Control Name \"~a\" should be string" name)
+      (assert (numberp value) (value) "Control Value \"~a\" should be number" value)
+      (when rate
+	(assert (find rate (list :ar :tr :lag)))
+	(when (eql rate :lag) (assert lag-value (name) "Lag Control \"~a\" should be has lag-value" name))
+	(when (find rate (list :tr :ar))
+	  (assert (not lag-value) (rate lag-value) "Control Rate ~a not support extra control ~a" rate lag-value)))))
   (labels ((make-ctrl (params)
 	     (dolist (controls (mapcar #'second params))
 	       (dolist (control-val (alexandria:ensure-list controls))
@@ -171,7 +178,7 @@
       (make-ctrl trig-controls) (make-ctrl audio-controls) (make-ctrl controls)
       (append
        (when trig-controls
-	 (prog1 (ugen-new "TrigControl" rate 'control #'identity :bipolar
+	 (prog1 (ugen-new "TrigControl" :control 'control #'identity :bipolar
 			  (mapcar #'second trig-controls)
 			  (control-ugen-count *synthdef*))
 	   (incf (control-ugen-count *synthdef*) (length (alexandria:flatten (mapcar #'second trig-controls))))))
@@ -181,7 +188,7 @@
 			  (control-ugen-count *synthdef*))
 	   (incf (control-ugen-count *synthdef*) (length (alexandria:flatten (mapcar #'second audio-controls))))))
        (when controls
-	 (prog1 (add-controls rate lag-p controls)
+	 (prog1 (add-controls :control lag-p controls)
 	   (incf (control-ugen-count *synthdef*) (length (alexandria:flatten (mapcar #'second controls))))))))))
 
 (defmacro with-controls (params &body body)
@@ -191,8 +198,7 @@
 						    (remove-if (lambda (a) (or (eql :tr (third a)) (eql :ar (third a)))) params)))
 		  (make-control (list ,@(mapcar (lambda (a)
 						  (cons 'list (list (string-downcase (first a)) `(floatfy ,(second a)) (third a) (fourth a))))
-						params))
-				:control)
+						params)))
 		,@body)
       `(progn ,@body)))
 
@@ -415,7 +421,7 @@
              (setf ,fade-time ,fade)
              (destructuring-bind (,dt ,buses ,gate ,gain-sym ,lag-sym)
                  (make-control (list (list "fade" ,fade) (list "out-bus" ,out-bus)
-				     (list "gate" 1.0) (list "gain" ,gain) (list "lag" ,lag)) :control)
+				     (list "gate" 1.0) (list "gain" ,gain) (list "lag" ,lag)))
                (let* ((,start-val (<=~ ,dt 0))
                       (,env (env-gen.kr
                              (env (list ,start-val 1 0) (list 1 1) :lin 1) :gate ,gate :level-scale 1 :level-bias 0.0
