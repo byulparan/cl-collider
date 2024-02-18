@@ -249,7 +249,7 @@
 	  (alexandria:appendf (control-names *synthdef*) (list (list name (control-ugen-count *synthdef*))))
 	  (incf (control-ugen-count *synthdef*) (length value))
 	  (push (list name (list :rate rate :value value :lag lag :fixed-lag fixed-lag :ugen ugen)) (named-controls *synthdef*))
-	  (when (and (eql rate :audio) lag) (setf ugen (lag.ar ugen lag)))
+	  (when (and (eql rate :audio) lag) (setf ugen (unbubble (lag.ar ugen lag))))
 	  (when (and (eql rate :control) lag (not fixed-lag)) (setf ugen (lag.kr ugen lag)))
 	  (pushnew (list name (unbubble value)) (synthdef-metadata (name *synthdef*) :controls))
 	  ugen)))))
