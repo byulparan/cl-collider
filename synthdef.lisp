@@ -154,7 +154,7 @@
     (destructuring-bind (name value &optional rate lag-value)
 	param
       (assert (stringp name) (name) "Control Name \"~a\" should be string" name)
-      (assert (numberp value) (value) "Control Value \"~a\" should be number" value)
+      (assert (every #'numberp (alexandria:ensure-list value)) (value) "Control Value \"~a\" should be number" value)
       (when rate
 	(assert (find rate (list :ar :tr :lag)))
 	(when (eql rate :lag) (assert lag-value (name) "Lag Control \"~a\" should be has lag-value" name))
