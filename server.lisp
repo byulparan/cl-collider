@@ -411,11 +411,7 @@
 				  (append
 				   (list "-u" (write-to-string (port rt-server)))
 				   (build-server-options (server-options rt-server)))))
-       :name "scsynth"))
-    #+windows
-    ;;wait for running scsynth(binding socket port)
-    (unless (find-port (sc-thread rt-server) (port rt-server))
-      (error "fail bootup"))) 
+       :name "scsynth"))) 
   (with-slots (osc-device) rt-server
     (setf osc-device (sc-osc:osc-device (host rt-server) (port rt-server) :local-port 0))))
 

@@ -57,24 +57,6 @@
   (simple-inferiors:run program options
 			:output t :error t :copier :line))
 
-#+windows
-(defun find-port (sc-thread port)
-  "in windows, scsynth program should be bind port before send message in CL"
-  (labels ((netstat ()
-	     (let* ((result
-		      (with-output-to-string (s)
-			(uiop:run-program "netstat -an" :output s :external-format :default))))
-	       (with-input-from-string (s result)
-		 (loop for line = (read-line s nil nil)
-		       while line
-		       when (and (search "UDP" line) (search (write-to-string port) line))
-			 collect line)))))
-    (let* ((find-p (thread-wait-with-timeout
-		    (lambda () (or (not (bt:thread-alive-p sc-thread)) (netstat)))
-		    15000)))
-      (when find-p
-	(bt:thread-alive-p sc-thread)))))
-
 
 (defun as-keyword (object)
   (alexandria:make-keyword
