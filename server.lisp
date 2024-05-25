@@ -411,7 +411,8 @@
 				  (append
 				   (list "-u" (write-to-string (port rt-server)))
 				   (build-server-options (server-options rt-server)))))
-       :name "scsynth"))) 
+       :name "scsynth")))
+  #+windows (sleep 2) ;; Wait on server boot...It's very temporal.
   (with-slots (osc-device) rt-server
     (setf osc-device (sc-osc:osc-device (host rt-server) (port rt-server) :local-port 0))))
 
