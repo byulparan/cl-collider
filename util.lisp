@@ -40,7 +40,8 @@
 
 (defun file-exists-p (filename)
   "True if FILENAME names a file that exists. This function is needed to ensure characters like ? are not interpreted as Common Lisp pathname wildcards."
-  (probe-file (uiop:ensure-pathname filename :want-non-wild t)))
+  #-windows (probe-file (uiop:ensure-pathname filename :want-non-wild t))
+  #+windows (probe-file filename))
 
 (defmethod cat ((sequence string) &rest sequences)
   (apply #'concatenate 'string sequence sequences))
