@@ -351,7 +351,8 @@
 
 
 (defun control-get (index &optional action)
-  (let ((result nil))
+  (let ((result nil)
+	(index (floor (floatfy index))))
     (setf (gethash index (control-get-handlers *s*)) (if action action (lambda (value) (setf result value))))
     (message-distribute nil (list "/c_get" index) *s*)
     (unless action
@@ -359,7 +360,7 @@
       result)))
 
 (defun control-set (index value)
-  (message-distribute nil (list "/c_set" index value) *s*))
+  (message-distribute nil (list "/c_set" (floatfy index) value) *s*))
 
 
 #+linux
