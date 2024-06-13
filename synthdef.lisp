@@ -277,6 +277,7 @@
 				    (/ sc::/~)
 				    (mod sc::mod~)
 				    (round sc::round~)
+				    (= sc::==)
 				    (< sc::<~)
 				    (> sc::>~)
 				    (<= sc::<=~)
