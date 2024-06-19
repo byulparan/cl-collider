@@ -421,8 +421,8 @@
            (unless (eql :scalar (rate ,result))
              (setf ,fade-time ,fade)
              (destructuring-bind (,dt ,buses ,gate ,gain-sym ,lag-sym)
-                 (make-control (list (list "fade" ,fade) (list "out-bus" ,out-bus)
-				     (list "gate" 1.0) (list "gain" ,gain) (list "lag" ,lag)))
+                 (make-control (list (list "fade" (floatfy ,fade)) (list "out-bus" (floatfy ,out-bus))
+				     (list "gate" (floatfy 1.0)) (list "gain" (floatfy ,gain)) (list "lag" (floatfy ,lag))))
                (let* ((,start-val (<=~ ,dt 0))
                       (,env (env-gen.kr
                              (env (list ,start-val 1 0) (list 1 1) :lin 1) :gate ,gate :level-scale 1 :level-bias 0.0
