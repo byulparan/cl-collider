@@ -40,8 +40,8 @@
   (multinew new 'pv-chain-ugen buffer bins))
 
 (def-pv-chain-ugen (pv-bin-shift "PV_BinShift")
-    (buffer &optional (stretch 1.0) (shift 0.0))
-  (multinew new 'pv-chain-ugen buffer stretch shift))
+    (buffer &optional (stretch 1.0) (shift 0.0) (interp 0.0))
+  (multinew new 'pv-chain-ugen buffer stretch shift interp))
 
 (def-pv-chain-ugen (pv-mag-shift "PV_MagShift")
     (buffer &optional (stretch 1.0) (shift 0.0))
