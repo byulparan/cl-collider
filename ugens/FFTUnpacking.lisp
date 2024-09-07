@@ -22,7 +22,7 @@
   (apply 'multinew (lambda (cls &rest inputs) (apply #'ugen-new "PackFFT" :control cls #'identity :bipolar inputs))
 	 'pv-chain-ugen chain bufsize frombin tobin zeroothers (length magsphases) (alexandria:ensure-list magsphases)))
 
-(defmethod pvcalc ((pv-ugen pv-chain-ugen) frames func &key (frombin 0) tobin (zeroothers 0))
+(defmethod pv-calc ((pv-ugen pv-chain-ugen) frames func &key (frombin 0) tobin (zeroothers 0))
   (let (origmagsphases magsphases)
     (setf origmagsphases (flop (clump (unpack-fft pv-ugen frames frombin tobin) 2)))
     (setf magsphases (funcall func (nth 0 origmagsphases) (nth 1 origmagsphases)))
@@ -34,7 +34,7 @@
     (setf magsphases (alexandria:flatten (flop magsphases)))
     (pack-fft pv-ugen frames magsphases :frombin frombin :tobin tobin :zeroothers zeroothers)))
 
-(defmethod pvcalc2 ((pv-ugen pv-chain-ugen) chain2 frames func &key (frombin 0) tobin (zeroothers 0))
+(defmethod pv-calc2 ((pv-ugen pv-chain-ugen) chain2 frames func &key (frombin 0) tobin (zeroothers 0))
   (let* ((origmagsphases (flop (clump (unpack-fft pv-ugen frames frombin tobin) 2)))
 	 (origmagsphases2 (flop (clump (unpack-fft chain2 frames frombin tobin) 2)))
 	 (magsphases (funcall func (nth 0 origmagsphases)

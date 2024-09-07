@@ -182,8 +182,8 @@
 	   #:env-as-signal
 
 	   #:fft
-	   #:pvcalc
-	   #:pvcalc2
+	   #:pv-calc
+	   #:pv-calc2
 	   #:pv-collect
 	   #:running-sum-rms))
 
