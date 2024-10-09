@@ -15,7 +15,7 @@
 	   #:*sc-synthdefs-path*
 	   #:+inf+
 	   
-	   #+linux #:jack-connect
+	   #+(or linux freebsd) #:jack-connect
 
 	   #:sched-ahead
 	   #:latency
