@@ -100,6 +100,12 @@
 (defmethod floatfy ((object string))
   object)
 
+(defmethod floatfy ((object symbol))
+  (env-shape-number object))
+
+(defmethod floatfy ((object list))
+  (mapcar #'floatfy object))
+
 (defgeneric is-local-p (server)
   (:documentation "The scsynth server can run across the network.
  If the server is running on the local machine, return T, otherwise NIL."))
