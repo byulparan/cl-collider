@@ -28,16 +28,16 @@
   "The path to the scsynth binary.")
 
 (setf *sc-plugin-paths*
-      #+darwin (list (or (find-if #'uiop:truename* '("/Applications/SuperCollider/SuperCollider.app/Contents/Resources/plugins/"
-						     "/Applications/SuperCollider.app/Contents/Resources/plugins/")))
-		     "~/Library/Application\ Support/SuperCollider/Extensions/")
-      #+(or linux freebsd) (remove-if-not #'uiop:directory-exists-p '("/usr/local/lib/SuperCollider/plugins/"
-                                                                      "/usr/lib/SuperCollider/plugins/"
-                                                                      "/usr/local/share/SuperCollider/Extensions/"
-                                                                      "/usr/share/SuperCollider/Extensions/"))      
-      #+windows (list (merge-pathnames #P"plugins/" *win-sc-dir*)
-		      (full-pathname (merge-pathnames #P"SuperCollider/Extensions/"
-						      (uiop:get-folder-path :local-appdata)))))
+  #+darwin (list (or (find-if #'uiop:truename* '("/Applications/SuperCollider/SuperCollider.app/Contents/Resources/plugins/"
+						 "/Applications/SuperCollider.app/Contents/Resources/plugins/")))
+		 "~/Library/Application\ Support/SuperCollider/Extensions/")
+  #+(or linux freebsd) (remove-if-not #'uiop:directory-exists-p '("/usr/local/lib/SuperCollider/plugins/"
+                                                                  "/usr/lib/SuperCollider/plugins/"
+                                                                  "/usr/local/share/SuperCollider/Extensions/"
+                                                                  "/usr/share/SuperCollider/Extensions/"))      
+  #+windows (list (merge-pathnames #P"plugins/" *win-sc-dir*)
+		  (full-pathname (merge-pathnames #P"SuperCollider/Extensions/"
+						  (uiop:get-folder-path :local-appdata)))))
 
 (defvar *sc-synthdefs-path*
   #+darwin (full-pathname "~/Library/Application Support/SuperCollider/synthdefs/")
@@ -137,7 +137,7 @@
 				  (assert (eql *s* server))
 				  (pushnew msg *bundle-msg-container*)
 				  (pushnew synth *bundle-synth-container*))
-      (apply #'send-message server msg))
+    (apply #'send-message server msg))
   synth)
 
 ;;; -------------------------------------------------------
@@ -193,16 +193,16 @@
 (defmethod initialize-instance :after ((self rt-server) &key)
   (push self *all-rt-servers*)
   (setf (scheduler self) (make-instance 'scheduler
-                                        :name (name self)
-                                        :server self
-                                        :timestamp (server-time-stamp self))
+                           :name (name self)
+                           :server self
+                           :timestamp (server-time-stamp self))
 	(tempo-clock self) (make-instance 'tempo-clock
-                                          :name (name self)
-                                          :server self
-                                          :bpm 60.0d0
-                                          :base-beats 0.0d0
-                                          :base-seconds (unix-time)
-                                          :beat-dur 1.0d0)))
+                             :name (name self)
+                             :server self
+                             :bpm 60.0d0
+                             :base-beats 0.0d0
+                             :base-seconds (unix-time)
+                             :beat-dur 1.0d0)))
 
 (let ((semaphore-table (make-hash-table)))
   (defun get-semaphore-by-thread ()
@@ -219,14 +219,14 @@
 
 (defun sync (&optional (rt-server *s*))
   (if (eql (bt:current-thread) (sc-reply-thread rt-server)) nil
-      (when (typep rt-server 'rt-server)
-        (let* ((semaphore (get-semaphore-by-thread))
-               (id (assign-id-map-id (sync-id-map rt-server) semaphore)))
-          (send-message rt-server "/sync" id)
-          #+ccl (ccl:wait-on-semaphore semaphore)
-          #+sbcl (sb-thread:wait-on-semaphore semaphore)
-          #+ecl (mp:wait-on-semaphore semaphore)
-          #+lisworks (mp:semaphore-acquire semaphore)))))
+    (when (typep rt-server 'rt-server)
+      (let* ((semaphore (get-semaphore-by-thread))
+             (id (assign-id-map-id (sync-id-map rt-server) semaphore)))
+        (send-message rt-server "/sync" id)
+        #+ccl (ccl:wait-on-semaphore semaphore)
+        #+sbcl (sb-thread:wait-on-semaphore semaphore)
+        #+ecl (mp:wait-on-semaphore semaphore)
+        #+lisworks (mp:semaphore-acquire semaphore)))))
 
 (defmethod server-boot ((rt-server rt-server))
   (assert (not (boot-p rt-server)) nil "~a already running." rt-server)
@@ -307,9 +307,9 @@
      "/status.reply"
      (lambda (&rest args)
        (if (not (sample-rate *s*)) (setf (sample-rate *s*) (car (last args 2)))
-           (progn
-             (apply #'format t "~&UGens    : ~4d~&Synths   : ~4d~&Groups   : ~4d~&SynthDefs: ~4d~&% CPU (Average): ~a~&% CPU (Peak)   : ~a~&SampleRate (Nominal): ~a~&SampleRate (Actual) : ~a~%" (cdr args))
-             (force-output)))))
+         (progn
+           (apply #'format t "~&UGens    : ~4d~&Synths   : ~4d~&Groups   : ~4d~&SynthDefs: ~4d~&% CPU (Average): ~a~&% CPU (Peak)   : ~a~&SampleRate (Nominal): ~a~&SampleRate (Actual) : ~a~%" (cdr args))
+           (force-output)))))
     (add-reply-responder
      "/synced"
      (lambda (id)
@@ -413,12 +413,12 @@
 (defmethod bootup-server-process ((rt-server external-server))
   (unless (just-connect-p rt-server)
     (setf (sc-thread rt-server)
-          (bt:make-thread
-           (lambda () (sc-program-run (full-pathname *sc-synth-program*)
-                                 (append
-                                  (list "-u" (write-to-string (port rt-server)))
-                                  (build-server-options (server-options rt-server)))))
-           :name "scsynth")))
+      (bt:make-thread
+       (lambda () (sc-program-run (full-pathname *sc-synth-program*)
+                                  (append
+                                   (list "-u" (write-to-string (port rt-server)))
+                                   (build-server-options (server-options rt-server)))))
+       :name "scsynth")))
   #+windows (sleep 2) ;; Wait on server boot...It's very temporal.
   (with-slots (osc-device) rt-server
     (setf osc-device (sc-osc:osc-device (host rt-server) (port rt-server) :local-port 0))))
@@ -436,7 +436,7 @@
 				   (sc-osc:close-device (osc-device rt-server))
 				   (sched-stop (scheduler rt-server))
 				   (tempo-clock-stop (tempo-clock rt-server)))
-      (call-next-method)))
+    (call-next-method)))
 
 
 (defmethod install-reply-responder ((rt-server external-server) cmd-name f)
@@ -460,10 +460,10 @@
 				    just-connect-p)
   (assert port nil "Server port must be specified.")
   (make-instance 'external-server :name name
-				  :server-options server-options
-				  :host host
-				  :port port
-				  :just-connect-p just-connect-p))
+		 :server-options server-options
+		 :host host
+		 :port port
+		 :just-connect-p just-connect-p))
 
 
 ;; cleanup server
@@ -510,15 +510,15 @@
 	    (,file-name (full-pathname ,output-files))
 	    (,osc-file (cat (subseq ,file-name 0 (position #\. ,file-name)) ".osc"))
 	    (*s* (make-instance 'nrt-server :name "NRTSynth" :streams nil
-					    :server-options (make-server-options))))
+				:server-options (make-server-options))))
        (setf (buffers *s*) (make-array (server-options-num-sample-buffers (server-options *s*))
-				       :initial-element nil)
+			     :initial-element nil)
 	     (tempo-clock *s*) (make-instance 'tempo-clock
-                                              :server *s*
-                                              :bpm ,bpm
-                                              :base-beats 0.0d0
-                                              :base-seconds 0.0d0
-                                              :beat-dur (/ 60.0d0 ,bpm))
+                                 :server *s*
+                                 :bpm ,bpm
+                                 :base-beats 0.0d0
+                                 :base-seconds 0.0d0
+                                 :beat-dur (/ 60.0d0 ,bpm))
 	     (node-proxy-table *s*) (make-hash-table))
        (let* ((*nrt-pad* ,pad))
 	 (make-group :id 1 :pos :head :to 0)
@@ -585,7 +585,7 @@
 		(number ,node)
 		(node (id ,node))
 		(keyword (alexandria:when-let ((node (gethash ,node (node-proxy-table *s*))))
-			   (id node)))))
+					      (id node)))))
 	 (,server (if (typep ,node 'node) (server ,node) *s*)))
      (when ,id
        ,@body)))
@@ -605,7 +605,7 @@
   "Map a bus or buses onto the specified controls of a node."
   (with-node (node id server)
     (message-distribute node (append (list "/n_map" id) (mapcar (lambda (p) (cond ((symbolp p) (string-downcase p))
-                                                                             (t (floatfy p))))
+										  (t (floatfy p))))
                                                                 param))
                         server)))
 
@@ -687,9 +687,9 @@
 (defun callback (time f &rest args)
   (if (typep *s* 'rt-server)
       (apply #'sched-add (scheduler *s*) time f args)
-      (if *nrt-pad* (when (< time *nrt-pad*)
-                      (apply f args))
-          (apply f args))))
+    (if *nrt-pad* (when (< time *nrt-pad*)
+                    (apply f args))
+      (apply f args))))
 
 
 (defun now ()
@@ -722,9 +722,9 @@
 (defun clock-add (beat function &rest args)
   (if (typep *s* 'rt-server)
       (tempo-clock-add (tempo-clock *s*) beat (lambda () (apply function args)))
-      (if *nrt-pad* (when (< (clock-dur beat) *nrt-pad*)
-                      (apply function args))
-          (apply function args))))
+    (if *nrt-pad* (when (< (clock-dur beat) *nrt-pad*)
+                    (apply function args))
+      (apply function args))))
 
 (defun clock-clear ()
   (tempo-clock-clear (tempo-clock *s*)))
@@ -733,7 +733,7 @@
 
 (defmacro at-beat (beat &body body)
   `(at (beats-to-secs (tempo-clock *s*) ,beat)
-     ,@body))
+       ,@body))
 
 (defmacro at-task (beat &body body)
   `(clock-add (+ ,beat (* (sched-ahead (server (tempo-clock *s*))) (/ (clock-bpm) 60.0d0)))
