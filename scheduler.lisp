@@ -296,6 +296,7 @@
 				    (tempo-clock-beats tempo-clock))
 		     (lambda () 'ensure-scheduler-stop-quit))
     (bt:join-thread (sched-thread tempo-clock))
+    (tempo-clock-clear tempo-clock)
     (setf (sched-status tempo-clock) :stop)))
 
 (defmethod tempo-clock-set-bpm ((tempo-clock tempo-clock) new-bpm)
