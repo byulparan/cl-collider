@@ -5,11 +5,11 @@
 
 (defugen (free-self "FreeSelf")
     (in)
-  ((:kr (multinew new 'ugen in))))
+  ((:kr (progn (multinew new 'ugen in) in))))
 
 (defugen (pause-self "PauseSelf")
-    (src)
-  ((:kr (multinew new 'ugen src))))
+    (in)
+  ((:kr (progn (multinew new 'ugen in) in))))
 
 (defugen (free-self-when-done "FreeSelfWhenDone")
     (src)
