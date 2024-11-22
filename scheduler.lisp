@@ -257,8 +257,6 @@
                                                            (sched-ahead (server tempo-clock)))
                                                         (unix-time))))
                                         (unless (plusp timeout)
-                                          (when (> (abs timeout) (sched-ahead (server tempo-clock)))
-                                            (uiop:println (format nil "late! ~a secs in TempoClock" (abs timeout))))
                                           (return))
                                         (condition-wait (condition-var tempo-clock) (mutex tempo-clock) :timeout timeout)))
                             (loop :while (and (not (pileup:heap-empty-p (in-queue tempo-clock)))
