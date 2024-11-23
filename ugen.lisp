@@ -1,4 +1,3 @@
-
 (in-package #:sc)
 
 ;;; header ---------------------------------------------------------------------------------------------------------
@@ -6,7 +5,7 @@
 (defvar *synthdef* nil)
 
 (defconstant +inf+
-  #+(or ccl lispworks) 1F++0 
+  #+(or ccl lispworks) 1F++0
   #+sbcl sb-ext:single-float-positive-infinity
   #+ecl ;; ext:single-float-positive-infinity // this is right value. but it signal a #<FLOATING-POINT-OVERFLOW>. maybe it's ecl's bug
   ext::most-positive-single-float)
@@ -72,6 +71,7 @@
     (apply #'new1 ugen inputs)))
 
 ;;; UGen rate -------------------------------------------------------------------------------
+
 (defun rate-number (rate)
   (ecase (rate rate)
     (:audio 2)
@@ -195,7 +195,6 @@
     (make-available desc))
   (push ugen stack))
 
-
 (defun make-pstring (string)
   (flex:with-output-to-sequence (vec)
     (write-byte (length string) vec)
@@ -205,7 +204,7 @@
   (mapcar (lambda (in)
 	    (if (typep in 'ugen)
 		(list (synth-index (source in)) (output-index in))
-	        (list -1 (position (floatfy in) (constants (synthdef ugen))))))
+		(list -1 (position (floatfy in) (constants (synthdef ugen))))))
 	  (inputs ugen)))
 
 (defmethod write-def-ugen-version1 ((ugen ugen) stream)
@@ -234,8 +233,6 @@
 						 :initial-element (rate-number ugen))
 		  stream))
 
-
-
 ;;; check inputs ----------------------------------------------------------------------------------------
 
 (defun check-n-inputs (ugen n)
@@ -253,17 +250,16 @@
   (unless (eql (rate ugen) (rate (car (inputs ugen))))
     (error "~a's rate does not match ~a's rate." ugen (car (inputs ugen)))))
 
-
 ;;; UGEN CLASS ------------------------------------------------------------------------------
 
-;;; pure ugen -------------------------------------------------------------------------------
+;;; PureUGen --------------------------------------------------------------------------------
 
 (defclass pure-ugen (ugen) ())
 
 (defmethod optimize-graph ((ugen pure-ugen))
   (perform-dead-code-elimination ugen))
 
-;;; MultioutUgen ----------------------------------------------------------------------------
+;;; MultiOutUGen ----------------------------------------------------------------------------
 
 (defclass proxy-output (ugen)
   ((source :initarg :source :reader source)
@@ -313,7 +309,7 @@
   "Return the 'description' section of a SCDoc helpfile, stripped of tags."
   (ppcre:regex-replace-all
    ;; remove double spaces
-   "  " 
+   "  "
    (ppcre:regex-replace-all
     ;; remove SCDoc tags
     ;; TODO: better treatment of lists, notes and footnotes
@@ -333,7 +329,6 @@
   (alexandria:when-let ((file (sc-help-file sc-name)))
     (parse-description (alexandria:read-file-into-string file
 							 :external-format :utf-8))))
-
 
 ;;; ------------------------------------------------------------------------------------------
 ;;; definition synth

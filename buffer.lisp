@@ -134,9 +134,6 @@
   "Get the duration in seconds of BUFFER."
   (/ (frames buffer) (sr buffer)))
 
-
-
-
 (defun buffer-get (buffer index &optional action)
   "Get the frame at INDEX from BUFFER. ACTION can be a function of one argument that is called on the result; without it, the value is simply returned.
 
@@ -297,14 +294,15 @@ Additionally, since this is a synchronous function, you should not call it in th
 	 (data nil))
     (loop for (index value) on pair-of-index-and-value by #'cddr
 	  do (if (listp value) (push (list index (length value) value) data)
-	       (push (list index 1 value) data)))
+		 (push (list index 1 value) data)))
     (apply #'send-message server "/b_setn" (bufnum buffer) (alexandria:flatten (reverse data)))
     (sync server)
     buffer))
 
-
 (defun buffer-send-sequence (buffer sequence &key (start-frame 0))
-  "This allows for larger sequence than `buffer-setn'. This is not as safe as `buffer-load-sequence', above, but will work with servers on remote machines. The sample rate of the buffer will be the sample rate of the server on which it is created. Additionally, since this is a synchronous function, you should not call it in the reply thread."
+  "Similar to `buffer-setn', but allowing for larger sequences. This is not as safe as `buffer-load-sequence', but will work with servers on remote machines. The sample rate of the buffer will be the sample rate of the server on which it is created.
+
+Note that since this is a synchronous function, you should not call it in the reply thread."
   (unless (listp sequence) (setf sequence (coerce sequence 'list)))
   (when (> (+ start-frame (length sequence)) (frames buffer))
     (warn "Sequence larger than available number of Frames"))
@@ -320,9 +318,10 @@ Additionally, since this is a synchronous function, you should not call it in th
     (sync (server buffer))
     buffer))
 
-
 (defun buffer-load-sequence (buffer sequence &key (start-frame 0))
-  "This allows for larger sequence than `buffer-setn', above, and is in general the safest way to get a large sequence into a buffer. The sample rate of the buffer will be the sample rate of the server on which it was created. The number of channels and frames will have been determined when the buffer was allocated. You are responsible for making sure that the size of collection is not greater than numFrames, and for interleaving any data if needed. Additionally, since this is a synchronous function, you should not call it in the reply thread."
+  "Similar to `buffer-setn', but allowing for larger sequences. In general, this function is the safest way to get a large sequence into a buffer. The sample rate of the buffer will be the sample rate of the server on which it was created. The number of channels and frames will have been determined when the buffer was allocated. You are responsible for making sure that the size of collection is not greater than numFrames, and for interleaving any data if needed.
+
+Note that since this is a synchronous function, you should not call it in the reply thread."
   (let* ((server (server buffer)))
     (assert (is-local-p server) nil "This function only works on local servers.")
     (when (> (+ start-frame (length sequence)) (frames buffer))
@@ -336,18 +335,15 @@ Additionally, since this is a synchronous function, you should not call it in th
       (sync server)
       buffer)))
 
-
 (defun buffer-load (buffer sequence &key (start-frame 0) set-function)
-  "This allows for larger sequence than `buffer-setn',above, and is in general the safest way to get a large sequence into a buffer. Additionally, since this is a synchronous function, you should not call it in the reply thread."
+  "This allows for larger sequence than `buffer-setn', and is in general the safest way to get a large sequence into a buffer.
+
+Note that since this is a synchronous function, it should not be called within the reply thread."
   (funcall (or set-function
 	       (if (is-local-p (server buffer))
 		   #'buffer-load-sequence
-		 #'buffer-send-sequence))
+		   #'buffer-send-sequence))
 	   buffer sequence :start-frame start-frame))
-
-
-
-
 
 (defun buffer-copy (bufnum-src bufnum-dst &optional (start-dst 0) (start-src 0) (nframes -1))
   (apply #'send-message
@@ -357,7 +353,7 @@ Additionally, since this is a synchronous function, you should not call it in th
 
 (defun buffer-fill (buffer wave amplitudes &key frequencies phases
 					     (server *s*) (normalize t) (as-wavetable t) (clear-first t))
-  "Fill BUFFER with either: a series of sine wave partials, when WAVE is `:sine'; or a series of chebyshev polynomials, when WAVE is `:cheby'. 
+  "Fill BUFFER with either: a series of sine wave partials, when WAVE is :sine; or a series of chebyshev polynomials, when WAVE is :cheby.
 
 In the case of sine wave partials, AMPLITUDES is a list whose first value specifies the amplitude of the first partial, the second value specifies the amplitude of the second partial, and so on. FREQUENCIES is a list of partial frequencies, in cycles per buffer. It's assumed to be an integer series of partials if the list is not supplied. When frequencies are specified, a list of PHASES can also be used where each partial may have a nonzero starting phase.
 
@@ -391,7 +387,6 @@ When NORMALIZE is T, the peak amplitude of the wave is normalized to 1.0. If WAV
 	(setf (elt vec (* i 2)) (- (* 2 a0) a1)
 	      (elt vec (1+ (* i 2))) (- a1 a0))))))
 
-
 (setf (symbol-function 'as-wavetable) #'vector-in-wavetable-format)
 
 (defun as-wavetable-no-wrap (sequence)
@@ -408,10 +403,6 @@ Signal's _SignalAddChebyshev calculates N/2!"
 	      (aref newsig (1+ index)) (- next cur))
 	(setf cur next)))
     newsig))
-
-
-
-
 
 (defun buffer-read-as-wavetable (path &key bufnum (server *s*))
   "Read a soundfile located at PATH as a wavetable."

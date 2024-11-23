@@ -2,7 +2,6 @@
 (in-package #:sc)
 (named-readtables:in-readtable :sc)
 
-
 ;;; [1 2 3] == (list 1 2 3)
 (let ((rpar (get-macro-character #\))))
   (set-macro-character #\] rpar)
@@ -49,7 +48,6 @@
 (defmethod cat ((sequence list) &rest sequences)
   (apply #'append sequence sequences))
 
-
 (defun sc-program-run (program options)
   #+(or ecl lispworks)
   (uiop:run-program (format nil "~{~s ~}" (cons program options))
@@ -57,7 +55,6 @@
   #-(or ecl lispworks)
   (simple-inferiors:run program options
 			:output t :error t :copier :line))
-
 
 (defun as-keyword (object)
   (alexandria:make-keyword
@@ -101,9 +98,6 @@
   (when (alexandria:featurep :slynk)
     (load (asdf:system-relative-pathname :cl-collider "slynk-extensions.lisp"))))
 
-
-
-
 (defun write-mono-fl32-wav (stream sr sequence)
   "write sequence data to wave file."
   (write-sequence (flexi-streams:string-to-octets "RIFF") stream)
@@ -121,6 +115,3 @@
   (write-sequence (nreverse (osc::encode-int32 (* 4 (length sequence)))) stream)
   (dotimes (i (length sequence))
     (write-sequence (nreverse (osc::encode-float32 (float (elt sequence i) 1.0))) stream)))
-
-
-

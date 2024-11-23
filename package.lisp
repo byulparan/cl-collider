@@ -14,16 +14,16 @@
 	   #:*sc-plugin-paths*
 	   #:*sc-synthdefs-path*
 	   #:+inf+
-	   
+
 	   #+(or linux freebsd) #:jack-connect
 
 	   #:sched-ahead
 	   #:latency
-	   
+
 	   #:make-server-options
 	   #:server-options
 	   #:server-options-block-size
-	   
+
 	   #:*synth-definition-mode*
 	   #:defsynth
 	   #:synth
@@ -42,7 +42,7 @@
 	   #:make-external-server
 	   #:server-boot
 	   #:server-quit
-	   #:boot-p 
+	   #:boot-p
 	   #:send-message
 	   #:send-bundle
 
@@ -51,7 +51,7 @@
 	   #:add-reply-responder
 	   #:remove-reply-responder
 	   #:sync
-	   
+
 	   #:at
 	   #:free
 	   #:release
@@ -82,7 +82,7 @@
 	   #:clock-clear
 	   #:at-beat
 	   #:at-task
-	   
+
 	   #:bufnum
 	   #:sr
 	   #:frames
@@ -111,7 +111,7 @@
 	   #:buffer-normalize
 	   #:buffer-dur
 	   #:buffer-copy
-	   
+
 	   #:buffer-fill
 	   #:buffer-read-as-wavetable
 	   #:calc-pv-recsize
@@ -121,12 +121,14 @@
 	   #:local-buf-list
 	   #:as-wavetable
 	   #:as-wavetable-no-wrap
-	   
+
 	   #:bus-audio
 	   #:bus-control
 	   #:bus-free
 	   #:bus-string
 	   #:busnum
+
+	   #:import-sclang-ugens
 
 	   #:neg
 	   #:reciprocal
@@ -192,5 +194,3 @@
 
 (in-package :sc-user)
 (named-readtables:in-readtable :sc)
-
-
