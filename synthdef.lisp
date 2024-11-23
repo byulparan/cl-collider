@@ -1,4 +1,3 @@
-
 (in-package #:sc)
 
 (defclass synthdef ()
@@ -46,7 +45,7 @@
     (alexandria:appendf (constants synthdef) (list const))))
 
 (defmethod add-constant ((synthdef synthdef) (const t))
-  (error "can't available input: ~a" const))
+  (error "can't add constant ~s to ~s" const synthdef))
 
 (defmethod collect-constants ((synthdef synthdef))
   (dolist (ugen (children synthdef))
@@ -125,12 +124,11 @@
     (loop for control in (first inputs)
 	  collect (unbubble (loop repeat (length (alexandria:ensure-list control))
 				  collect (make-instance 'proxy-output
-					    :source ugen
-					    :rate (rate ugen)
-					    :signal-range (signal-range ugen)
-					    :output-index i)
+							 :source ugen
+							 :rate (rate ugen)
+							 :signal-range (signal-range ugen)
+							 :output-index i)
 				  do (incf i))))))
-
 
 (defun add-controls (rate lag-p controls)
   (ugen-new (if lag-p "LagControl" "Control")
@@ -202,7 +200,6 @@
 		,@body)
       `(progn ,@body)))
 
-
 (defun named-control (name rate &optional value lag)
   "A NamedControl directly combines a ControlName and a Control UGen conveniently. Also this makes it safe even if several identical controls exist"
   (when (and (consp lag) (find 0 lag :test #'equalp)) (error "'lagTime' has bad input"))
@@ -228,36 +225,35 @@
 		      (cond ((and lag (not fixed-lag) (equal rate :control)) (lag.kr ugen lag))
 			    ((and lag (not fixed-lag) (equal rate :audio)) (lag.ar ugen lag))
 			    (t ugen)))
-      (let* ((fixed-lag (and lag (every #'numberp (alexandria:ensure-list lag)))))
-	(when (and (eql rate :control) value fixed-lag)
-	  (when (and (numberp value) (consp lag) (/= 1 (length lag)))
-	    (error "Single control with multiple lag values is not supported."))
-	  (when (and (consp value) (consp lag) (/= (length lag) (length value)))
-	    (error "Number of control values does not match the number of lag values."))
-	  (when (and (consp value) (atom lag))
-	    (setf lag (make-list (length value) :initial-element lag))))
-	(let* ((value (alexandria:ensure-list (floatfy (if value value 0.0))))
-	       (lag (alexandria:ensure-list lag))
-	       (lag (if fixed-lag (subseq lag 0 (length value)) lag))
-	       (ugen-name (ecase rate
-			    (:control (if fixed-lag "LagControl" "Control"))
-			    (:audio "AudioControl")
-			    (:trig "TrigControl")))
-	       (ugen (unbubble (ugen-new ugen-name (if (eql rate :trig) :control rate) 'control #'identity :bipolar
-					 value (control-ugen-count *synthdef*) lag))))
-	  (alexandria:appendf (controls *synthdef*) value)
-	  (alexandria:appendf (control-names *synthdef*) (list (list name (control-ugen-count *synthdef*))))
-	  (incf (control-ugen-count *synthdef*) (length value))
-	  (push (list name (list :rate rate :value value :lag lag :fixed-lag fixed-lag :ugen ugen)) (named-controls *synthdef*))
-	  (when (and (eql rate :audio) lag) (setf ugen (unbubble (lag.ar ugen lag))))
-	  (when (and (eql rate :control) lag (not fixed-lag)) (setf ugen (lag.kr ugen lag)))
-	  (pushnew (list name (unbubble value)) (synthdef-metadata (name *synthdef*) :controls))
-	  ugen)))))
+	(let* ((fixed-lag (and lag (every #'numberp (alexandria:ensure-list lag)))))
+	  (when (and (eql rate :control) value fixed-lag)
+	    (when (and (numberp value) (consp lag) (/= 1 (length lag)))
+	      (error "Single control with multiple lag values is not supported."))
+	    (when (and (consp value) (consp lag) (/= (length lag) (length value)))
+	      (error "Number of control values does not match the number of lag values."))
+	    (when (and (consp value) (atom lag))
+	      (setf lag (make-list (length value) :initial-element lag))))
+	  (let* ((value (alexandria:ensure-list (floatfy (if value value 0.0))))
+		 (lag (alexandria:ensure-list lag))
+		 (lag (if fixed-lag (subseq lag 0 (length value)) lag))
+		 (ugen-name (ecase rate
+			      (:control (if fixed-lag "LagControl" "Control"))
+			      (:audio "AudioControl")
+			      (:trig "TrigControl")))
+		 (ugen (unbubble (ugen-new ugen-name (if (eql rate :trig) :control rate) 'control #'identity :bipolar
+					   value (control-ugen-count *synthdef*) lag))))
+	    (alexandria:appendf (controls *synthdef*) value)
+	    (alexandria:appendf (control-names *synthdef*) (list (list name (control-ugen-count *synthdef*))))
+	    (incf (control-ugen-count *synthdef*) (length value))
+	    (push (list name (list :rate rate :value value :lag lag :fixed-lag fixed-lag :ugen ugen)) (named-controls *synthdef*))
+	    (when (and (eql rate :audio) lag) (setf ugen (unbubble (lag.ar ugen lag))))
+	    (when (and (eql rate :control) lag (not fixed-lag)) (setf ugen (lag.kr ugen lag)))
+	    (pushnew (list name (unbubble value)) (synthdef-metadata (name *synthdef*) :controls))
+	    ugen)))))
 
 (defun kr (name &optional value lag)
   "shortcut for named-control(control rate)"
   (named-control name :kr value lag))
-
 
 ;;; build --------------------------------------------------------------------------------------
 
@@ -362,7 +358,7 @@
   (let ((metadata (gethash (as-keyword (if (typep synth 'node) (name synth) synth)) *synthdef-metadata*)))
     (if key
         (getf metadata (as-keyword key))
-      metadata)))
+	metadata)))
 
 #-ecl
 (uiop:with-deprecation (:style-warning)
@@ -501,15 +497,14 @@ via :TO, possible values are :HEAD, :TAIL, :BEFORE, :AFTER.
     (assert node nil "can't find proxy ~a" key)
     (let* ((fade-time (getf (meta node) :fade-time)))
       (flet ((clear-node ()
-	       (if fade-time  (ctrl node :gate 0 :fade (or (getf params :fade) fade-time))
-		 (free node))))
-	(let* ((new-node  (apply #'synth key params)))
+	       (if fade-time (ctrl node :gate 0 :fade (or (getf params :fade) fade-time))
+		   (free node))))
+	(let* ((new-node (apply #'synth key params)))
 	  (setf (meta new-node) (list :fade-time fade-time))
 	  (prog1
 	      (setf (gethash key (node-proxy-table *s*)) new-node)
 	    (when node-alive-p
 	      (clear-node))))))))
-
 
 ;;; ======================================================================
 ;;; build to ByteArray
@@ -564,6 +559,3 @@ via :TO, possible values are :HEAD, :TAIL, :BEFORE, :AFTER.
     (dolist (ugen (children synthdef))
       (write-def-ugen-version2 ugen stream))
     (write-sequence (sc-osc::encode-int16 0) stream)))
-
-
-

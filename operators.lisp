@@ -1,6 +1,5 @@
 (in-package #:sc)
 
-
 (defgeneric optimize-sub (ugen))
 (defgeneric optimize-add-neg (ugen))
 (defgeneric optimize-to-madd (ugen))
@@ -27,8 +26,6 @@
 			(if (numberp (second args)) (apply ,basic-function (cdr args))
 			    (apply #'ugen-new "UnaryOpUGen" nil cls #'identity :bipolar args)))))
 	 (multinew ,op-new 'unary-operator ,special-index in1)))))
-
-
 
 (def-unary-op neg (lambda (a) (* -1 a))
   :special-index 0)
@@ -156,7 +153,6 @@
   ((equalp 1.0 in2) in1)
   ((equalp -1.0 in2) (neg in1)))
 
-
 (defun optimize-add (ugen)
   (let ((optimized-ugen (optimize-to-sum3 ugen)))
     (unless optimized-ugen (setf optimized-ugen (optimize-to-sum4 ugen)))
@@ -165,7 +161,6 @@
     (when optimized-ugen
       (replace-ugen (synthdef ugen) ugen optimized-ugen)
       (optimize-graph optimized-ugen))))
-
 
 (defmethod optimize-sub (ugen)
   (destructuring-bind (a b) (inputs ugen)
@@ -192,7 +187,6 @@
 	      (alexandria:removef (descendants x) ugen))
 	  (minus a (nth 0 (inputs b))))))))
 
-
 (defmethod optimize-graph ((ugen binary-operator))
   (when (perform-dead-code-elimination ugen)
     (return-from optimize-graph))
@@ -200,7 +194,6 @@
     (return-from optimize-graph (optimize-add ugen)))
   (when (= (special-index ugen) 1)
     (optimize-sub ugen)))
-
 
 (defun +~ (&rest args)
   (reduce 'add args))
@@ -280,7 +273,6 @@
 (def-binary-op logior~ #'logior
     (:special-index 15))
 
-
 (def-binary-op << #'(lambda (in1 in2) (ash in1 in2))
     (:special-index 26))
 
@@ -292,7 +284,7 @@
       (>> in1 (- in2))))
 ;;;
 ;;;
-;;; 
+;;;
 
 (defclass MulAdd (ugen) ())
 
@@ -378,7 +370,6 @@
 	  (alexandria:removef (children (synthdef ugen)) x)
 	  (sum3 (nth 0 (inputs x)) (nth 1 (inputs x)) y))))))
 
-
 ;;; Sum3
 (defclass sum4 (ugen) ())
 
@@ -411,7 +402,6 @@
 	(when (and x y)
 	  (alexandria:removef (children (synthdef ugen)) x)
 	  (sum4 (nth 0 (inputs x)) (nth 1 (inputs x)) (nth 2 (inputs x)) y))))))
-
 
 ;;; operations ugen
 ;;; UGen 연산자 -------------------------------------------------------------
@@ -524,4 +514,3 @@
 
 (defmethod duplicate ((self function) (n list))
   (loop for i in n collect (funcall self i)))
-

@@ -1,6 +1,7 @@
 (in-package #:sc)
 
 ;;; ---id map ------------------------------------
+
 (defstruct id-map
   (vector (make-array 1 :initial-element nil))
   (free 0)

@@ -34,7 +34,7 @@
   #+(or linux freebsd) (remove-if-not #'uiop:directory-exists-p '("/usr/local/lib/SuperCollider/plugins/"
                                                                   "/usr/lib/SuperCollider/plugins/"
                                                                   "/usr/local/share/SuperCollider/Extensions/"
-                                                                  "/usr/share/SuperCollider/Extensions/"))      
+                                                                  "/usr/share/SuperCollider/Extensions/"))
   #+windows (list (merge-pathnames #P"plugins/" *win-sc-dir*)
 		  (full-pathname (merge-pathnames #P"SuperCollider/Extensions/"
 						  (uiop:get-folder-path :local-appdata)))))
@@ -79,7 +79,6 @@
   #+ecl (bt:with-lock-held ((server-lock server))
 	  (incf (car (id server))))
   #+lispworks (system:atomic-incf (car (id server))))
-
 
 ;;; declare generic function for realtime server
 (defgeneric floatfy (object)
@@ -143,6 +142,7 @@
 ;;; -------------------------------------------------------
 ;;; realtime Server
 ;;; -------------------------------------------------------
+
 (defgeneric install-reply-responder (rt-server cmd handler))
 (defgeneric uninstall-reply-responder (rt-server cmd))
 (defgeneric bootup-server-process (rt-server))
@@ -354,8 +354,6 @@
     (add-reply-responder
      "/d_removed" (lambda (&rest args) (declare (ignore args))))))
 
-
-
 (defun control-get (index &optional action)
   (let ((result nil)
 	(index (floor (floatfy index))))
@@ -368,7 +366,6 @@
 (defun control-set (index value)
   (message-distribute nil (list "/c_set" (floatfy index) value) *s*))
 
-
 #+(or linux freebsd)
 (defun jack-connect (&key (client-name "SuperCollider") (input-name "system:capture") (output-name "system:playback"))
   (loop for i from 0 below (server-options-num-input-bus (server-options *s*))
@@ -378,14 +375,12 @@
 	do (uiop:run-program (format nil "jack_connect ~a:out_~d ~a_~d" client-name (+ i 1) output-name (+ i 1))
 			     :ignore-error-status t)))
 
-
-
 ;;; --------------------------------------------------------------------------------------------
 ;;; external server
 ;;; --------------------------------------------------------------------------------------------
 
 (defclass external-server (rt-server)
-  ((host 
+  ((host
     :initarg :host
     :reader host)
    (port
@@ -413,12 +408,12 @@
 (defmethod bootup-server-process ((rt-server external-server))
   (unless (just-connect-p rt-server)
     (setf (sc-thread rt-server)
-      (bt:make-thread
-       (lambda () (sc-program-run (full-pathname *sc-synth-program*)
-                                  (append
-                                   (list "-u" (write-to-string (port rt-server)))
-                                   (build-server-options (server-options rt-server)))))
-       :name "scsynth")))
+	  (bt:make-thread
+	   (lambda () (sc-program-run (full-pathname *sc-synth-program*)
+				      (append
+				       (list "-u" (write-to-string (port rt-server)))
+				       (build-server-options (server-options rt-server)))))
+	   :name "scsynth")))
   #+windows (sleep 2) ;; Wait on server boot...It's very temporal.
   (with-slots (osc-device) rt-server
     (setf osc-device (sc-osc:osc-device (host rt-server) (port rt-server) :local-port 0))))
@@ -437,7 +432,6 @@
 				   (sched-stop (scheduler rt-server))
 				   (tempo-clock-stop (tempo-clock rt-server)))
     (call-next-method)))
-
 
 (defmethod install-reply-responder ((rt-server external-server) cmd-name f)
   (sc-osc:add-osc-responder (osc-device rt-server) cmd-name f))
@@ -464,7 +458,6 @@
 		 :host host
 		 :port port
 		 :just-connect-p just-connect-p))
-
 
 ;; cleanup server
 (labels ((cleanup-server ()
@@ -552,6 +545,7 @@
 ;;; -------------------------------------------------------
 ;;; Node
 ;;; -------------------------------------------------------
+
 (defclass node ()
   ((server :initarg :server :reader server)
    (id :initarg :id :reader id)
@@ -691,13 +685,11 @@
                     (apply f args))
       (apply f args))))
 
-
 (defun now ()
   (sched-time (scheduler *s*)))
 
 (defun quant (next-time &optional (offset .5))
   (sched-quant (scheduler *s*) next-time offset))
-
 
 ;;; tempo-clock
 (defun set-clock (new-clock)
@@ -728,8 +720,6 @@
 
 (defun clock-clear ()
   (tempo-clock-clear (tempo-clock *s*)))
-
-
 
 (defmacro at-beat (beat &body body)
   `(at (beats-to-secs (tempo-clock *s*) ,beat)

@@ -76,4 +76,3 @@
 	       (:file "ugens/SC3plugins/TJUGens")
 	       (:file "ugens/quarks/miSCellaneous_lib/WaveFolding")
 	       (:file "ugens/Extensions/mi-ugens")))
-

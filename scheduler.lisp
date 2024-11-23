@@ -32,7 +32,6 @@
       (gettimeofday tv (cffi::null-pointer))
       (+ (cffi:mem-ref tv 'time_t) (* (cffi:mem-ref tv 'seconds_t (cffi:foreign-type-size 'time_t)) 1.0d-6)))))
 
-
 #-windows
 (cffi:defcstruct sched-param
     (priority :int))
@@ -86,7 +85,7 @@
   (values))
 
 ;; ================================================================================
-;; threading util 
+;; threading util
 
 #+ecl
 (defmacro with-recursive-lock-held ((lock) &body body)
@@ -110,7 +109,6 @@
 
 #-ecl
 (setf (symbol-function 'condition-wait) #'bt:condition-wait)
-
 
 ;; ================================================================================
 
@@ -221,7 +219,6 @@
     (bt:join-thread (sched-thread scheduler))
     (setf (sched-status scheduler) :stop)))
 
-
 ;;; TempoClock
 (defclass tempo-clock (scheduler)
   ((bpm :initarg :bpm :accessor bpm)
@@ -317,7 +314,6 @@
       (loop :until (pileup:heap-empty-p in-queue)
 	    :do (pileup:heap-pop in-queue)))
     (bt:condition-notify (condition-var tempo-clock))))
-
 
 (defmethod tempo-clock-quant ((tempo-clock tempo-clock) quant)
   (let* ((beats (secs-to-beats tempo-clock (+ (sched-ahead (server tempo-clock)) (sched-time tempo-clock)))))

@@ -1,9 +1,10 @@
 # cl-collider
 
-A <a href="http://supercollider.github.io/">SuperCollider</a> client for <a href="https://www.common-lisp.net/">CommonLisp</a>.  
+A <a href="http://supercollider.github.io/">SuperCollider</a> client for <a href="https://www.common-lisp.net/">Common Lisp</a>.
 It is an experimental project, so changes to the API are possible.
 
 ## Videos:
+
 - [tempo-clock on cl-collider](https://youtu.be/3Lo7yyZcSzU)   
 - [cl-collider on Windows10](https://youtu.be/pCEfV4jOdUA)  
 - [Tutorial](https://www.youtube.com/watch?v=JivNMDUqNQc) - Due to API changes, this video is deprecated. A new tutorial video is coming soon.  
@@ -19,6 +20,7 @@ It is an experimental project, so changes to the API are possible.
 - [net-tools](https://net-tools.sourceforge.io/) - On Windows, scsynth should bind to a port before sending a message to CL.
 
 ## Contrib:
+
 If you have your own additional libraries, please report me. I will add here.
 
 - [sc-extensions](https://github.com/byulparan/sc-extensions) - extension library
@@ -27,6 +29,7 @@ If you have your own additional libraries, please report me. I will add here.
 - [sc-vst](https://github.com/byulparan/sc-vst) - VSTPlugin support library
 
 ## Usage:
+
 - package: `sc`, `sc-user` (use this package)
 - named-readtable: `sc`
 
@@ -65,6 +68,7 @@ If you have your own additional libraries, please report me. I will add here.
 ```
 
 ### Create SynthDef
+
 ```cl
 (defsynth sine-wave ((note 60))
   (let* ((freq (midicps note))
@@ -77,6 +81,7 @@ If you have your own additional libraries, please report me. I will add here.
 ```
 
 ### Create Proxy
+
 ```cl
 (proxy :sinesynth
   (sin-osc.ar [440 441] 0 .2))
@@ -89,7 +94,9 @@ If you have your own additional libraries, please report me. I will add here.
 (ctrl :sinesynth :lfo-speed 8)
 (ctrl :sinesynth :gate 0)
 ```
+
 ### Create Musical Sequence
+
 ```cl
 (defsynth saw-synth ((note 60) (dur 4.0))
   (let* ((env (env-gen.kr (env [0 .2 0] [(* dur .2) (* dur .8)]) :act :free))
@@ -106,7 +113,9 @@ If you have your own additional libraries, please report me. I will add here.
 (make-melody (quant 4) 16)
 (make-melody (+ 4 (quant 4)) 16 12)
 ```
+
 ### Non-real-time Rendering to File
+
 ```cl
 (setf *synth-definition-mode* :load)
 
@@ -131,7 +140,9 @@ If you have your own additional libraries, please report me. I will add here.
   (make-melody 8.0d0 32 12)
   (make-melody 16.0d0 32 24))
 ```
+
 ### Record Audio Output
+
 ```cl
 ;;; write a single channel to disk
 
@@ -157,7 +168,6 @@ mybuffer
 (proxy :blah (sin-osc.ar 440))
 (free :blah)
 
-
 ;; then when you are done
 
 ;; stop the disk_writer synth
@@ -166,7 +176,6 @@ mybuffer
 ;; close and free the buffer
 (buffer-close mybuffer)
 (buffer-free mybuffer)
-
 
 ;; then you can play what you recorded with a utility like mpv:
 ;;     mpv /tmp/foo.aiff
