@@ -12,7 +12,6 @@
 	       #:flexi-streams
 	       #:split-sequence
 	       #:named-readtables
-	       #-(or ecl lispworks) #:simple-inferiors
 	       #:cl-ppcre)
   :serial t
   :components ((:file "package")

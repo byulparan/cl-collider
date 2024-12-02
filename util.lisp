@@ -53,8 +53,8 @@
   (uiop:run-program (format nil "~{~s ~}" (cons program options))
 		    :output :interactive)
   #-(or ecl lispworks)
-  (simple-inferiors:run program options
-			:output t :error t :copier :line))
+  (uiop:run-program (cons program options)
+		    :output *debug-io* :error-output *debug-io*))
 
 (defun as-keyword (object)
   (alexandria:make-keyword
