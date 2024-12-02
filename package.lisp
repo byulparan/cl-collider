@@ -128,8 +128,6 @@
 	   #:bus-string
 	   #:busnum
 
-	   #:import-sclang-ugens
-
 	   #:neg
 	   #:reciprocal
 	   #:frac
