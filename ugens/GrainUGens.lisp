@@ -28,9 +28,17 @@
 	      mul add))))
 
 (defugen (warp1 "Warp1") (&optional (numchan 1) (bufnum 0) (pointer 0) (freq-scale 1) (window-size 0.2)
-				    (envbufnum -1) (overlaps 8) (window-rand-ratio 0.0) (interp 1) 
+				    (envbufnum -1) (overlaps 8) (window-rand-ratio 0.0) (interp 1)
 				    &key (mul 1.0) (add 0.0))
   ((:ar (madd (multinew new 'multiout-ugen numchan bufnum pointer freq-scale window-size envbufnum overlaps
-			window-rand-ratio interp) 
+			window-rand-ratio interp)
+	      mul add))))
+
+(defugen (warpz "WarpZ") (&optional (numchan 1) (bufnum 0) (pointer 0) (freq-scale 1)
+				    (window-size 0.2) (envbufnum -1) (overlaps 8) (window-rand-ratio 0.0)
+				    (interp 1) (zero-search 0) (zero-start 0) (mul 1) (add 0))
+  ((:ar (madd (multinew new 'multiout-ugen numchan bufnum pointer freq-scale
+			window-size envbufnum overlaps window-rand-ratio interp
+			zero-search zero-start)
 	      mul add))))
 
