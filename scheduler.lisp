@@ -221,13 +221,16 @@
 
 ;;; TempoClock
 (defclass tempo-clock (scheduler)
-  ((bpm :initarg :bpm :accessor bpm)
-   (beat-dur :initarg :beat-dur)
-   (base-seconds :initarg :base-seconds :accessor base-seconds)
-   (base-beats :initarg :base-beats :accessor base-beats)))
+  ((bpm :initarg :bpm :initform 60.0d0)
+   (base-seconds)
+   (base-beats)
+   (beat-dur)))
 
-(defmethod beat-dur ((tempo-clock tempo-clock))
-  (slot-value tempo-clock 'beat-dur))
+(defmethod initialize-instance :after ((self tempo-clock) &key)
+  (with-slots (bpm base-beats beat-dur base-seconds) self
+    (setf base-beats 0.0d0 
+	  beat-dur (/ 60.0d0 bpm)
+	  base-seconds (funcall (timestamp self)))))
 
 (defmethod beats-to-secs ((tempo-clock tempo-clock) beats)
   (with-slots (base-beats beat-dur base-seconds) tempo-clock
@@ -286,13 +289,14 @@
   (values))
 
 (defmethod tempo-clock-stop ((tempo-clock tempo-clock))
-  (when (eql (sched-status tempo-clock) :running)
-    (tempo-clock-add tempo-clock (+ (* (sched-ahead *s*) .5 (reciprocal (beat-dur tempo-clock)))
-				    (tempo-clock-beats tempo-clock))
-		     (lambda () 'ensure-scheduler-stop-quit))
-    (bt:join-thread (sched-thread tempo-clock))
-    (tempo-clock-clear tempo-clock)
-    (setf (sched-status tempo-clock) :stop)))
+  (with-slots (beat-dur) tempo-clock
+    (when (eql (sched-status tempo-clock) :running)
+      (tempo-clock-add tempo-clock (+ (* (sched-ahead *s*) .5 (reciprocal beat-dur))
+				      (tempo-clock-beats tempo-clock))
+		       (lambda () 'ensure-scheduler-stop-quit))
+      (bt:join-thread (sched-thread tempo-clock))
+      (tempo-clock-clear tempo-clock)
+      (setf (sched-status tempo-clock) :stop))))
 
 (defmethod tempo-clock-set-bpm ((tempo-clock tempo-clock) new-bpm)
   (with-recursive-lock-held ((mutex tempo-clock))
@@ -306,7 +310,8 @@
 
 (defmethod tempo-clock-bpm ((tempo-clock tempo-clock) &optional new-bpm)
   (if new-bpm (tempo-clock-set-bpm tempo-clock new-bpm)
-    (bpm tempo-clock)))
+    (with-slots (bpm) tempo-clock
+      bpm)))
 
 (defmethod tempo-clock-clear ((tempo-clock tempo-clock))
   (with-recursive-lock-held ((mutex tempo-clock))

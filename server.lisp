@@ -196,15 +196,10 @@
   (push self *all-rt-servers*)
   (setf (scheduler self) (make-instance 'scheduler
                            :name (name self)
-                           :server self
-                           :timestamp #'unix-time)
+                           :server self)
 	(tempo-clock self) (make-instance 'tempo-clock
                              :name (name self)
-                             :server self
-                             :bpm 60.0d0
-                             :base-beats 0.0d0
-                             :base-seconds (unix-time)
-                             :beat-dur 1.0d0)))
+                             :server self)))
 
 (let ((semaphore-table (make-hash-table)))
   (defun get-semaphore-by-thread ()
@@ -511,9 +506,7 @@
 	     (tempo-clock *s*) (make-instance 'tempo-clock
                                  :server *s*
                                  :bpm ,bpm
-                                 :base-beats 0.0d0
-                                 :base-seconds 0.0d0
-                                 :beat-dur (/ 60.0d0 ,bpm))
+				 :timestamp (lambda () 0.0d0))
 	     (node-proxy-table *s*) (make-hash-table))
        (let* ((*nrt-pad* ,pad))
 	 (make-group :id 1 :pos :head :to 0)
@@ -711,7 +704,8 @@
   (tempo-clock-quant (tempo-clock *s*) quant))
 
 (defun clock-dur (beat)
-  (* (beat-dur (tempo-clock *s*)) beat))
+  (with-slots (beat-dur) (tempo-clock *s*) 
+    (* beat-dur beat)))
 
 (defun clock-add (beat function &rest args)
   (if (typep *s* 'rt-server)
