@@ -67,8 +67,6 @@
    (buffers :initarg :buffers :accessor buffers)
    (audio-buses :initarg :audio-buses :accessor audio-buses)
    (control-buses :initarg :control-buses :accessor control-buses)
-   (sched-ahead :initarg :sched-ahead :initform 0.2d0 :accessor sched-ahead)
-   (latency :initarg :latency :initform 0.0d0 :accessor latency)
    (tempo-clock :accessor tempo-clock)
    (node-proxy-table :accessor node-proxy-table))
   (:documentation "This is base class for the scsynth server. This library includes realtime server, NRT server, and internal server (not yet implemented)."))
@@ -160,13 +158,17 @@
 (defvar *all-rt-servers* nil)
 
 (defclass rt-server (server)
-  ((server-time-stamp
-    :initarg :server-time-stamp
-    :initform #'unix-time
-    :accessor server-time-stamp)
-   (sample-rate
+  ((sample-rate
     :initform nil
     :accessor sample-rate)
+   (sched-ahead
+    :initarg :sched-ahead
+    :initform 0.2d0
+    :accessor sched-ahead)
+   (latency
+    :initarg :latency
+    :initform 0.0d0
+    :accessor latency)
    (scheduler
     :accessor scheduler)
    (sc-thread
@@ -195,7 +197,7 @@
   (setf (scheduler self) (make-instance 'scheduler
                            :name (name self)
                            :server self
-                           :timestamp (server-time-stamp self))
+                           :timestamp #'unix-time)
 	(tempo-clock self) (make-instance 'tempo-clock
                              :name (name self)
                              :server self
