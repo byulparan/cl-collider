@@ -10,7 +10,6 @@
 	       #:bordeaux-threads
 	       #:pileup
 	       #:flexi-streams
-	       #:split-sequence
 	       #:named-readtables
 	       #:cl-ppcre)
   :serial t
