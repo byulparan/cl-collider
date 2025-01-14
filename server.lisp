@@ -153,6 +153,11 @@
 
 (defgeneric sc-reply-thread (rt-server))
 
+(defgeneric initialize-scheduler (rt-server)
+  (:documentation
+   "Create scheduler and tempo-clock. Called when the rt-server is created."))
+
+
 (defvar *server-boot-hooks* nil)
 (defvar *server-quit-hooks* nil)
 (defvar *all-rt-servers* nil)
@@ -194,12 +199,18 @@
 
 (defmethod initialize-instance :after ((self rt-server) &key)
   (push self *all-rt-servers*)
-  (setf (scheduler self) (make-instance 'scheduler
-                           :name (name self)
-                           :server self)
-	(tempo-clock self) (make-instance 'tempo-clock
-                             :name (name self)
-                             :server self)))
+  (initialize-scheduler self))
+
+
+
+(defmethod initialize-scheduler ((rt-server rt-server))
+  (setf (scheduler rt-server) (make-instance 'scheduler
+				:name (name rt-server)
+				:server rt-server)
+	(tempo-clock rt-server) (make-instance 'tempo-clock
+				  :name (name rt-server)
+				  :server rt-server)))
+
 
 (let ((semaphore-table (make-hash-table)))
   (defun get-semaphore-by-thread ()
