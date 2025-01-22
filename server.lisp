@@ -451,10 +451,14 @@
   (apply #'sc-osc:send-message (osc-device server) msg))
 
 (defmethod send-bundle ((server external-server) time list-of-messages)
-  (apply #'sc-osc:send-bundle
-	 (+ time (latency server))
-	 (osc-device server)
-	 list-of-messages))
+  (flet ((unixtime-to-osctime (time)
+	   (multiple-value-bind (secs subsecs)
+	       (floor time)
+	     (+ (ash (+ secs osc::+unix-epoch+) 32) (round (* subsecs osc::+2^32+))))))
+    (apply #'sc-osc:send-bundle
+	   (unixtime-to-osctime (+ time (latency server)))
+	   (osc-device server)
+	   list-of-messages)))
 
 (defun make-external-server (name &key (server-options (make-server-options))
 				    (host "127.0.0.1")

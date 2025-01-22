@@ -59,19 +59,6 @@
       (cat lump
 	   (osc::pad (osc::padding-length (length lump))))))
 
-(defconstant +2^32+ (expt 2 32))
-
-(defun sc-encode-timetag (utime)
-  (labels ((make-timetag (unix-time-in-seconds)
-	     (multiple-value-bind (secs subsecs)
-		 (floor unix-time-in-seconds)
-	       (+ (ash (+ secs osc::+unix-epoch+) 32) (round (* subsecs +2^32+))))))
-    (cond
-      ;; a 1bit timetag will be interpreted as 'imediately' 
-      ((equalp utime :now)
-       *immediate-timetag*) 
-      ((numberp utime) (osc::encode-int64 (make-timetag utime)))
-      (t (error "the time or subsecond given is not an integer or float")))))
 
 (defun sc-encode-data (data)
   (let ((lump (make-array 0 :adjustable t :fill-pointer t :element-type '(unsigned-byte 8))))
@@ -98,8 +85,8 @@
 	     (cat (osc::encode-int32 (length message)) message))))
     (cat '(35 98 117 110 100 108 101 0)	
 	 (if timetag
-	     (sc-encode-timetag timetag)
-           (sc-encode-timetag :now))
+	     (osc::encode-timetag timetag)
+           (osc::encode-timetag :now))
 	 (if (listp (car data))
 	     (apply #'cat (mapcar #'encode-bundle-elt data))
 	   (encode-bundle-elt data)))))
