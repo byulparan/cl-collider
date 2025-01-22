@@ -451,14 +451,10 @@
   (apply #'sc-osc:send-message (osc-device server) msg))
 
 (defmethod send-bundle ((server external-server) time list-of-messages)
-  (flet ((unixtime-to-osctime (time)
-	   (multiple-value-bind (secs subsecs)
-	       (floor time)
-	     (+ (ash (+ secs osc::+unix-epoch+) 32) (round (* subsecs osc::+2^32+))))))
-    (apply #'sc-osc:send-bundle
-	   (unixtime-to-osctime (+ time (latency server)))
-	   (osc-device server)
-	   list-of-messages)))
+  (apply #'sc-osc:send-bundle
+	 (round (* (+ (+ time (latency server)) osc::+unix-epoch+) osc::+2^32+))
+	 (osc-device server)
+	 list-of-messages))
 
 (defun make-external-server (name &key (server-options (make-server-options))
 				    (host "127.0.0.1")
@@ -506,7 +502,7 @@
 
 (defmethod send-bundle ((server nrt-server) time list-of-messages)
   (declare (type double-float time))
-  (push (list (- time osc::+unix-epoch+) list-of-messages) (streams server)))
+  (push (list (round (* time osc::+2^32+)) list-of-messages) (streams server)))
 
 (defmacro with-rendering ((output-files &key (pad nil) (keep-osc-file nil) (format :int24) (sr 44100)
 					  (clock-bpm (if *s* (clock-bpm) 60.0d0)) (num-of-output 2)) &body body)
@@ -530,7 +526,7 @@
 	 (with-open-file (,non-realtime-stream ,osc-file :direction :output :if-exists :supersede
 							 :element-type '(unsigned-byte 8))
 	   (dolist (,message (sort (streams *s*) #'<= :key #'car))
-	     (when (and ,pad (> (car ,message) ,pad)) (return))
+	     (when (and ,pad (> (car ,message) (* ,pad osc::+2^32+))) (return))
 	     (let ((,message (sc-osc::encode-bundle (second ,message) (car ,message))))
 	       (write-sequence (osc::encode-int32 (length ,message)) ,non-realtime-stream)
 	       (write-sequence ,message ,non-realtime-stream))))
