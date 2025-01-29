@@ -10,6 +10,13 @@
   (apply #'concatenate '(vector (unsigned-byte 8)) catatac))
 
 (defvar *immediate-timetag* (map '(vector (unsigned-byte 8)) #'identity (list 0 0 0 0 0 0 0 1)))
+(defconstant +2^32+ (expt 2 32))
+
+(deftype timetag () '(unsigned-byte 64))
+
+(defun timetagp (object)
+  (typep object 'timetag))
+
 
 ;;; encode osc ------------------------------------------------------------
 
@@ -73,11 +80,23 @@
 	  (t (enc sc-encode-blob))))
       lump)))
 
+
 (defun encode-message (address &rest data)
   (concatenate '(vector (unsigned-byte 8))
 	       (sc-encode-address address)
 	       (sc-encode-typetags data)
 	       (sc-encode-data data)))
+
+
+
+(defun sc-encode-timetag (timetag)
+  (cond
+    ((equalp timetag :now)
+     #(0 0 0 0 0 0 0 1))
+    ((timetagp timetag)
+     (osc::encode-int64 timetag))
+    (t (error "Argument given is not one of :now, or timetagp."))))
+
 
 (defun encode-bundle (data &optional timetag)
   (flet ((encode-bundle-elt (data)
@@ -85,8 +104,8 @@
 	     (cat (osc::encode-int32 (length message)) message))))
     (cat '(35 98 117 110 100 108 101 0)	
 	 (if timetag
-	     (osc::encode-timetag timetag)
-           (osc::encode-timetag :now))
+	     (sc-encode-timetag timetag)
+           (sc-encode-timetag :now))
 	 (if (listp (car data))
 	     (apply #'cat (mapcar #'encode-bundle-elt data))
 	   (encode-bundle-elt data)))))
