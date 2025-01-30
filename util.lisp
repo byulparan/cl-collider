@@ -49,12 +49,19 @@
   (apply #'append sequence sequences))
 
 (defun sc-program-run (program options)
-  #+(or ecl lispworks)
+  #+lispworks (multiple-value-bind (res result-string)
+                  (sys:call-system-showing-output (format nil "~{~s ~}" (cons program options)) 
+                                                  :output-stream nil)
+                (if (zerop res)
+                    t
+                  (error "Failed to run program ~s with error code ~d and output ~s"
+                         program res result-string)))
+  #+ecl
   (uiop:run-program (format nil "~{~s ~}" (cons program options))
 		    :output :interactive)
   #-(or ecl lispworks)
   (uiop:run-program (cons program options)
-		    :output *debug-io* :error-output *debug-io*))
+		    :output :interactive :error-output *debug-io*))
 
 (defun as-keyword (object)
   (alexandria:make-keyword

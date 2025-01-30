@@ -24,7 +24,7 @@
                          (t (c)
                            (warn "SuperCollider was not found in the system path.")
                            nil))
-  #+windows (merge-pathnames *win-sc-dir* #P"scsynth.exe")
+  #+windows (make-pathname :name "scsynth" :type "exe" :defaults *win-sc-dir*)
   "The path to the scsynth binary.")
 
 (setf *sc-plugin-paths*
@@ -61,8 +61,7 @@
   ((name :initarg :name :initform "" :reader name)
    (server-options :initarg :server-options :reader server-options)
    (server-lock :initform (bt:make-lock) :reader server-lock)
-   (id :initform (list #-sbcl 999 #+sbcl 1000)
-       :accessor id)
+   (id :initform (list #-sbcl 999 #+sbcl 1000) :accessor id)
    (group-id :initform 1 :accessor group-id)
    (buffers :initarg :buffers :accessor buffers)
    (audio-buses :initarg :audio-buses :accessor audio-buses)
@@ -413,6 +412,8 @@
 (defmethod sc-reply-thread ((rt-server external-server))
   (sc-osc::listening-thread (osc-device rt-server)))
 
+(defvar *window-server-sleep-time* 2)
+
 (defmethod bootup-server-process ((rt-server external-server))
   (unless (just-connect-p rt-server)
     (setf (sc-thread rt-server)
@@ -422,7 +423,7 @@
 				       (list "-u" (write-to-string (port rt-server)))
 				       (build-server-options (server-options rt-server)))))
 	   :name "scsynth")))
-  #+windows (sleep 2) ;; Wait on server boot...It's very temporal.
+  #+windows (sleep *window-server-sleep-time*) ;; Wait on server boot...It's very temporal.
   (with-slots (osc-device) rt-server
     (setf osc-device (sc-osc:osc-device (host rt-server) (port rt-server) :local-port 0))))
 

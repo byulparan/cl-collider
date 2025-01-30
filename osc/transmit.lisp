@@ -86,32 +86,47 @@
     (usocket:socket-close (socket osc-device)))
   (setf (status osc-device) :not-running))
 
+(defparameter *debugging-make-listening-thread* nil)
+
 (defun make-listening-thread (osc-device)
   (bt:make-thread
    (lambda ()
      (setf *random-state* (make-random-state t))
      (let ((running-p t)
+           #+lispworks(starting-calls 100)
 	   (buffer (make-array 2048 :element-type '(unsigned-byte 8))))
        (loop while running-p
 	     do 
 	     #+ecl (setf buffer (make-array 2048 :element-type '(unsigned-byte 8))) ;; maybe This is ECL/USocket bug 
 		   (multiple-value-bind (buffer length host port)
-		       (usocket:socket-receive (socket osc-device) buffer (length buffer))
-		     (declare (ignore host port length))
-		     (let* ((messages (cdr (decode-bundle buffer))))
-		       (loop for message in messages
-			     for handler = (gethash (car message) (reply-handle-table osc-device))
-			     do (if handler (handler-case (progn (apply handler (cdr message))
-								 (when (and (string= (car message) "/done")
-									    (string= (second message) "/quit"))
-								   (setf running-p nil)
-								   (return)))
-					      (error (c) (format t "Error ~a on received message ~s ~%" c (car message))))
-				  (if (and (string= (car message) "/done")
-					   (string= (second message) "/quit"))
-				      (progn
-					(setf running-p nil)
-					(return))
-				    (format t "Reply handler not found: ~a [ ~{~a ~}]~%" (car message) (cdr message))))))))))
+		       #+lispworks
+                       (if (> starting-calls 0)
+                           (progn (decf starting-calls)
+				  (ignore-errors 	
+				   (usocket:socket-receive (socket osc-device) buffer (length buffer))))
+                         (usocket:socket-receive (socket osc-device) buffer (length buffer)))
+		     #-lispworks (usocket:socket-receive (socket osc-device) buffer (length buffer))
+		     (declare (ignore host port))
+                     (if buffer  ; nil when some error inside usocket:socket-receive was caught by the ignore-errors. 
+                         (let* ((messages (cdr (decode-bundle buffer))))
+                           (loop for message in messages
+                                 for handler = (gethash (car message) (reply-handle-table osc-device))
+                                 do (if handler (handler-case (progn (apply handler (cdr message))
+                                                                     (when (and (string= (car message) "/done")
+										(string= (second message) "/quit"))
+                                                                       (setf running-p nil)
+                                                                       (return)))
+                                                  (error (c) (format t "Error ~a on received message ~s ~%" c (car message))))
+                                      (if (and (string= (car message) "/done")
+                                               (string= (second message) "/quit"))
+                                          (progn
+                                            (setf running-p nil)
+                                            (return))
+                                        (format t "Reply handler not found: ~a [ ~{~a ~}]~%" (car message) (cdr message))))))
+                       ;; We reach here if we get an error during the first 100 calls. We assume the server not
+                       ;; ready yet, so just sleep a little and try again. 
+                       (progn 
+                         (when *debugging-make-listening-thread*
+                           (format t " make-listening-thread thread sleeping, error is : ~a~%" length))
+                         (sleep 0.2)))))))
    :name (format nil "OSC device receive thread")))
-

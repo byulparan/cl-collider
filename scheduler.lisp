@@ -14,7 +14,7 @@
                 (values (ccl:pref tv :timeval.tv_sec) (ccl:pref tv :timeval.tv_usec))
               (+ secs (* usecs 1.0d-6)))))
 
-#+(or ecl lispworks)
+#+(or ecl (and lispworks (not mswindows)))
 (progn
   (cffi:defctype time_t :long)
   (cffi:defctype seconds_t :int)
@@ -31,6 +31,13 @@
     (cffi:with-foreign-object (tv '(:struct timeval))
       (gettimeofday tv (cffi::null-pointer))
       (+ (cffi:mem-ref tv 'time_t) (* (cffi:mem-ref tv 'seconds_t (cffi:foreign-type-size 'time_t)) 1.0d-6)))))
+
+#+(and lispworks mswindows)
+(defun unix-time ()
+  (multiple-value-bind (seconds tenths-of-micro)
+      (sys::internal-get-universal-time)
+    (+ (- seconds 2208988800) ;; 2208988800 is the time between the start of 1970 and 1900
+       (* tenths-of-micro 1.0d-7))))
 
 #-windows
 (cffi:defcstruct sched-param
