@@ -216,13 +216,17 @@
 (def-binary-op mod~ #'mod
     (:special-index 5))
 
-(def-binary-op round~ (lambda (a b) (let* ((round (round a b))
+(def-binary-op %round~ (lambda (a b) (let* ((round (round a b))
 					   (lo (* round b))
 					   (hi (* (+ 1 round) b)))
 				      (if (< (abs (- lo a))
 					     (abs (- hi a)))
 					  lo hi)))
     (:special-index 19))
+
+(defun round~ (in1 &optional (in2 1))
+  (%round~ in1 in2))
+
 
 (def-binary-op trunc (lambda (a b) (* b (truncate a b)))
     (:special-index 21))
