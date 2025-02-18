@@ -1,3 +1,7 @@
+;;
+;; https://github.com/v7b1/mi-UGens
+;; 
+
 (in-package :sc)
 
 
