@@ -4,6 +4,9 @@
   ((reply-handle-table
     :initform (make-hash-table :test #'equal)
     :reader reply-handle-table)
+   (debug-msg 
+    :initarg :debug-msg
+    :accessor debug-msg)
    (host
     :initarg :host
     :reader host)
@@ -24,10 +27,11 @@
     :reader local-port)))
 
 
-(defun osc-device (host port &key (local-host "0.0.0.0") local-port)
+(defun osc-device (host port &key (local-host "0.0.0.0") local-port debug-msg)
   (let ((device (make-instance 'osc-device
 		  :host host
 		  :port port
+		  :debug-msg debug-msg
 		  :socket (usocket:socket-connect nil nil
 						  :protocol :datagram
 						  :local-host local-host
@@ -122,7 +126,8 @@
                                           (progn
                                             (setf running-p nil)
                                             (return))
-                                        (format t "Reply handler not found: ~a [ ~{~a ~}]~%" (car message) (cdr message))))))
+					(when (debug-msg osc-device)
+                                          (format t "Reply handler not found: ~a [ ~{~a ~}]~%" (car message) (cdr message)))))))
                        ;; We reach here if we get an error during the first 100 calls. We assume the server not
                        ;; ready yet, so just sleep a little and try again. 
                        (progn 
