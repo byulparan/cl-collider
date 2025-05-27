@@ -188,11 +188,13 @@
 		do (let ((mark (+ i 4))
 			 (size (osc::decode-int32
 				(subseq data i (+ i 4)))))
-		     (if (eq size 0)
-			 (setf bundle-length 0)
-		       (push (decode-bundle-iter
-			      (subseq data mark (+ mark size)))
-			     contents))
+		     (if (eq size 0) (setf bundle-length 0)
+		       (if (< (+ mark size) usocket:+max-datagram-packet-size+)
+			   (push (decode-bundle-iter
+				  (subseq data mark (+ mark size)))
+				 contents)
+			 ;(error "out of index ~d to ~d over ~d" mark (+ mark size) usocket:+max-datagram-packet-size+)
+			 ))
 		     (incf i (+ 4 size))))
 	  (push timetag contents))
       (decode-message data))))
