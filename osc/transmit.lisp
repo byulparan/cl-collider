@@ -94,10 +94,10 @@
      (setf *random-state* (make-random-state t))
      (let ((running-p t)
            #+lispworks(starting-calls 100)
-	   (buffer (make-array 2048 :element-type '(unsigned-byte 8))))
+	   (buffer (make-array usocket:+max-datagram-packet-size+ :element-type '(unsigned-byte 8))))
        (loop while running-p
 	     do 
-	     #+ecl (setf buffer (make-array 2048 :element-type '(unsigned-byte 8))) ;; maybe This is ECL/USocket bug 
+	     #+ecl (setf buffer (make-array usocket:+max-datagram-packet-size+ :element-type '(unsigned-byte 8))) ;; maybe This is ECL/USocket bug 
 		   (multiple-value-bind (buffer length host port)
 		       #+lispworks
                        (if (> starting-calls 0)
