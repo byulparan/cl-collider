@@ -42,7 +42,7 @@
     (setf (slot-value buffer 'frames) frames
           (slot-value buffer 'chanls) chanls
           (slot-value buffer 'server) server)
-    (with-sync-or-call-handle (server buffer "/b_alloc" complete-handler) 
+    (with-sync-or-call-handle (server buffer "/b_alloc" complete-handler)
       (apply #'send-message server (list "/b_alloc" bufnum (floor frames) (floor chanls)
 					 (sc-osc::encode-message "/b_query" bufnum))))))
 
@@ -112,7 +112,7 @@
       (assert (elt (buffers server) buffer) nil "bufnum ~d already free." buffer)
       (setf free-buffer (elt (buffers server) buffer))
       (setf (elt (buffers server) buffer) nil))
-    (with-sync-or-call-handle (server free-buffer "/b_free" complete-handler) 
+    (with-sync-or-call-handle (server free-buffer "/b_free" complete-handler)
       (send-message server "/b_free" buffer))
     free-buffer))
 

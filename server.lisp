@@ -423,7 +423,7 @@
 				       (list "-u" (write-to-string (port rt-server)))
 				       (build-server-options (server-options rt-server)))))
 	   :name "scsynth")))
-  #+windows (sleep *window-server-sleep-time*) ;; Wait on server boot...It's very temporal.
+  #+windows (sleep *window-server-sleep-time*) ; Wait on server boot...It's very temporal.
   (with-slots (osc-device) rt-server
     (setf osc-device (sc-osc:osc-device (host rt-server) (port rt-server) :local-port 0 :debug-msg t))))
 

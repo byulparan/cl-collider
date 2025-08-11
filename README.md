@@ -1,31 +1,32 @@
 # cl-collider
 
-A <a href="http://supercollider.github.io/">SuperCollider</a> client for <a href="https://www.common-lisp.net/">Common Lisp</a>.
+A [SuperCollider](http://supercollider.github.io) client for [Common Lisp](https://www.common-lisp.net).
 It is an experimental project, so changes to the API are possible.
 
 ## Videos:
 
-- [tempo-clock on cl-collider](https://youtu.be/3Lo7yyZcSzU)   
-- [cl-collider on Windows10](https://youtu.be/pCEfV4jOdUA)  
-- [Tutorial](https://www.youtube.com/watch?v=JivNMDUqNQc) - Due to API changes, this video is deprecated. A new tutorial video is coming soon.  
-- [Live Coding Demo 1](https://www.youtube.com/watch?v=xzTH_ZqaFKI)  
-- [Live Coding Demo 2](https://www.youtube.com/watch?v=pZyuHjztARY)  
+- [tempo-clock on cl-collider](https://youtu.be/3Lo7yyZcSzU)
+- [cl-collider on Windows 10](https://youtu.be/pCEfV4jOdUA)
+- [Tutorial](https://www.youtube.com/watch?v=JivNMDUqNQc) - Due to API changes, this video is deprecated. A new tutorial video is coming soon.
+- [Live Coding Demo 1](https://www.youtube.com/watch?v=xzTH_ZqaFKI)
+- [Live Coding Demo 2](https://www.youtube.com/watch?v=pZyuHjztARY)
 
 ## Dependencies:
 
 - [SuperCollider](http://supercollider.github.io)
 - [Quicklisp](http://www.quicklisp.org)
-- [ClozureCL](http://www.clozure.com/clozurecl.html) or [SBCL](http://www.sbcl.org) or [ECL](https://common-lisp.net/project/ecl/)
-- [Jack](https://jackaudio.org/) - Only on GNU/Linux and BSD distributions.
+- [Clozure CL](https://ccl.clozure.com/), [SBCL](http://www.sbcl.org), or [ECL](https://common-lisp.net/project/ecl/)
+- [JACK](https://jackaudio.org/) - Only on GNU/Linux and BSD distributions.
 - [net-tools](https://net-tools.sourceforge.io/) - On Windows, scsynth should bind to a port before sending a message to CL.
 
-## Contrib:
+## Contributing:
 
-If you have your own additional libraries, please report me. I will add here.
+If you have your own additional libraries, please inform me; I will add them here.
 
 - [sc-extensions](https://github.com/byulparan/sc-extensions) - extension library
-- [cl-patterns](https://github.com/defaultxr/cl-patterns) - patterns/sequencing library
 - [bdef](https://github.com/defaultxr/bdef) - file/buffer management/convenience library
+- [cl-patterns](https://github.com/defaultxr/cl-patterns) - patterns/sequencing library
+- [collidxr](https://github.com/defaultxr/collidxr) - syntax sugar and conveniences
 - [sc-vst](https://github.com/byulparan/sc-vst) - VSTPlugin support library
 
 ## Usage:
@@ -39,8 +40,8 @@ If you have your own additional libraries, please report me. I will add here.
 (in-package :sc-user)
 (named-readtables:in-readtable :sc)
 
-;; please check *sc-synth-program*, *sc-plugin-paths*, *sc-synthdefs-path*
-;; if you have different path then set to
+;; please check *sc-synth-program*, *sc-plugin-paths*, and *sc-synthdefs-path*
+;; if paths are different on your system, set these variables accordingly:
 ;;
 ;; (setf *sc-synth-program* "/path/to/scsynth")
 ;; (setf *sc-plugin-paths* (list "/path/to/plugin_path" "/path/to/extension_plugin_path"))
@@ -52,7 +53,7 @@ If you have your own additional libraries, please report me. I will add here.
 (setf *s* (make-external-server "localhost" :port 48800))
 (server-boot *s*)
 
-;; in Linux, maybe you need to call this function
+;; in Linux, you may need to call this function
 #+linux
 (jack-connect)
 
@@ -146,9 +147,9 @@ If you have your own additional libraries, please report me. I will add here.
 ```cl
 ;;; write a single channel to disk
 
-;; we can write to buffer number out_buf_num by reading in from the 0 bus
+;; we can write to buffer number out_buf_num by reading from the 0 bus
 (defsynth disk_writer ((out_buf_num 99))
-    (disk-out.ar out_buf_num (in.ar 0)))
+  (disk-out.ar out_buf_num (in.ar 0)))
 
 (setf mybuffer (buffer-alloc (expt 2 17))) 
 mybuffer
@@ -156,7 +157,7 @@ mybuffer
 ;; start a disk_writer synth
 (setf writer_0 (synth 'disk_writer))
 
-;; make it output to buffer you allocated
+;; make it output to the buffer you allocated
 (ctrl writer_0 :out_buf_num (bufnum mybuffer))
 
 ;; continuously write the buffer contents to a file
@@ -168,7 +169,7 @@ mybuffer
 (proxy :blah (sin-osc.ar 440))
 (free :blah)
 
-;; then when you are done
+;; then when you are done:
 
 ;; stop the disk_writer synth
 (free writer_0)
