@@ -100,6 +100,9 @@
       (write-sequence encoded-synthdef stream))
     (namestring path)))
 
+(defmethod load-synthdef ((path string) node &optional (completion-message 0))
+  (assert (is-local-p *s*) nil "Server ~a is not a local server, so it cannot load synthdefs from a file." *s*)
+  (message-distribute node (list "/d_load" path completion-message) *s*))
 
 (defmethod load-synthdef ((synthdef synthdef) node &optional (completion-message 0))
   (assert (is-local-p *s*) nil "Server ~a is not a local server, so it cannot load synthdefs from a file." *s*)

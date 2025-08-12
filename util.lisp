@@ -50,7 +50,7 @@
 
 (defun sc-program-run (program options)
   #+lispworks (multiple-value-bind (res result-string)
-                  (sys:call-system-showing-output (format nil "~{~s ~}" (cons program options)) 
+                  (sys:call-system-showing-output (format nil "~{~s ~}" (cons program options))
                                                   :output-stream nil)
                 (if (zerop res)
                     t
