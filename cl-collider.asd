@@ -73,5 +73,6 @@
 	       (:file "ugens/SC3plugins/NHUGens")
 	       (:file "ugens/SC3plugins/TJUGens")
 	       (:file "ugens/quarks/miSCellaneous_lib/WaveFolding")
+	       (:file "ugens/quarks/redSys/RedImpulse")
 	       (:file "ugens/Extensions/mi-ugens")
 	       (:file "ugens/Extensions/f0plugins")))
