@@ -3,7 +3,7 @@
   :author "Park Sungmin. byulparan@gmail.com"
   :description "SuperCollider client for Common Lisp"
   :licence "Public Domain / 0-clause MIT"
-  :version "2018.7.15"
+  :version "2025.8.21"
   :depends-on (#:sc-osc
 	       #:alexandria
 	       #:cffi
