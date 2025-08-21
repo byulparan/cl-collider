@@ -22,6 +22,9 @@
 
 	   #:make-server-options
 	   #:server-options
+	   #:server-options-num-input-bus
+	   #:server-options-num-output-bus
+	   #:server-options-device
 	   #:server-options-block-size
 
 	   #:*synth-definition-mode*
