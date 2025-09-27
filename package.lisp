@@ -110,6 +110,8 @@
 	   #:buffer-set
 	   #:buffer-setn
 	   #:buffer-load
+	   #:buffer-send-sequence
+	   #:buffer-load-sequence
 	   #:buffer-zero
 	   #:buffer-normalize
 	   #:buffer-dur
