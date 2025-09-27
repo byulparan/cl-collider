@@ -224,8 +224,19 @@
 		semaphore new-semaphore)))
       semaphore)))
 
+
+(defvar *async-in-place* nil)
+
+(defmacro with-async ((&key blocking) &body body)
+  "The `sync' function is ignored inside this form. In cl-collider, many functions internally call `sync' (especially those related to buffers). If you want to avoid unnecessary waiting in such cases, you can use `with-async'."
+  `(prog1 (let* ((*async-in-place* t))
+	    ,@body)
+     (when ,blocking
+       (sync))))
+
 (defun sync (&optional (rt-server *s*))
-  (if (eql (bt:current-thread) (sc-reply-thread rt-server)) nil
+  "This function waits until all asynchronous commands on the server are completed. However, if it is called from the server’s response thread, it will be ignored to prevent a deadlock. It is also ignored when used inside the `with-async' macro."
+  (if (or (eql (bt:current-thread) (sc-reply-thread rt-server)) *async-in-place*) nil
     (when (typep rt-server 'rt-server)
       (let* ((semaphore (get-semaphore-by-thread))
              (id (assign-id-map-id (sync-id-map rt-server) semaphore)))

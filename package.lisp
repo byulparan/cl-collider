@@ -53,6 +53,7 @@
 	   #:control-set
 	   #:add-reply-responder
 	   #:remove-reply-responder
+	   #:with-async
 	   #:sync
 
 	   #:at
