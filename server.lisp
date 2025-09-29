@@ -354,7 +354,9 @@
      "/b_info"
      (lambda (bufnum frames chanls sr)
        (let ((buffer (elt (buffers rt-server) bufnum)))
-	 (setf (frames buffer) frames (chanls buffer) chanls (sr buffer) sr))))
+	 (setf (slot-value buffer 'frames) frames
+	       (slot-value buffer 'chanls) chanls
+	       (slot-value buffer 'sr) sr))))
     (add-reply-responder
      "/fail"
      (lambda (&rest args)

@@ -1,12 +1,12 @@
 (in-package #:sc)
 
 (defclass buffer ()
-  ((bufnum :initarg :bufnum :initform nil :accessor bufnum)
-   (frames :initarg :frames :initform nil :accessor frames)
-   (chanls :initarg :chanls :initform nil :accessor chanls)
-   (sr :initarg :sr :initform nil :accessor sr)
-   (path :initarg :path :initform nil :accessor path)
-   (server :initarg :server :initform nil :accessor server)))
+  ((bufnum :initarg :bufnum :initform nil :reader bufnum)
+   (server :initarg :server :initform nil :reader server)
+   (frames :initarg :frames :initform nil :reader frames)
+   (chanls :initarg :chanls :initform nil :reader chanls)
+   (sr :initarg :sr :initform nil :reader sr)
+   (path :initarg :path :initform nil :reader path)))
 
 (defmethod print-object ((self buffer) stream)
   (format stream "#<~s :server ~s :bufnum ~s :frames ~s :channels ~s :samplerate ~s :path ~s>"
