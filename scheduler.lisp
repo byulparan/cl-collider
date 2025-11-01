@@ -230,13 +230,12 @@
 (defclass tempo-clock (scheduler)
   ((bpm :initarg :bpm :initform 60.0d0)
    (base-seconds)
-   (base-beats)
+   (base-beats :initarg :base-beats :initform 0 :reader base-beats)
    (beat-dur)))
 
 (defmethod initialize-instance :after ((self tempo-clock) &key)
   (with-slots (bpm base-beats beat-dur base-seconds) self
-    (setf base-beats 0.0d0 
-	  beat-dur (/ 60.0d0 bpm)
+    (setf beat-dur (/ 60.0d0 bpm)
 	  base-seconds (funcall (timestamp self)))))
 
 (defmethod beats-to-secs ((tempo-clock tempo-clock) beats)
