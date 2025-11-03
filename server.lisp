@@ -290,6 +290,7 @@
 
 (defmethod server-quit ((rt-server rt-server))
   (assert (boot-p rt-server) nil "~a is not running." rt-server)
+  (group-free-all 0)
   (send-message rt-server "/quit")
   (thread-wait (lambda () (not (boot-p rt-server))))
   (setf (node-watcher rt-server) nil)
