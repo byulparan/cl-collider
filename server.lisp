@@ -175,6 +175,9 @@
     :accessor latency)
    (scheduler
     :accessor scheduler)
+   (timing-offset
+    :initform 0.0d0
+    :accessor timing-offset)
    (sc-thread
     :initform nil
     :accessor sc-thread)
@@ -466,7 +469,7 @@
 
 (defmethod send-bundle ((server external-server) time list-of-messages)
   (apply #'sc-osc:send-bundle
-	 (round (* (+ (+ time (latency server)) osc::+unix-epoch+) sc-osc::+2^32+))
+	 (round (* (+ (+ time (timing-offset server) (latency server)) osc::+unix-epoch+) sc-osc::+2^32+))
 	 (osc-device server)
 	 list-of-messages))
 
