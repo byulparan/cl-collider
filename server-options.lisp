@@ -38,6 +38,7 @@
 			'("-i" server-options-num-input-bus)
 			'("-o" server-options-num-output-bus)
 			'("-z" server-options-block-size)
+			'("-Z" server-options-hardware-buffer-size)
 			'("-S" server-options-hardware-samplerate)
 			'("-b" server-options-num-sample-buffers)
 			'("-n" server-options-max-num-nodes)
