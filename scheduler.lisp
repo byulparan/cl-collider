@@ -263,6 +263,12 @@
    (sync-cond :initform (bt:make-condition-variable) :reader sync-cond)))
 
 
+(defmethod initialize-instance :after ((self tempo-clock) &key)
+  (with-slots (bpm base-beats beat-dur base-seconds) self
+    (setf beat-dur (/ 60.0d0 bpm)
+	  base-seconds (funcall (timestamp self)))))
+
+
 (defun sync-with-unix-time (server tempo-clock)
   (let ((min-diff most-positive-fixnum)
 	(num-of-tries 5)
@@ -278,11 +284,18 @@
     (setf (timing-offset server) new-offset)))
 
 
+(defmethod resync-thread-run ((tempo-clock tempo-clock))
+  (sync-with-unix-time (server tempo-clock) tempo-clock)
+  (setf (sync-thread tempo-clock)
+    (bt:make-thread
+     (lambda ()
+       (bt:with-lock-held ((sync-lock tempo-clock))
+	 (loop while (sync-thread-run tempo-clock)
+	       do (bt:condition-wait (sync-cond tempo-clock) (sync-lock tempo-clock)
+				     :timeout 20)
+		  (sync-with-unix-time (server tempo-clock) tempo-clock))))
+     :name (format nil "~@[~a ~]Timing sync thread" (sched-name tempo-clock)))))
 
-(defmethod initialize-instance :after ((self tempo-clock) &key)
-  (with-slots (bpm base-beats beat-dur base-seconds) self
-    (setf beat-dur (/ 60.0d0 bpm)
-	  base-seconds (funcall (timestamp self)))))
 
 (defmethod beats-to-secs ((tempo-clock tempo-clock) beats)
   (with-slots (base-beats beat-dur base-seconds) tempo-clock
@@ -292,18 +305,10 @@
   (with-slots (base-seconds bpm base-beats) tempo-clock
     (+ (* (- secs base-seconds) (/ bpm 60.0)) base-beats)))
 
+
 (defmethod tempo-clock-run ((tempo-clock tempo-clock))
   (when (eql (sched-status tempo-clock) :stop)
-    (sync-with-unix-time (server tempo-clock) tempo-clock)
-    (setf (sync-thread tempo-clock)
-      (bt:make-thread
-       (lambda ()
-	 (bt:with-lock-held ((sync-lock tempo-clock))
-	   (loop while (sync-thread-run tempo-clock)
-		 do (bt:condition-wait (sync-cond tempo-clock) (sync-lock tempo-clock)
-				       :timeout 20)
-		    (sync-with-unix-time (server tempo-clock) tempo-clock))))
-              :name (format nil "~@[~a ~]Timing sync thread" (sched-name tempo-clock))))
+    (resync-thread-run tempo-clock)
     (setf (sched-thread tempo-clock)
       (bt:make-thread
        (lambda ()
@@ -342,6 +347,7 @@
 (defmethod tempo-clock-beats ((tempo-clock tempo-clock))
   (secs-to-beats tempo-clock (sched-time tempo-clock)))
 
+
 (defmethod tempo-clock-add ((tempo-clock tempo-clock) beats f &rest args)
   (with-recursive-lock-held ((mutex tempo-clock))
     (pileup:heap-insert (make-sched-event :timestamp beats
@@ -350,11 +356,13 @@
     (bt:condition-notify (condition-var tempo-clock)))
   (values))
 
+
 (defmethod tempo-clock-stop ((tempo-clock tempo-clock))
-  (bt:with-lock-held ((sync-lock tempo-clock))
-    (setf (sync-thread-run tempo-clock) nil)
-    (bt:condition-notify (sync-cond tempo-clock)))
-  (bt:join-thread (sync-thread tempo-clock))
+  (when (sync-thread tempo-clock)
+    (bt:with-lock-held ((sync-lock tempo-clock))
+      (setf (sync-thread-run tempo-clock) nil)
+      (bt:condition-notify (sync-cond tempo-clock)))
+    (bt:join-thread (sync-thread tempo-clock)))
   (with-slots (beat-dur) tempo-clock
     (when (eql (sched-status tempo-clock) :running)
       (tempo-clock-add tempo-clock (+ (* (sched-ahead *s*) .5 (reciprocal beat-dur))
@@ -363,6 +371,7 @@
       (bt:join-thread (sched-thread tempo-clock))
       (tempo-clock-clear tempo-clock)
       (setf (sched-status tempo-clock) :stop))))
+
 
 (defmethod tempo-clock-set-bpm ((tempo-clock tempo-clock) new-bpm)
   (with-recursive-lock-held ((mutex tempo-clock))
