@@ -375,13 +375,7 @@
     (add-reply-responder
      "/d_removed" (lambda (&rest args) (declare (ignore args))))
     (add-reply-responder
-     "/g_head" (lambda (&rest args) (declare (ignore args))))
-    (add-reply-responder
-     "/g_tail" (lambda (&rest args) (declare (ignore args))))
-    (add-reply-responder
-     "/n_before" (lambda (&rest args) (declare (ignore args))))
-    (add-reply-responder
-     "/n_after" (lambda (&rest args) (declare (ignore args))))))
+     "/n_move" (lambda (&rest args) (declare (ignore args))))))
 
 (defun control-get (index &optional action)
   (let ((result nil)
@@ -634,12 +628,19 @@
 
 ;; move nodes
 
-(defun move-after (node before-node)
-  (with-node (node id server)
-    (with-node (before-node b-id server2)
-      (send-message server "/n_after" id b-id))))
+(defun move-before (node before-node)
+  "Move first node before the second node"
+  (let ((id)
+        (before-id))
+    (cl-collider::with-node (node cid server)
+      (setf id cid))
+    (cl-collider::with-node (before-node aid server)
+      (setf before-id aid)
+      (send-message server "/n_before" id before-id))))
 
-(defun move-after (node after-node)  
+  
+(defun move-after (node after-node)
+  "Move first node after the second node"
   (let ((id)
         (after-id))
     (cl-collider::with-node (node cid server)
@@ -648,24 +649,25 @@
       (setf after-id aid)
       (send-message server "/n_after" id after-id))))
 
-(defun move-to-head (group node)
-  (let ((id)
-        (group-id))
-    (cl-collider::with-node (node cid server)
-      (setf id cid))
+(defun move-node-to-head (group node)
+    "Move first node after the second node"
+  (let ((group-id)
+        (node-id))
     (cl-collider::with-node (group gid server)
       (setf group-id gid))
-    (send-message server "g_head" group-id id)))
+    (cl-collider::with-node (node id server)
+      (setf node-id id)
+      (send-message server "/g_head" group-id node-id))))
 
-(defun move-to-tail (group node)
-  (let ((id)
-        (group-id))q
-    (cl-collider::with-node (node cid server)
-      (setf id cid))
+(defun move-node-to-tail (group node)
+    "Move first node after the second node"
+  (let ((group-id)
+        (node-id))
     (cl-collider::with-node (group gid server)
       (setf group-id gid))
-    (send-message server "g_tail" group-id id)))
-
+    (cl-collider::with-node (node id server)
+      (setf node-id id)
+      (send-message server "/g_tail" group-id node-id))))
 
 (defmethod free ((node node))
   (with-node (node id server)
