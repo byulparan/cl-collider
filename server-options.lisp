@@ -8,7 +8,7 @@
   (num-input-bus 8)
   (num-output-bus 8)
   (block-size 64)
-  (hardware-buffer-size 512)
+  (hardware-buffer-size 0)
   (hardware-samplerate 0)
   (num-sample-buffers 1024)
   (max-num-nodes 1024)
