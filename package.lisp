@@ -62,7 +62,11 @@
 	   #:ctrl
 	   #:map-bus
 	   #:is-playing-p
-
+       #:move-before
+       #:move-after
+       #:move-to-head
+       #:move-to-tail
+       
 	   #:make-group
 	   #:server-query-all-nodes
 	   #:group-free-all
