@@ -24,6 +24,9 @@
   (device nil))
 
 (defun build-server-options (server-options)
+  ;; If the hardware buffer size is 0, do not apply the -Z option
+  (when (zerop (server-options-hardware-buffer-size server-options))
+    (setf (server-options-hardware-buffer-size server-options) nil))
   (reduce #'append
 	  (mapcar (lambda (pair)
 		    (let ((param-name (first pair))
