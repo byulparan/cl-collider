@@ -4,6 +4,7 @@
        #-ccl :common-lisp
        #+ccl :current)))
 
+
 (defpackage #:cl-collider
   (:use #:cl)
   (:nicknames #:sc)
@@ -63,18 +64,15 @@
 	   #:map-bus
 	   #:is-playing-p
 
-       #:move-before
-       #:move-after
-       #:move-node-to-head
-       #:move-node-to-tail
-       
+	   #:move-node
+	   
 	   #:make-group
 	   #:server-query-all-nodes
 	   #:group-free-all
 	   #:server-free-all
 	   #:stop
 	   #:server-status
-       #:*server-boot-hooks*
+	   #:*server-boot-hooks*
 	   #:*server-quit-hooks*
 	   #:*server-free-all-hooks*
 	   #:*stop-hooks*

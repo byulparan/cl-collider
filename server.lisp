@@ -626,49 +626,25 @@
                                                                 param))
                         server)))
 
-;; move nodes
 
-(defun move-before (node before-node)
-  "Move first node before the second node"
-  (let ((id)
-        (before-id))
-    (cl-collider::with-node (node cid server)
-      (setf id cid))
-    (cl-collider::with-node (before-node aid server)
-      (setf before-id aid)
-      (send-message server "/n_before" id before-id))))
+;; Move Nodes
+(defun move-node (node target action)
+  "move node to target by action"
+  (let* ((command (ecase action
+		    (:before "/n_before")
+		    (:after "/n_after")
+		    (:head "/g_head")
+		    (:tail "/g_tail")))
+	 (server))
+    (sc::with-node (node id s)
+      (setf server s)
+      (sc::with-node (target target-id s)
+	(if (find action '(:before :after)) (message-distribute node (list command id target-id) server)
+	  (message-distribute node (list command target-id id) s))))))
 
-  
-(defun move-after (node after-node)
-  "Move first node after the second node"
-  (let ((id)
-        (after-id))
-    (cl-collider::with-node (node cid server)
-      (setf id cid))
-    (cl-collider::with-node (after-node aid server)
-      (setf after-id aid)
-      (send-message server "/n_after" id after-id))))
 
-(defun move-node-to-head (group node)
-    "Move first node after the second node"
-  (let ((group-id)
-        (node-id))
-    (cl-collider::with-node (group gid server)
-      (setf group-id gid))
-    (cl-collider::with-node (node id server)
-      (setf node-id id)
-      (send-message server "/g_head" group-id node-id))))
 
-(defun move-node-to-tail (group node)
-    "Move first node after the second node"
-  (let ((group-id)
-        (node-id))
-    (cl-collider::with-node (group gid server)
-      (setf group-id gid))
-    (cl-collider::with-node (node id server)
-      (setf node-id id)
-      (send-message server "/g_tail" group-id node-id))))
-
+;; Free Node
 (defmethod free ((node node))
   (with-node (node id server)
     (message-distribute node (list "/n_free" id) server)))
