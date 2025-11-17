@@ -373,7 +373,9 @@
        (declare (ignore args))
        (alexandria:removef (node-watcher rt-server) id)))
     (add-reply-responder
-     "/d_removed" (lambda (&rest args) (declare (ignore args))))))
+     "/d_removed" (lambda (&rest args) (declare (ignore args))))
+    (add-reply-responder
+     "/n_move" (lambda (&rest args) (declare (ignore args))))))
 
 (defun control-get (index &optional action)
   (let ((result nil)
@@ -623,6 +625,49 @@
 										  (t (floatfy p))))
                                                                 param))
                         server)))
+
+;; move nodes
+
+(defun move-before (node before-node)
+  "Move first node before the second node"
+  (let ((id)
+        (before-id))
+    (cl-collider::with-node (node cid server)
+      (setf id cid))
+    (cl-collider::with-node (before-node aid server)
+      (setf before-id aid)
+      (send-message server "/n_before" id before-id))))
+
+  
+(defun move-after (node after-node)
+  "Move first node after the second node"
+  (let ((id)
+        (after-id))
+    (cl-collider::with-node (node cid server)
+      (setf id cid))
+    (cl-collider::with-node (after-node aid server)
+      (setf after-id aid)
+      (send-message server "/n_after" id after-id))))
+
+(defun move-node-to-head (group node)
+    "Move first node after the second node"
+  (let ((group-id)
+        (node-id))
+    (cl-collider::with-node (group gid server)
+      (setf group-id gid))
+    (cl-collider::with-node (node id server)
+      (setf node-id id)
+      (send-message server "/g_head" group-id node-id))))
+
+(defun move-node-to-tail (group node)
+    "Move first node after the second node"
+  (let ((group-id)
+        (node-id))
+    (cl-collider::with-node (group gid server)
+      (setf group-id gid))
+    (cl-collider::with-node (node id server)
+      (setf node-id id)
+      (send-message server "/g_tail" group-id node-id))))
 
 (defmethod free ((node node))
   (with-node (node id server)
