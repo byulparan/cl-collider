@@ -294,7 +294,7 @@
 	       do (bt:condition-wait (sync-cond tempo-clock) (sync-lock tempo-clock)
 				     :timeout 20)
 		  (sync-with-unix-time (server tempo-clock) tempo-clock))))
-     :name (format nil "~@[~a ~]Timing sync thread" (sched-name tempo-clock)))))
+     :name (format nil "~@[~a ~]time-sync thread" (sched-name tempo-clock)))))
 
 
 (defmethod beats-to-secs ((tempo-clock tempo-clock) beats)
