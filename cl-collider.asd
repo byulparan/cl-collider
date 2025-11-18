@@ -11,7 +11,8 @@
 	       #:pileup
 	       #:flexi-streams
 	       #:named-readtables
-	       #:cl-ppcre)
+	       #:cl-ppcre
+	       (:feature (:not :darwin) #:precise-time))
   :serial t
   :components ((:file "package")
 	       #-ccl (:file "id-map")

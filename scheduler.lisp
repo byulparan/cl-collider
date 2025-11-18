@@ -14,6 +14,8 @@
                 (values (ccl:pref tv :timeval.tv_sec) (ccl:pref tv :timeval.tv_usec))
               (+ secs (* usecs 1.0d-6)))))
 
+
+
 #+(or ecl (and lispworks (not mswindows)))
 (progn
   (cffi:defctype time_t :long)
@@ -117,6 +119,28 @@
 #-ecl
 (setf (symbol-function 'condition-wait) #'bt:condition-wait)
 
+
+;; ================================================================================
+;; Monotonic Time
+
+#-darwin
+(defun monotonic-time ()
+     (multiple-value-bind (secs subsecs)
+	       (org.shirakumo.precise-time:get-monotonic-time)
+       (+ secs (* subsecs (/ 1.0d0 org.shirakumo.precise-time:monotonic-time-units-per-second)))))
+
+
+#+darwin
+(defun monotonic-time ()
+    (cffi:with-foreign-objects ((tb :uint32 2))
+      (if (= 0 (cffi:foreign-funcall "mach_timebase_info" :pointer tb :int))
+	  (let* ((numer (cffi:mem-aref tb :uint32 0))
+		 (denom (cffi:mem-aref tb :uint32 1)))
+	    (* (/ (* (cffi:foreign-funcall "mach_absolute_time" :uint64) numer) denom) 1d-9))
+	(error "Failed to get time scale for monotonic time."))))
+
+
+
 ;; ================================================================================
 
 (defstruct sched-event timestamp task)
@@ -146,7 +170,7 @@
     :accessor sched-status)
    (timestamp
     :initarg :timestamp
-    :initform #'unix-time
+    :initform #'monotonic-time
     :reader timestamp
     :documentation
     "This Function is get current scheduler time. That must based on seconds.")))
@@ -226,17 +250,52 @@
     (bt:join-thread (sched-thread scheduler))
     (setf (sched-status scheduler) :stop)))
 
+
 ;;; TempoClock
 (defclass tempo-clock (scheduler)
   ((bpm :initarg :bpm :initform 60.0d0)
    (base-seconds)
    (base-beats :initarg :base-beats :initform 0 :reader base-beats)
-   (beat-dur)))
+   (beat-dur)
+   (sync-thread :initform nil :accessor sync-thread)
+   (sync-thread-run :initform t :accessor sync-thread-run)
+   (sync-lock :initform (bt:make-lock) :reader sync-lock)
+   (sync-cond :initform (bt:make-condition-variable) :reader sync-cond)))
+
 
 (defmethod initialize-instance :after ((self tempo-clock) &key)
   (with-slots (bpm base-beats beat-dur base-seconds) self
     (setf beat-dur (/ 60.0d0 bpm)
 	  base-seconds (funcall (timestamp self)))))
+
+
+(defun sync-with-unix-time (server tempo-clock)
+  (let ((min-diff most-positive-fixnum)
+	(num-of-tries 5)
+	(new-offset (timing-offset server)))
+    (dotimes (i num-of-tries)
+      (let* ((before-time (funcall (timestamp tempo-clock)))
+	     (unix-time (unix-time))
+	     (after-time (funcall (timestamp tempo-clock)))
+	     (diff (- after-time before-time)))
+	(when (< diff min-diff)
+	  (setf min-diff diff)
+	  (setf new-offset (- unix-time (+ before-time (/ diff 2)))))))
+    (setf (timing-offset server) new-offset)))
+
+
+(defmethod resync-thread-run ((tempo-clock tempo-clock))
+  (sync-with-unix-time (server tempo-clock) tempo-clock)
+  (setf (sync-thread tempo-clock)
+    (bt:make-thread
+     (lambda ()
+       (bt:with-lock-held ((sync-lock tempo-clock))
+	 (loop while (sync-thread-run tempo-clock)
+	       do (bt:condition-wait (sync-cond tempo-clock) (sync-lock tempo-clock)
+				     :timeout 20)
+		  (sync-with-unix-time (server tempo-clock) tempo-clock))))
+     :name (format nil "~@[~a ~]time-sync thread" (sched-name tempo-clock)))))
+
 
 (defmethod beats-to-secs ((tempo-clock tempo-clock) beats)
   (with-slots (base-beats beat-dur base-seconds) tempo-clock
@@ -246,8 +305,10 @@
   (with-slots (base-seconds bpm base-beats) tempo-clock
     (+ (* (- secs base-seconds) (/ bpm 60.0)) base-beats)))
 
+
 (defmethod tempo-clock-run ((tempo-clock tempo-clock))
   (when (eql (sched-status tempo-clock) :stop)
+    (resync-thread-run tempo-clock)
     (setf (sched-thread tempo-clock)
       (bt:make-thread
        (lambda ()
@@ -286,6 +347,7 @@
 (defmethod tempo-clock-beats ((tempo-clock tempo-clock))
   (secs-to-beats tempo-clock (sched-time tempo-clock)))
 
+
 (defmethod tempo-clock-add ((tempo-clock tempo-clock) beats f &rest args)
   (with-recursive-lock-held ((mutex tempo-clock))
     (pileup:heap-insert (make-sched-event :timestamp beats
@@ -294,7 +356,13 @@
     (bt:condition-notify (condition-var tempo-clock)))
   (values))
 
+
 (defmethod tempo-clock-stop ((tempo-clock tempo-clock))
+  (when (sync-thread tempo-clock)
+    (bt:with-lock-held ((sync-lock tempo-clock))
+      (setf (sync-thread-run tempo-clock) nil)
+      (bt:condition-notify (sync-cond tempo-clock)))
+    (bt:join-thread (sync-thread tempo-clock)))
   (with-slots (beat-dur) tempo-clock
     (when (eql (sched-status tempo-clock) :running)
       (tempo-clock-add tempo-clock (+ (* (sched-ahead *s*) .5 (reciprocal beat-dur))
@@ -303,6 +371,7 @@
       (bt:join-thread (sched-thread tempo-clock))
       (tempo-clock-clear tempo-clock)
       (setf (sched-status tempo-clock) :stop))))
+
 
 (defmethod tempo-clock-set-bpm ((tempo-clock tempo-clock) new-bpm)
   (with-recursive-lock-held ((mutex tempo-clock))
