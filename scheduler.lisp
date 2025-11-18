@@ -170,7 +170,7 @@
     :accessor sched-status)
    (timestamp
     :initarg :timestamp
-    :initform #'monotonic-time
+    :initform #'unix-time
     :reader timestamp
     :documentation
     "This Function is get current scheduler time. That must based on seconds.")))
@@ -258,6 +258,7 @@
    (base-beats :initarg :base-beats :initform 0 :reader base-beats)
    (beat-dur)
    (time-sync-p :initarg :time-sync-p :initform t :reader time-sync-p)
+   (timing-offset :initform 0.0d0 :accessor timing-offset)
    (sync-thread :initform nil :accessor sync-thread)
    (sync-thread-run :initform t :accessor sync-thread-run)
    (sync-lock :initform (bt:make-lock) :reader sync-lock)
@@ -270,10 +271,10 @@
 	  base-seconds (funcall (timestamp self)))))
 
 
-(defun sync-with-unix-time (server tempo-clock)
+(defun sync-with-unix-time (tempo-clock)
   (let ((min-diff most-positive-fixnum)
 	(num-of-tries 5)
-	(new-offset (timing-offset server)))
+	(new-offset (timing-offset tempo-clock)))
     (dotimes (i num-of-tries)
       (let* ((before-time (funcall (timestamp tempo-clock)))
 	     (unix-time (unix-time))
@@ -282,11 +283,11 @@
 	(when (< diff min-diff)
 	  (setf min-diff diff)
 	  (setf new-offset (- unix-time (+ before-time (/ diff 2)))))))
-    (setf (timing-offset server) new-offset)))
+    (setf (timing-offset tempo-clock) new-offset)))
 
 
 (defmethod resync-thread-run ((tempo-clock tempo-clock))
-  (sync-with-unix-time (server tempo-clock) tempo-clock)
+  (sync-with-unix-time tempo-clock)
   (setf (sync-thread tempo-clock)
     (bt:make-thread
      (lambda ()
@@ -294,7 +295,7 @@
 	 (loop while (sync-thread-run tempo-clock)
 	       do (bt:condition-wait (sync-cond tempo-clock) (sync-lock tempo-clock)
 				     :timeout 20)
-		  (sync-with-unix-time (server tempo-clock) tempo-clock))))
+		  (sync-with-unix-time tempo-clock))))
      :name (format nil "~@[~a~] resync time thread" (sched-name tempo-clock)))))
 
 

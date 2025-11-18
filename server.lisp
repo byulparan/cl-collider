@@ -175,9 +175,6 @@
     :accessor latency)
    (scheduler
     :accessor scheduler)
-   (timing-offset
-    :initform 0.0d0
-    :accessor timing-offset)
    (sc-thread
     :initform nil
     :accessor sc-thread)
@@ -472,7 +469,7 @@
 
 (defmethod send-bundle ((server external-server) time list-of-messages)
   (apply #'sc-osc:send-bundle
-	 (round (* (+ (+ time (timing-offset server) (latency server)) osc::+unix-epoch+) sc-osc::+2^32+))
+	 (round (* (+ (+ time (latency server)) osc::+unix-epoch+) sc-osc::+2^32+))
 	 (osc-device server)
 	 list-of-messages))
 
@@ -768,8 +765,10 @@
   (tempo-clock-clear (tempo-clock *s*)))
 
 (defmacro at-beat (beat &body body)
-  `(at (beats-to-secs (tempo-clock *s*) ,beat)
-       ,@body))
+  (alexandria:with-gensyms (clock)
+    `(let* ((,clock (tempo-clock *s*)))
+       (at (+ (beats-to-secs ,clock ,beat) (timing-offset ,clock))
+	 ,@body))))
 
 (defmacro at-task (beat &body body)
   `(clock-add (+ ,beat (* (sched-ahead (server (tempo-clock *s*))) (/ (clock-bpm) 60.0d0)))
