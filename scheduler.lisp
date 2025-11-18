@@ -257,6 +257,7 @@
    (base-seconds)
    (base-beats :initarg :base-beats :initform 0 :reader base-beats)
    (beat-dur)
+   (time-sync-p :initarg :time-sync-p :initform t :reader time-sync-p)
    (sync-thread :initform nil :accessor sync-thread)
    (sync-thread-run :initform t :accessor sync-thread-run)
    (sync-lock :initform (bt:make-lock) :reader sync-lock)
@@ -308,7 +309,8 @@
 
 (defmethod tempo-clock-run ((tempo-clock tempo-clock))
   (when (eql (sched-status tempo-clock) :stop)
-    (resync-thread-run tempo-clock)
+    (when (time-sync-p tempo-clock)
+      (resync-thread-run tempo-clock))
     (setf (sched-thread tempo-clock)
       (bt:make-thread
        (lambda ()
