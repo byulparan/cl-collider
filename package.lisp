@@ -194,7 +194,10 @@
 	   #:pv-calc
 	   #:pv-calc2
 	   #:pv-collect
-	   #:running-sum-rms))
+	   #:running-sum-rms
+
+	   #:part-conv-calc-buf-size
+	   #:buffer-prepare-part-conv))
 
 (defpackage #:sc-user
   (:use #:cl #:sc))
