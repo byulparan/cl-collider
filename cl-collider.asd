@@ -77,4 +77,5 @@
 	       (:file "ugens/quarks/miSCellaneous_lib/WaveFolding")
 	       (:file "ugens/quarks/redSys/RedImpulse")
 	       (:file "ugens/Extensions/mi-ugens")
-	       (:file "ugens/Extensions/f0plugins")))
+	       (:file "ugens/Extensions/f0plugins")
+	       (:file "ugens/Extensions/DynGen")))
