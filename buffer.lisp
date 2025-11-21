@@ -36,7 +36,9 @@
      ,buffer))
 
 
-(defun buffer-alloc (frames &key (chanls 1) bufnum (server *s*) complete-handler)
+
+
+(defun buffer-alloc (frames &key (chanls 1) sr bufnum (server *s*) complete-handler)
   (let* ((buffer (get-next-buffer server bufnum))
 	 (bufnum (slot-value buffer 'bufnum)))
     (setf (slot-value buffer 'frames) frames
@@ -44,19 +46,32 @@
           (slot-value buffer 'server) server)
     (with-sync-or-call-handle (server buffer "/b_alloc" complete-handler)
       (apply #'send-message server (list "/b_alloc" bufnum (floor frames) (floor chanls)
-					 (sc-osc::encode-message "/b_query" bufnum))))))
+					 (sc-osc::encode-message "/b_query" bufnum)
+					 (if sr (floatfy  sr) 0.0))))))
 
-(defun buffer-alloc-sequence (sequence &key (server *s*))
+
+(defun buffer-set-sr (buffer sr)
+  "Sets the sample rate of the buffer on the server side, and updates its value on the language side. This does not resample the audio. sr is 0 or nil will set to the Server's sample rate. What's different from sclang is that it calls /b_query to update the internal information of the Buffer."
+  (let* ((server (server buffer)))
+    (send-message server "/b_setSampleRate" (floatfy buffer) (if sr (floatfy sr) 0.0))
+    (send-message server "/b_query" (floatfy buffer))
+    (sync server)
+    buffer))
+
+
+(defun buffer-alloc-sequence (sequence &key (server *s*) sr)
   (if (is-local-p server)
       (uiop:with-temporary-file (:stream stream
 				 :pathname pathname
 				 :element-type '(unsigned-byte 8))
-	(write-mono-fl32-wav stream (floor (sample-rate server)) sequence)
+	(write-mono-fl32-wav stream (if sr sr (floor (sample-rate server))) sequence)
 	(close stream)
 	(buffer-read pathname))
-    (let* ((buffer (buffer-alloc (length sequence) :server server)))
+    (let* ((buffer (buffer-alloc (length sequence) :server server :sr sr)))
       (buffer-load buffer sequence)
       buffer)))
+
+
 
 (defun buffer-read (path &key bufnum (server *s*))
   (let ((file-path (full-pathname path)))

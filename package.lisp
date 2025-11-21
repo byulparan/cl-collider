@@ -98,6 +98,7 @@
 	   #:buffer-read
 	   #:buffer-read-channel
 	   #:buffer-alloc
+	   #:buffer-set-sr
 	   #:buffer-alloc-sequence
 	   #:buffer-cue-soundfile
 	   #:buffer-close
