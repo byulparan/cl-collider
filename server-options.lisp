@@ -21,7 +21,9 @@
   (max-logins 64)
   (verbosity 0)
   (ugen-plugins-path (mapcar #'full-pathname *sc-plugin-paths*))
-  (device nil))
+  (device nil)
+  (input-stream-enabled nil)
+  (output-stream-enabled nil))
 
 (defun build-server-options (server-options)
   ;; If the hardware buffer size is 0, do not apply the -Z option
@@ -53,7 +55,9 @@
 			'("-R" server-options-publish-to-rendezvous-p)
 			'("-l" server-options-max-logins)
 			'("-V" server-options-verbosity)
-			'("-H" server-options-device)))
+			'("-H" server-options-device)
+			'("-I" server-options-input-stream-enabled)
+			'("-O" server-options-output-stream-enabled)))
 	  :initial-value (let* ((paths (server-options-ugen-plugins-path server-options)))
 			   (when paths
 			     (list "-U" (format nil
