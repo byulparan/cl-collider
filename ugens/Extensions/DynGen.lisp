@@ -2,7 +2,7 @@
 
 (in-package :sc)
 
-(export '(list-all-dyn-gen make-dyn-gen dyn-gen.ar dyn-gen-rt.ar))
+(export '(list-all-dyn-gen def-dyn-gen dyn-gen.ar dyn-gen-rt.ar))
 
 
 (defvar *dyn-gen-table* (make-hash-table))
@@ -27,7 +27,7 @@
       h)))
 
 
-(defun make-dyn-gen (name code)
+(defun def-dyn-gen (name code)
   "In order to run a DynGen script on the server it is necessary to first register it on the server under a given name, similar to a SynthDef.
 If the code for an already existing name gets updated, all running instances of this code will also be updated. This allows to live-code DynGen scripts."
   (assert (and (boot-p *s*) (is-local-p *s*)))
