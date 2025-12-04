@@ -78,4 +78,5 @@
 	       (:file "ugens/quarks/redSys/RedImpulse")
 	       (:file "ugens/Extensions/mi-UGens")
 	       (:file "ugens/Extensions/f0plugins")
-	       (:file "ugens/Extensions/DynGen")))
+	       (:file "ugens/Extensions/DynGen")
+	       (:file "ugens/Extensions/Portedplugins")))
