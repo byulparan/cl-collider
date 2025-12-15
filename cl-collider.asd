@@ -79,4 +79,4 @@
 	       (:file "ugens/Extensions/mi-UGens")
 	       (:file "ugens/Extensions/f0plugins")
 	       (:file "ugens/Extensions/DynGen")
-	       (:file "ugens/Extensions/Portedplugins")))
+	       (:file "ugens/Extensions/PortedPlugins")))
