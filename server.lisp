@@ -244,7 +244,8 @@
         #+ccl (ccl:wait-on-semaphore semaphore)
         #+sbcl (sb-thread:wait-on-semaphore semaphore)
         #+ecl (mp:wait-on-semaphore semaphore)
-        #+lisworks (mp:semaphore-acquire semaphore)))))
+        #+lisworks (mp:semaphore-acquire semaphore))))
+  rt-server)
 
 (defmethod server-boot ((rt-server rt-server))
   (assert (not (boot-p rt-server)) nil "~a already running." rt-server)
