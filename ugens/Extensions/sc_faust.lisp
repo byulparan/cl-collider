@@ -6,8 +6,13 @@
 (defvar *faust-register-table* nil)
 
 (defun faust-hash (name)
-  (let* ((hash (sxhash name)))
-    (* (mod hash (expt 2 20)) (sign hash))))
+  (flet ((hash (name)
+	   (* (mod (sxhash name) (expt 2 20)) (sign hash))))
+    (let* ((h (hash name)))
+      (loop for n in (remove name (alexandria:hash-table-keys *faust-register-table*))
+	    when (= h (hash n))
+	      do (error "Conflict hash key ~a and ~a." name n))
+      h)))
 
 
 
@@ -55,7 +60,7 @@
 (defun faust-send (name code)
   "Registers and compiles the associated code on the server by sending an OSC message. May take time."
   (let* ((hash (faust-hash name))
-	 (param-file-path (format nil "/tmp/param~d" hash))
+	 (param-file-path (format nil "/tmp/faust-param~d" hash))
 	 (script-msg (osc:encode-message "/cmd" "faustscript" hash param-file-path code nil)))
     (if (< (length script-msg) (/ 65535 4)) (let* ((osc-device (osc-device *s*)))
 					      (usocket:socket-send (sc-osc::socket osc-device) script-msg (length script-msg)
