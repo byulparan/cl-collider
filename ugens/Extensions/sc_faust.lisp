@@ -7,7 +7,8 @@
 
 (defun faust-hash (name)
   (flet ((hash (name)
-	   (* (mod (sxhash name) (expt 2 20)) (sign hash))))
+	   (let* ((h (sxhash name) ))
+	     (* (mod h (expt 2 20)) (sign h)))))
     (let* ((h (hash name)))
       (loop for n in (remove name (alexandria:hash-table-keys *faust-register-table*))
 	    when (= h (hash n))
