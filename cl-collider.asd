@@ -79,4 +79,5 @@
 	       (:file "ugens/Extensions/mi-UGens")
 	       (:file "ugens/Extensions/f0plugins")
 	       (:file "ugens/Extensions/DynGen")
-	       (:file "ugens/Extensions/PortedPlugins")))
+	       (:file "ugens/Extensions/PortedPlugins")
+	       (:file "ugens/Extensions/sc_faust")))
