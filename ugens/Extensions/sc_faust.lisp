@@ -8,7 +8,7 @@
 (defun faust-hash (name)
   (flet ((hash (name)
 	   (let* ((h (sxhash name) ))
-	     (* (mod h (expt 2 20)) (sign h)))))
+	     (floor (* (mod h (expt 2 20)) (sign h))))))
     (let* ((h (hash name)))
       (loop for n in (remove name (alexandria:hash-table-keys *faust-register-table*))
 	    when (= h (hash n))
@@ -60,6 +60,7 @@
 
 (defun faust-send (name code)
   "Registers and compiles the associated code on the server by sending an OSC message. May take time."
+  (setf code (dyn-gen-code-remove-comment code))
   (let* ((hash (faust-hash name))
 	 (param-file-path (format nil "/tmp/faust-param~d" hash))
 	 (script-msg (osc:encode-message "/cmd" "faustscript" hash param-file-path code nil)))

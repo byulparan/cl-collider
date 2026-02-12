@@ -27,10 +27,17 @@
 
 
 
+(defun dyn-gen-code-remove-comment (code)
+  (let* ((code-line (uiop:split-string code :separator (list #\newline))))
+    (setf code-line (mapcar #'(lambda (line) (ppcre:regex-replace-all "\\/\\/.*?$" line "")) code-line)
+	  code-line (mapcar #'(lambda (line) (ppcre:regex-replace-all "\\/\\*.*?\\*\\/"  line "")) code-line))
+    (with-output-to-string (stream)
+      (loop for line in code-line
+	    do (format stream "~&~a" line)))))
+
+
 ;; extract param
-(defun dyn-gen-code-optimized (code)
-  (setf code (ppcre:regex-replace-all "\\/\\/.*?$" code ""))
-  (setf code (ppcre:regex-replace-all "\\/\\*.*?\\*\\/" code ""))
+(defun dyn-gen-code-extract-param (code)
   (let* ((result nil))
     (ppcre:do-scans (match-start match-end reg-starts reg-ends "[^(?:A-Za-z|\\_|$|]?(\\_(?:[A-Za-z]|[0-9]|_)+)" code)
       (pushnew (subseq code (aref reg-starts 0) (aref reg-ends 0)) result :test #'string=))
@@ -42,8 +49,9 @@
   "In order to run a DynGen script on the server it is necessary to first register it on the server under a given name, similar to a SynthDef.
 If the code for an already existing name gets updated, all running instances of this code will also be updated. This allows to live-code DynGen scripts."
   (assert (and (boot-p *s*) (is-local-p *s*)))
+  (setf code (dyn-gen-code-remove-comment code))
   (let* ((hash (dyn-gen-hash name))
-	 (params (dyn-gen-code-optimized code))
+	 (params (dyn-gen-code-extract-param code))
 	 (message (append (list "/cmd" "dyngenscript" hash code (length params)) params (list nil)))
 	 (script-msg (apply #'osc:encode-message message)))
     (if (< (length script-msg) (/ 65535 4)) (let* ((osc-device (osc-device *s*)))
