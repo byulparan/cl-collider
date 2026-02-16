@@ -34,10 +34,9 @@
 		    (let ((param-name (first pair))
 			  (param-value (funcall (second pair) server-options)))
 		      (when param-value
-			(list param-name
-			      (if (stringp param-value)
-				  param-value
-				  (write-to-string param-value))))))
+			(cons param-name (mapcar #'(lambda (v) (if (stringp v) v
+								 (write-to-string v)))
+						 (alexandria:ensure-list param-value))))))
 		  (list '("-c" server-options-num-control-bus)
 			'("-a" server-options-num-audio-bus)
 			'("-i" server-options-num-input-bus)
