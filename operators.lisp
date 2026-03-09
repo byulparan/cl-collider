@@ -1,10 +1,5 @@
 (in-package #:sc)
 
-(defgeneric optimize-sub (ugen))
-(defgeneric optimize-add-neg (ugen))
-(defgeneric optimize-to-madd (ugen))
-(defgeneric optimize-to-sum3 (ugen))
-(defgeneric optimize-to-sum4 (ugen))
 
 ;;; unary-operator
 (defclass unary-operator (pure-ugen)
@@ -162,7 +157,7 @@
       (replace-ugen (synthdef ugen) ugen optimized-ugen)
       (optimize-graph optimized-ugen))))
 
-(defmethod optimize-sub (ugen)
+(defun optimize-sub (ugen)
   (destructuring-bind (a b) (inputs ugen)
     (let (replacement)
       (when (and (typep b 'unary-operator) (= (special-index b) 0))
@@ -175,7 +170,7 @@
 	(replace-ugen (synthdef ugen) ugen replacement)
 	(optimize-graph replacement)))))
 
-(defmethod optimize-add-neg (ugen)
+(defun optimize-add-neg (ugen)
   (let ((comp (lambda (ugen) (and (typep ugen 'unary-operator) (= (special-index ugen) 0)))))
     (destructuring-bind (a b) (inputs ugen)
       (destructuring-bind (x y)
@@ -324,7 +319,7 @@
 	      (apply #'ugen-new "MulAdd" nil cls #'identity :bipolar inputs))
 	    'muladd in mul add))
 
-(defmethod optimize-to-madd (ugen)
+(defun optimize-to-madd (ugen)
   (let ((comp (lambda (ugen) (and (typep ugen 'binary-operator)
 				  (= (special-index ugen) 2)
 				  (= (length (descendants ugen)) 1)))))
@@ -361,7 +356,7 @@
    (lambda (cls &rest inputs) (apply #'ugen-new "Sum3" nil cls #'identity :bipolar inputs))
    'sum3 in0 in1 in2))
 
-(defmethod optimize-to-sum3 (ugen)
+(defun optimize-to-sum3 (ugen)
   (let ((comp (lambda (ugen) (and (typep ugen 'binary-operator)
 				  (= (special-index ugen) 0)
 				  (= (length (descendants ugen)) 1)))))
@@ -395,7 +390,7 @@
    (lambda (cls &rest inputs) (apply #'ugen-new "Sum4" nil cls #'identity :bipolar inputs))
    'sum4 in0 in1 in2 in3))
 
-(defmethod optimize-to-sum4 (ugen)
+(defun optimize-to-sum4 (ugen)
   (let ((comp (lambda (ugen) (and (typep ugen 'sum3)
 				  (= (length (descendants ugen)) 1)))))
     (destructuring-bind (a b) (inputs ugen)
