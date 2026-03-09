@@ -185,7 +185,7 @@
 	(when (and x y)
 	  (if (= (length (descendants x)) 1) (alexandria:removef (children (synthdef ugen)) x)
 	      (alexandria:removef (descendants x) ugen))
-	  (minus a (nth 0 (inputs b))))))))
+	  (minus y (nth 0 (inputs x))))))))
 
 (defmethod optimize-graph ((ugen binary-operator))
   (when (perform-dead-code-elimination ugen)
