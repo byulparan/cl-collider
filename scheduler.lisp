@@ -47,7 +47,7 @@
 
 #+darwin
 (cffi:defcenum sched-policy
-    (:sched_other 1)
+  (:sched_other 1)
   (:sched_rr 2)
   (:sched_fifo 4))
 
@@ -60,7 +60,7 @@
 #-windows
 (defun set-thread-realtime-priority ()
   "This function is made high priority to calling thread, and sched-policy set SCHED_RR."
-  (cffi:with-foreign-objects ((param '(:pointer (:struct sched-param))))
+  (cffi:with-foreign-objects ((param '(:struct sched-param)))
     (let* ((max-priority (cffi:foreign-funcall "sched_get_priority_max" :int (cffi:foreign-enum-value 'sched-policy :sched_rr)
 									:int)))
       (cffi:with-foreign-slots ((priority dummy) param (:struct sched-param))
@@ -73,7 +73,7 @@
 (defun get-thread-priority ()
   "Get the thread-info of calling thread. If you want get thread-info of *main-scheduler*,
  eval the '(callback (now) #'get-thread-priority)."
-  (cffi:with-foreign-objects ((param '(:pointer (:struct sched-param)))
+  (cffi:with-foreign-objects ((param '(:struct sched-param))
 			      (policy :int))
     (cffi:foreign-funcall "pthread_getschedparam" :pointer (cffi:foreign-funcall "pthread_self" :pointer)
 						  :pointer policy
