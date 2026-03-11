@@ -22,7 +22,7 @@
   (cffi:defctype seconds_t :int)
 
   (cffi:defcstruct timeval
-      (tv_sec time_t)
+    (tv_sec time_t)
     (tv_usec seconds_t))
 
   (cffi:defcfun gettimeofday :int
@@ -43,7 +43,7 @@
 
 #-windows
 (cffi:defcstruct sched-param
-    (priority :int))
+  (priority :int))
 
 #+darwin
 (cffi:defcenum sched-policy
@@ -53,7 +53,7 @@
 
 #+(or linux freebsd)
 (cffi:defcenum sched-policy
-    (:sched_other 0)
+  (:sched_other 0)
   (:sched_fifo 1)
   (:sched_rr 2))
 
@@ -63,7 +63,7 @@
   (cffi:with-foreign-objects ((param '(:struct sched-param)))
     (let* ((max-priority (cffi:foreign-funcall "sched_get_priority_max" :int (cffi:foreign-enum-value 'sched-policy :sched_rr)
 									:int)))
-      (cffi:with-foreign-slots ((priority dummy) param (:struct sched-param))
+      (cffi:with-foreign-slots ((priority) param (:struct sched-param))
 	(setf priority max-priority)))
     (cffi:foreign-funcall "pthread_setschedparam" :pointer (cffi:foreign-funcall "pthread_self" :pointer)
 						  :int (cffi:foreign-enum-value 'sched-policy :sched_rr)
@@ -80,7 +80,7 @@
 						  :pointer param)
     (format t "~&policy: ~d~%priority: ~d" (let ((policy (cffi:mem-ref policy :int)))
 					     (cffi:foreign-enum-keyword 'sched-policy policy))
-	    (cffi:with-foreign-slots ((priority dummy) param (:struct sched-param))
+	    (cffi:with-foreign-slots ((priority) param (:struct sched-param))
 	      priority))))
 
 #+windows
@@ -125,19 +125,19 @@
 
 #-darwin
 (defun monotonic-time ()
-     (multiple-value-bind (secs subsecs)
-	       (org.shirakumo.precise-time:get-monotonic-time)
-       (+ secs (* subsecs (/ 1.0d0 org.shirakumo.precise-time:monotonic-time-units-per-second)))))
+  (multiple-value-bind (secs subsecs)
+      (org.shirakumo.precise-time:get-monotonic-time)
+    (+ secs (* subsecs (/ 1.0d0 org.shirakumo.precise-time:monotonic-time-units-per-second)))))
 
 
 #+darwin
 (defun monotonic-time ()
-    (cffi:with-foreign-objects ((tb :uint32 2))
-      (if (= 0 (cffi:foreign-funcall "mach_timebase_info" :pointer tb :int))
-	  (let* ((numer (cffi:mem-aref tb :uint32 0))
-		 (denom (cffi:mem-aref tb :uint32 1)))
-	    (* (/ (* (cffi:foreign-funcall "mach_absolute_time" :uint64) numer) denom) 1d-9))
-	(error "Failed to get time scale for monotonic time."))))
+  (cffi:with-foreign-objects ((tb :uint32 2))
+    (if (= 0 (cffi:foreign-funcall "mach_timebase_info" :pointer tb :int))
+	(let* ((numer (cffi:mem-aref tb :uint32 0))
+	       (denom (cffi:mem-aref tb :uint32 1)))
+	  (* (/ (* (cffi:foreign-funcall "mach_absolute_time" :uint64) numer) denom) 1d-9))
+      (error "Failed to get time scale for monotonic time."))))
 
 
 
