@@ -148,6 +148,21 @@
   ((equalp 1.0 in2) in1)
   ((equalp -1.0 in2) (neg in1)))
 
+
+
+
+(defun optimize-update-descendants (ugen replacement delete-unit)
+  (flet ((replace-func (in-ugen)
+	   (pushnew replacement (descendants in-ugen))
+	   (alexandria:removef (descendants in-ugen) ugen)
+	   (alexandria:removef (descendants in-ugen) delete-unit)))
+    (loop for in in (inputs replacement)
+	  do (when (typep in 'ugen)
+	       (replace-func in)
+	       (when (typep in 'proxy-output)
+		 (replace-func (source in)))))))
+
+
 (defun optimize-add (ugen)
   (let ((optimized-ugen (optimize-to-sum3 ugen)))
     (unless optimized-ugen (setf optimized-ugen (optimize-to-sum4 ugen)))
@@ -156,6 +171,7 @@
     (when optimized-ugen
       (replace-ugen (synthdef ugen) ugen optimized-ugen)
       (optimize-graph optimized-ugen))))
+
 
 (defun optimize-sub (ugen)
   (destructuring-bind (a b) (inputs ugen)
@@ -170,17 +186,23 @@
 	(replace-ugen (synthdef ugen) ugen replacement)
 	(optimize-graph replacement)))))
 
+
 (defun optimize-add-neg (ugen)
-  (let ((comp (lambda (ugen) (and (typep ugen 'unary-operator) (= (special-index ugen) 0)))))
+  (let ((comp (lambda (ugen) (and (typep ugen 'unary-operator) (= (special-index ugen) 0) (= (length (descendants ugen)) 1)))))
     (destructuring-bind (a b) (inputs ugen)
+      (when (eql a b)
+	(return-from optimize-add-neg))
       (destructuring-bind (x y)
 	  (cond ((funcall comp b) (list b a))
 		((funcall comp a) (list a b))
 		(t (list nil nil)))
 	(when (and x y)
-	  (if (= (length (descendants x)) 1) (alexandria:removef (children (synthdef ugen)) x)
-	      (alexandria:removef (descendants x) ugen))
-	  (minus y (nth 0 (inputs x))))))))
+	  (alexandria:removef (children (synthdef ugen)) x)
+	  (let* ((replacement (minus y (nth 0 (inputs x)))))
+	    (setf (descendants replacement) (descendants ugen))
+	    (optimize-update-descendants ugen replacement x)
+	    replacement))))))
+
 
 (defmethod optimize-graph ((ugen binary-operator))
   (when (perform-dead-code-elimination ugen)
@@ -189,6 +211,7 @@
     (return-from optimize-graph (optimize-add ugen)))
   (when (= (special-index ugen) 1)
     (optimize-sub ugen)))
+
 
 (defun +~ (&rest args)
   (reduce 'add args))
@@ -324,6 +347,7 @@
 				  (= (special-index ugen) 2)
 				  (= (length (descendants ugen)) 1)))))
     (destructuring-bind (a b) (inputs ugen)
+      (when (eql a b) (return-from optimize-to-madd))
       (destructuring-bind (x y)
 	  (cond ((funcall comp a) (list a b))
 		((funcall comp b) (list b a))
@@ -334,7 +358,10 @@
 		    ((can-be-mul-add (nth 1 (inputs x)) (nth 0 (inputs x)) y) (reverse (inputs x)))
 		    (t (return-from optimize-to-madd nil)))
 	    (alexandria:removef (children (synthdef ugen)) x)
-	    (mul-add x0 x1 y)))))))
+	    (let* ((replacement (mul-add x0 x1 y)))
+	      (setf (descendants replacement) (descendants ugen))
+	      (optimize-update-descendants ugen replacement x)
+	      replacement)))))))
 
 ;;; Sum3
 (defclass sum3 (ugen) ())
@@ -361,13 +388,20 @@
 				  (= (special-index ugen) 0)
 				  (= (length (descendants ugen)) 1)))))
     (destructuring-bind (a b) (inputs ugen)
+      (when (or (eql (rate a) :demand)
+		(eql (rate b) :demand))
+	(return-from optimize-to-sum3))
       (destructuring-bind (x y)
 	  (cond ((funcall comp a) (list a b))
 		((funcall comp b) (list b a))
 		(t (list nil nil)))
 	(when (and x y)
 	  (alexandria:removef (children (synthdef ugen)) x)
-	  (sum3 (nth 0 (inputs x)) (nth 1 (inputs x)) y))))))
+	  (let* ((replacement (if (eql x y) (sum4 (nth 0 (inputs x)) (nth 0 (inputs x)) (nth 1 (inputs x)) (nth 1 (inputs x)))
+				(sum3 (nth 0 (inputs x)) (nth 1 (inputs x)) y))))
+	    (setf (descendants replacement) (descendants ugen))
+	    (optimize-update-descendants ugen replacement x)
+	    replacement))))))
 
 ;;; Sum3
 (defclass sum4 (ugen) ())
@@ -394,13 +428,18 @@
   (let ((comp (lambda (ugen) (and (typep ugen 'sum3)
 				  (= (length (descendants ugen)) 1)))))
     (destructuring-bind (a b) (inputs ugen)
+      (when (eql a b) (return-from optimize-to-sum4))
+      (when (or (eql (rate a) :demand) (eql (rate b) :demand)) (return-from optimize-to-sum4))
       (destructuring-bind (x y)
 	  (cond ((funcall comp a) (list a b))
 		((funcall comp b) (list b a))
 		(t (list nil nil)))
 	(when (and x y)
 	  (alexandria:removef (children (synthdef ugen)) x)
-	  (sum4 (nth 0 (inputs x)) (nth 1 (inputs x)) (nth 2 (inputs x)) y))))))
+	  (let* ((replacement (sum4 (nth 0 (inputs x)) (nth 1 (inputs x)) (nth 2 (inputs x)) y)))
+	    (setf (descendants replacement) (descendants ugen))
+	    (optimize-update-descendants ugen replacement x)
+	    replacement))))))
 
 ;;; operations ugen
 ;;; UGen 연산자 -------------------------------------------------------------
