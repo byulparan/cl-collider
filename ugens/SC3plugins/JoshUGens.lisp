@@ -1,5 +1,9 @@
 (in-package #:sc)
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; JoshPV
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (def-pv-chain-ugen (pv-noise-synth-p "PV_NoiseSynthP")
     (buffer &optional (threshold 0.1) (num-frames 2.0) (initflag 0.0))
   (multinew new 'pv-chain-ugen buffer threshold num-frames initflag))
@@ -112,4 +116,11 @@
 ;; PV_PitchShift
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; MoogVCF
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defugen (moog-vcf "MoogVCF")
+    (&optional (in 0.0) (fco .0) (res .0) (mul 1.0) (add 0.0))
+  ((:ar (madd (multinew new 'ugen in fco res) mul add))))
 
