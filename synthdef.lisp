@@ -432,8 +432,8 @@
                        (t (error "Play: ~a is not a UGen." ,result))))))))
        (build-synthdef ,synthdef)
        (let* ((,node-id (or ,id (get-next-id *s*)))
-              (,node (make-instance 'node :server *s* :id ,node-id :name *temp-synth-name* :pos ,pos :to ,to
-				    :meta (list :fade-time ,fade-time))))
+              (,node (make-instance 'node :server *s* :id ,node-id :name *temp-synth-name* :pos ,pos :to ,to)))
+	 (setf (synthdef-metadata ,name :fade-time) ,fade-time)
          (recv-synthdef ,synthdef ,node (apply 'sc-osc::encode-message (apply #'make-synth-msg *s* ,name ,node-id ,to ,pos
 									      (loop for (key value) on (synthdef-metadata ,name :params) by #'cddr
 										    append (list (string-downcase key) (floatfy value))))))
@@ -473,14 +473,16 @@ via :TO, possible values are :HEAD, :TAIL, :BEFORE, :AFTER.
                    :return res)))))
 
 (defmacro proxy (key body &key id (gain 1.0) (fade .5) (rel 2) (pos :head) (to 1) (out-bus 0))
-  (alexandria:with-gensyms (node node-alive-p d-key)
+  (alexandria:with-gensyms (node node-alive-p d-key has-fade)
     `(let* ((,node (gethash ,key (node-proxy-table *s*)))
-	    (,node-alive-p (when ,node (if (typep *s* 'nrt-server) t (is-playing-p ,node)))))
+	    (,node-alive-p (when ,node (if (typep *s* 'nrt-server) t (is-playing-p ,node))))
+	    (,has-fade (synthdef-metadata ,key :fade-time)))
+       (declare (ignorable ,has-fade))
        ,(if body
 	    (alexandria:once-only (id fade)
 	      `(labels ((clear-node ()
 			  (when ,node-alive-p
-			    (if (getf (meta ,node) :fade-time) (ctrl ,node :gate 0 :fade (* ,fade ,rel))
+			    (if ,has-fade (ctrl ,node :gate 0 :fade (* ,fade ,rel))
 			      (free ,node)))))
 		 (when (and (typep *s* 'rt-server) (is-playing-p ,id))
 		   (error "already running id ~d~%" ,id))
@@ -496,17 +498,17 @@ via :TO, possible values are :HEAD, :TAIL, :BEFORE, :AFTER.
           `(when ,node-alive-p
 	     (free ,node))))))
 
-(defun proxy-ctrl (key &rest params &key &allow-other-keys)
+(defun proxy-ctrl (key &rest params &key (fade .5) (rel 2) &allow-other-keys)
   (let* ((name key)
 	 (node (gethash name (node-proxy-table *s*)))
 	 (node-alive-p (and node (if (typep *s* 'nrt-server) t (is-playing-p node)))))
     (assert node nil "can't find proxy ~a" key)
-    (let* ((fade-time (getf (meta node) :fade-time)))
+    (let* ((fade-time (synthdef-metadata key :fade-time)))
       (flet ((clear-node ()
-	       (if fade-time (ctrl node :gate 0 :fade (or (getf params :fade) fade-time))
+	       (if fade-time (ctrl node :gate 0 :fade (* fade rel))
 		   (free node))))
-	(let* ((new-node (apply #'synth key params)))
-	  (setf (meta new-node) (list :fade-time fade-time))
+	(setf (getf params :fade) fade)
+	(let* ((new-node (apply #'synth key (print params))))
 	  (loop with controls = (synthdef-metadata name :controls)
 		for (key value) on params by #'cddr
 		for key-name = (intern (string-upcase key))
