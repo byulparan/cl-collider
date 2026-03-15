@@ -251,7 +251,7 @@
 	    (push (list name (list :rate rate :value value :lag lag :fixed-lag fixed-lag :ugen ugen)) (named-controls *synthdef*))
 	    (when (and (eql rate :audio) lag) (setf ugen (unbubble (lag.ar ugen lag))))
 	    (when (and (eql rate :control) lag (not fixed-lag)) (setf ugen (lag.kr ugen lag)))
-	    (pushnew (list name (unbubble value)) (synthdef-metadata (name *synthdef*) :controls))
+	    (pushnew (list (intern (string-upcase name)) (unbubble value)) (synthdef-metadata (name *synthdef*) :controls) :test #'equal)
 	    ugen)))))
 
 (defun kr (name &optional value lag)
@@ -434,7 +434,9 @@
        (let* ((,node-id (or ,id (get-next-id *s*)))
               (,node (make-instance 'node :server *s* :id ,node-id :name *temp-synth-name* :pos ,pos :to ,to
 				    :meta (list :fade-time ,fade-time))))
-         (recv-synthdef ,synthdef ,node (apply 'sc-osc::encode-message (make-synth-msg *s* ,name ,node-id ,to ,pos)))
+         (recv-synthdef ,synthdef ,node (apply 'sc-osc::encode-message (apply #'make-synth-msg *s* ,name ,node-id ,to ,pos
+									      (loop for (key value) on (synthdef-metadata ,name :params) by #'cddr
+										    append (list (string-downcase key) (floatfy value))))))
          (sync)
          ,node))))
 
@@ -495,7 +497,8 @@ via :TO, possible values are :HEAD, :TAIL, :BEFORE, :AFTER.
 	     (free ,node))))))
 
 (defun proxy-ctrl (key &rest params &key &allow-other-keys)
-  (let* ((node (gethash key (node-proxy-table *s*)))
+  (let* ((name key)
+	 (node (gethash name (node-proxy-table *s*)))
 	 (node-alive-p (and node (if (typep *s* 'nrt-server) t (is-playing-p node)))))
     (assert node nil "can't find proxy ~a" key)
     (let* ((fade-time (getf (meta node) :fade-time)))
@@ -504,6 +507,13 @@ via :TO, possible values are :HEAD, :TAIL, :BEFORE, :AFTER.
 		   (free node))))
 	(let* ((new-node (apply #'synth key params)))
 	  (setf (meta new-node) (list :fade-time fade-time))
+	  (loop with controls = (synthdef-metadata name :controls)
+		for (key value) on params by #'cddr
+		for key-name = (intern (string-upcase key))
+		for param = (assoc key-name controls)
+		when (or (and param (not (eql :tr (third param))))
+			 (find key '(:out-bus :gain)))
+		  do (setf (getf (synthdef-metadata name :params) key-name) value))
 	  (prog1
 	      (setf (gethash key (node-proxy-table *s*)) new-node)
 	    (when node-alive-p

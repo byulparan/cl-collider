@@ -603,7 +603,7 @@
 		(number ,node)
 		(node (id ,node))
 		(keyword (alexandria:when-let ((node (gethash ,node (node-proxy-table *s*))))
-					      (id node)))))
+			   (id node)))))
 	 (,server (if (typep ,node 'node) (server ,node) *s*)))
      (when ,id
        ,@body)))
@@ -613,10 +613,19 @@
     (assert (eql rt-server server) nil "Target server is not synth's server. (/= ~a ~a)" server rt-server)
     (apply #'list 9 name id (node-to-pos pos) target args)))
 
+
 (defun ctrl (node &rest param &key &allow-other-keys)
   (with-node (node id server)
     (let* ((args (loop :for (key val) :on param :by #'cddr
 		       :append (list (if (numberp key) key (string-downcase key)) (floatfy val)))))
+      (when (keywordp node)
+	(loop with controls = (synthdef-metadata node :controls)
+	      for (key value) on param by #'cddr
+	      for key-name = (intern (string-upcase key))
+	      for param = (assoc key-name controls)
+	      when (or (and param (not (eql :tr (third param))))
+		       (find key '(:out-bus :gain)))
+		do (setf (getf (synthdef-metadata node :params) key-name) value)))
       (message-distribute node (cons 15 (cons id args)) server))))
 
 (defun map-bus (node &rest param &key &allow-other-keys)
