@@ -53,7 +53,6 @@
 		     :min (read-from-string (third params))
 		     :max (read-from-string (fourth params))
 		     :step (read-from-string (fifth params))))))
-      
       (mapcar #'parse-param params))))
 
 
@@ -67,15 +66,17 @@
     (if (< (length script-msg) (/ 65535 4)) (let* ((osc-device (osc-device *s*)))
 					      (usocket:socket-send (sc-osc::socket osc-device) script-msg (length script-msg)
 								   :port (sc-osc::port osc-device)
-								   :host (sc-osc::host osc-device)))
+								   :host (sc-osc::host osc-device))
+					      (sync))
       (progn
 	(unless (is-local-p *s*)
 	  (error "FaustDef ~a could not be added  to server because it is too big for sending via OSC and server is not local" name))
 	(uiop:with-temporary-file (:stream stream :pathname pathname)
 	  (format stream code)
 	  (close stream)
-	  (send-message *s* "/cmd" "faustfile" hash param-file-path (namestring pathname) nil))))
-    (sync)
+	  (send-message *s* "/cmd" "faustfile" hash param-file-path (namestring pathname) nil)
+	  (sync) ;; should be call `s:sync' before delete temporary file
+	  )))
     (unless (uiop:file-exists-p param-file-path) 
       (warn "FaustGen ~a was not successfully compiled" name)
       (return-from faust-send))

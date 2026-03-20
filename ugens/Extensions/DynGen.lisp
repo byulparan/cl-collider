@@ -57,7 +57,8 @@ If the code for an already existing name gets updated, all running instances of 
     (if (< (length script-msg) (/ 65535 4)) (let* ((osc-device (osc-device *s*)))
 					      (usocket:socket-send (sc-osc::socket osc-device) script-msg (length script-msg)
 								   :port (sc-osc::port osc-device)
-								   :host (sc-osc::host osc-device)))
+								   :host (sc-osc::host osc-device))
+					      (sync))
       (progn
 	(unless (is-local-p *s*)
 	  (error "DynGenDef ~a could not be added  to server because it is too big for sending via OSC and server is not local" name))
@@ -66,8 +67,9 @@ If the code for an already existing name gets updated, all running instances of 
 	  (format stream code)
 	  (close stream)
 	  (let* ((message (append (list "/cmd" "dyngenfile" hash (namestring p) (length params)) params (list nil))))
-	    (apply #'send-message *s* message)))))
-    (sync)
+	    (apply #'send-message *s* message)
+	    (sync) ;; should be call `s:sync' before delete temporary file
+	    ))))
     (setf (gethash name *dyn-gen-register-table*) params)
     name))
 
