@@ -472,7 +472,7 @@ via :TO, possible values are :HEAD, :TAIL, :BEFORE, :AFTER.
                  :unless (null res)
                    :return res)))))
 
-(defmacro proxy (key body &key id (gain 1.0) (fade .5) (rel 2) (pos :head) (to 1) (out-bus 0))
+(defmacro proxy (key body &key id (gain 1.0) (fade .5) (pos :head) (to 1) (out-bus 0))
   (alexandria:with-gensyms (node node-alive-p d-key has-fade)
     `(let* ((,node (gethash ,key (node-proxy-table *s*)))
 	    (,node-alive-p (when ,node (if (typep *s* 'nrt-server) t (is-playing-p ,node))))
@@ -482,7 +482,7 @@ via :TO, possible values are :HEAD, :TAIL, :BEFORE, :AFTER.
 	    (alexandria:once-only (id fade)
 	      `(labels ((clear-node ()
 			  (when ,node-alive-p
-			    (if ,has-fade (ctrl ,node :gate 0 :fade (* ,fade ,rel))
+			    (if ,has-fade (ctrl ,node :gate 0 :fade ,fade)
 			      (free ,node)))))
 		 (when (and (typep *s* 'rt-server) (is-playing-p ,id))
 		   (error "already running id ~d~%" ,id))
@@ -498,14 +498,14 @@ via :TO, possible values are :HEAD, :TAIL, :BEFORE, :AFTER.
           `(when ,node-alive-p
 	     (free ,node))))))
 
-(defun proxy-ctrl (key &rest params &key (fade .5) (rel 2) &allow-other-keys)
+(defun proxy-ctrl (key &rest params &key (fade .5) &allow-other-keys)
   (let* ((name key)
 	 (node (gethash name (node-proxy-table *s*)))
 	 (node-alive-p (and node (if (typep *s* 'nrt-server) t (is-playing-p node)))))
     (assert node nil "can't find proxy ~a" key)
     (let* ((fade-time (synthdef-metadata key :fade-time)))
       (flet ((clear-node ()
-	       (if fade-time (ctrl node :gate 0 :fade (* fade rel))
+	       (if fade-time (ctrl node :gate 0 :fade fade)
 		   (free node))))
 	(setf (getf params :fade) fade)
 	(let* ((new-node (apply #'synth key (print params))))
