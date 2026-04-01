@@ -21,7 +21,7 @@
   "Returns a list of Faust DSP modules and their parameters sent to the current server."
   (loop for k being the hash-keys of *faust-register-table*
 	  using (hash-value v)
-	collect (list :name k :params (car v))))
+	collect (list :name k :params v)))
 
 
 (defun faust-init (&optional path)
