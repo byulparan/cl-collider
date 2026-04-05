@@ -208,7 +208,8 @@
 				:server rt-server)
 	(tempo-clock rt-server) (make-instance 'tempo-clock
 				  :name (name rt-server)
-				  :server rt-server)))
+				  :server rt-server
+				  :timestamp #'monotonic-time)))
 
 
 (let ((semaphore-table (make-hash-table)))
