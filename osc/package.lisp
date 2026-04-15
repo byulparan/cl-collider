@@ -5,6 +5,6 @@
   	   #:send-message
   	   #:send-bundle
   	   #:close-device
-	   #:debug-msg
+	   #:osc-trace
   	   #:add-osc-responder
   	   #:remove-osc-responder))

@@ -4,9 +4,9 @@
   ((reply-handle-table
     :initform (make-hash-table :test #'equal)
     :reader reply-handle-table)
-   (debug-msg 
-    :initarg :debug-msg
-    :accessor debug-msg)
+   (osc-trace
+    :initarg :osc-trace
+    :accessor osc-trace)
    (host
     :initarg :host
     :reader host)
@@ -21,21 +21,18 @@
     :reader socket)
    (listening-thread
     :initform nil
-    :accessor listening-thread)
-   (local-port
-    :initarg :local-port
-    :reader local-port)))
+    :accessor listening-thread)))
 
 
-(defun osc-device (host port &key (local-host "0.0.0.0") local-port debug-msg)
+(defun osc-device (host port &key (local-host "0.0.0.0") local-port trace)
   (let ((device (make-instance 'osc-device
 		  :host host
 		  :port port
-		  :debug-msg debug-msg
 		  :socket (usocket:socket-connect nil nil
 						  :protocol :datagram
 						  :local-host local-host
-						  :local-port local-port))))
+						  :local-port local-port)
+		  :osc-trace trace)))
     #+sbcl (setf (sb-bsd-sockets:sockopt-send-buffer (usocket:socket (socket device)))
 	     usocket:+max-datagram-packet-size+)
     #+(or ccl lispworks)
@@ -110,7 +107,6 @@
 				   (usocket:socket-receive (socket osc-device) buffer (length buffer))))
                          (usocket:socket-receive (socket osc-device) buffer (length buffer)))
 		     #-lispworks (usocket:socket-receive (socket osc-device) buffer (length buffer))
-		     (declare (ignore host port))
                      (if buffer  ; nil when some error inside usocket:socket-receive was caught by the ignore-errors. 
                          (let* ((messages (cdr (decode-bundle buffer))))
                            (loop for message in messages
@@ -125,9 +121,13 @@
                                                (string= (second message) "/quit"))
                                           (progn
                                             (setf running-p nil)
-                                            (return))
-					(when (debug-msg osc-device)
-                                          (format t "Reply handler not found: ~a [ ~{~a ~}]~%" (car message) (cdr message)))))))
+                                            (return))))
+				    (when (osc-trace osc-device)
+				      (format t "OSC Message Received:~%    time: ~a~%    address: ~a:~a~%    recvPort: ~a~%    msg: ~a~%~%"
+					      (* 1.0 (/ (get-internal-real-time) internal-time-units-per-second))
+					      (usocket:host-to-hostname host) port
+					      (usocket:get-local-port (socket osc-device))
+					      message))))
                        ;; We reach here if we get an error during the first 100 calls. We assume the server not
                        ;; ready yet, so just sleep a little and try again. 
                        (progn 

@@ -49,6 +49,7 @@
 	   #:boot-p
 	   #:send-message
 	   #:send-bundle
+	   #:osc-trace
 
 	   #:control-get
 	   #:control-set

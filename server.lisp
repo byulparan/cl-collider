@@ -443,7 +443,7 @@
 	   :name "scsynth")))
   #+windows (sleep *window-server-sleep-time*) ; Wait on server boot...It's very temporal.
   (with-slots (osc-device) rt-server
-    (setf osc-device (sc-osc:osc-device (host rt-server) (port rt-server) :local-port 0 :debug-msg t))))
+    (setf osc-device (sc-osc:osc-device (host rt-server) (port rt-server) :local-port 0))))
 
 (defmethod cleanup-server ((rt-server external-server))
   (when (sc-thread rt-server)
@@ -474,6 +474,19 @@
 	 (round (* (+ (+ time (latency server)) osc::+unix-epoch+) sc-osc::+2^32+))
 	 (osc-device server)
 	 list-of-messages))
+
+
+
+(defgeneric osc-trace (rt-server)
+  (:documentation "A convenience method which dumps all incoming OSC messages."))
+
+(defmethod osc-trace ((rt-server external-server))
+  (sc-osc::osc-trace (osc-device rt-server)))
+
+(defmethod (setf osc-trace) (flag (rt-server external-server))
+  (setf (sc-osc::osc-trace (osc-device rt-server)) flag))
+
+
 
 (defun make-external-server (name &key (server-options (make-server-options))
 				    (host "127.0.0.1")
