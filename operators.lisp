@@ -181,8 +181,8 @@
 	    (alexandria:removef (descendants b) ugen))
 	(setf replacement (make-instance 'binary-operator :synthdef (synthdef ugen)
 							  :name "BinaryOpUGen"
-							  :inputs (list a (nth 0 (inputs b)))
 							  :rate (rate ugen)))
+	(setf (inputs replacement) (list a (nth 0 (inputs b))))
 	(replace-ugen (synthdef ugen) ugen replacement)
 	(optimize-graph replacement)))))
 
