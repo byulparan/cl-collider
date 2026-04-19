@@ -30,6 +30,13 @@
     (input &key (bias .5) (saturation .5) (drive .5) (oversample 1) (mode 0))
   ((:ar (multinew new 'ugen input bias saturation drive oversample mode))))
 
+(defugen (analog-degrade "AnalogDegrade")
+    (input &key (depth .5) (amount .5) (variance .5) (envelope 0.5))
+  ((:ar (multinew new 'ugen input depth amount variance envelope))))
+
+(defugen (analog-loss "AnalogLoss")
+    (input &key (gap .5) (thick .5) (space .5) (speed 1))
+  ((:ar (multinew new 'ugen input gap thick space speed))))
 
 (defugen (analog-vintage-distortion "AnalogVintageDistortion")
     (input &key (drivegain .5) (bias 0) (lowgain .1) (highgain .1) (shelvingfreq 600) (oversample 0))
