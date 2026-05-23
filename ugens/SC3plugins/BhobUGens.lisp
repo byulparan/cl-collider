@@ -169,3 +169,59 @@
   ((:ar (progn (when (< chanls 2) (error "TGrains needs at least two channels."))
 	       (multinew new 'multiout-ugen chanls trigger bufnum rate center-pos dur pan amp
 			 attk dec window interp)))))
+
+;; FFT
+(defugen (pv-common-mag "PV_CommonMag")
+    (buffer1 buffer2 &key (tolerance 0.0) (remove 0.0))
+  ((:ar
+    (multinew new 'pv-chain-ugen buffer1 buffer2 tolerance remove))))
+
+(defugen (pv-common-mul "PV_CommonMul")
+    (buffer1 buffer2 &key (tolerance 0.0) (remove 0.0))
+  ((:ar
+    (multinew new 'pv-chain-ugen buffer1 buffer2 tolerance remove))))
+
+(defugen (pv-mag-minus "PV_MagMinus")
+    (buffer1 buffer2 &key (remove 1.0))
+  ((:ar
+    (multinew new ''pv-chain-ugen buffer1 buffer2 remove))))
+
+(defugen (pv-mag-gate "PV_MagGate")
+    (buffer &key (thresh 1.0) (remove 0.0))
+  ((:ar
+    (multinew new 'pv-chain-ugen buffer thresh remove))))
+
+(defugen (pv-compander "PV_Compander")
+    (buffer &key (thresh 50) (slope-below 1.0) (slope-above 1.0))
+  ((:ar
+    (multinew new 'pv-chain-ugen buffer thresh slope-below slope-above))))
+
+(defugen (pv-mag-scale "PV_MagScale")
+    (buffer1 buffer2)
+  ((:ar
+    (multinew new 'pv-chain-ugen buffer1 buffer2))))
+
+(defugen (pv-morph "PV_Morph")
+    (buffer1 buffer2 &optional (morph 0.0))
+  ((:ar
+    (multinew new 'pv-chain-ugen buffer1 buffer2 morph))))
+
+(defugen (pv-xfade "PV_XFade")
+    (buffer1 buffer2 &optional (fade 0.0))
+  ((:ar
+    (multinew new 'pv-chain-ugen buffer1 buffer2 fade))))
+
+(defugen (pv-xfade "PV_XFade")
+    (buffer1 buffer2 &optional (fade 0.0))
+  ((:ar
+    (multinew new 'pv-chain-ugen buffer1 buffer2 fade))))
+
+(defugen (pv-soft-wipe "PV_SoftWipe")
+    (buffer1 buffer2 &optional (wipe 0.0))
+  ((:ar
+    (multinew new 'pv-chain-ugen buffer1 buffer2 wipe))))
+
+(defugen (pv-cutoff "PV_Cutoff")
+    (buffer1 buffer2 &optional (wipe 0.0))
+  ((:ar
+    (multinew new 'pv-chain-ugen buffer1 buffer2 wipe))))
