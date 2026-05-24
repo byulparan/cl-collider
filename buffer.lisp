@@ -49,6 +49,42 @@
 					 (sc-osc::encode-message "/b_query" bufnum)
 					 (if sr (floatfy  sr) 0.0))))))
 
+(defun find-consecutive-buffers (server num-bufs bufnum)
+  (let* ((buffers (buffers server))
+         (buf-size (length buffers))
+         (buf-num (position bufnum buffers)))
+    (loop
+      when (>= buf-num buf-size)
+        do (error (format nil "Unable to find ~d consecutive buffers." num-bufs))
+      do (loop for i :from 1 :below num-bufs
+               when (>= (+ buf-num i) buf-size)
+                 do (error (format nil "Unable to find ~d consecutive buffers" num-bufs))
+               when (aref buffers (+ buf-num i))
+                 do (setf buf-num (position nil buffers :start (+ buf-num i)))
+                 and return nil
+               finally (return-from find-consecutive-buffers buf-num)))))
+
+(defun get-consecutive-buffers (server num-bufs bufnum)
+  (bt:with-lock-held ((server-lock server))
+    (let* ((buf-num (find-consecutive-buffers server num-bufs bufnum))
+           (buffers (buffers server)))
+      (loop for i :from 0 :below num-bufs
+            collect (setf (aref buffers (+ buf-num i))
+                          (make-instance 'buffer :bufnum (+ buf-num i) :server server))))))
+
+
+(defun buffer-alloc-consecutive (num-bufs frames &key (chanls 1) sr bufnum (server *s*) complete-handler)
+  (let ((buffers (get-consecutive-buffers server num-bufs bufnum)))
+    (loop for buf in buffers
+          do (let ((bufnum (slot-value buf 'bufnum)))
+               (setf (slot-value buf 'frames) frames
+                     (slot-value buf 'chanls) chanls
+                     (slot-value buf 'server) server)
+               (with-sync-or-call-handle (server buf "/b_alloc" complete-handler)
+                 (apply #'send-message server (list "/b_alloc" bufnum (floor frames) (floor chanls)
+                                                    (sc-osc::encode-message "/b_query" bufnum)
+                                                    (if sr (floatfy  sr) 0.0))))))
+    buffers))
 
 (defun buffer-set-sr (buffer sr)
   "Sets the sample rate of the buffer on the server side, and updates its value on the language side. This does not resample the audio. sr is 0 or nil will set to the Server's sample rate. What's different from sclang is that it calls /b_query to update the internal information of the Buffer."

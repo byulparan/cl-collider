@@ -99,6 +99,7 @@
 	   #:buffer-read
 	   #:buffer-read-channel
 	   #:buffer-alloc
+           #:buffer-alloc-consecutive
 	   #:buffer-set-sr
 	   #:buffer-alloc-sequence
 	   #:buffer-cue-soundfile
