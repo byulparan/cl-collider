@@ -80,4 +80,5 @@
 	       (:file "ugens/Extensions/f0plugins")
 	       (:file "ugens/Extensions/DynGen")
 	       (:file "ugens/Extensions/PortedPlugins")
+               (:file "ugens/Extensions/safety-limiter")
 	       (:file "ugens/Extensions/sc_faust")))
