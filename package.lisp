@@ -179,6 +179,8 @@
 	   #:lin-exp
 	   #:exp-lin
 	   #:exp-exp
+           #:lin-curve
+           #:curve-lin
 
 	   #:env-shape-number
 	   #:env

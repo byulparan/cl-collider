@@ -182,7 +182,9 @@
 
 
 (defugen (select "Select") (which array)
-  ((:ar (multinew-list new 'pure-ugen (cons which array)))
+  ((:ar (multinew-list new 'pure-ugen (cons (cond ((eq t which) 1)
+                                                  ((null which) 0)
+                                                  (t which)) array)))
    (:kr (multinew-list new 'pure-ugen (cons which array))))
   :check-fn (lambda (ugen)
 	      (when (eql (rate ugen) :audio)
