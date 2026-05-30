@@ -773,12 +773,12 @@
 (defun clock-quant (quant)
   (tempo-clock-quant (tempo-clock *s*) quant))
 
-(defun clock-dur (beat)
+(defun beat-dur (beat)
   "The duration(sec) of a given beat in the current TempoClock"
   (with-slots (beat-dur) (tempo-clock *s*) 
     (* beat-dur beat)))
 
-(defun dur-clock (sec)
+(defun dur-beat (sec)
   "The number of beats for a given duration(sec) in the current TempoClock"
   (* sec (/ (clock-bpm) 60.0)))
 
@@ -786,7 +786,7 @@
 (defun clock-add (beat function &rest args)
   (if (typep *s* 'rt-server)
       (tempo-clock-add (tempo-clock *s*) beat (lambda () (apply function args)))
-    (if *nrt-pad* (when (< (clock-dur beat) *nrt-pad*)
+    (if *nrt-pad* (when (< (beat-dur beat) *nrt-pad*)
                     (apply function args))
       (apply function args))))
 
