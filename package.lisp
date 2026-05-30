@@ -87,6 +87,7 @@
 	   #:clock-add
 	   #:clock-quant
 	   #:clock-dur
+	   #:dur-clock
 	   #:clock-clear
 	   #:at-beat
 	   #:at-task
