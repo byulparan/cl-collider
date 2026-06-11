@@ -411,19 +411,32 @@ In the case of sine wave partials, AMPLITUDES is a list whose first value specif
 Chebyshev polynomials can be defined as cheby(n) = amplitude * cos(n * acos(x)). In this case, the first value of AMPLITUDES specifies the amplitude for n = 1, the second value specifies the amplitude for n = 2, and so on. FREQUENCIES and PHASES are ignored.
 
 When NORMALIZE is T, the peak amplitude of the wave is normalized to 1.0. If WAVETABLE is set to T, the buffer is written in a special wavetable format so that it can be read by interpolating oscillators. Setting CLEAR-FIRST to T clears the buffer before new partials are written into it. If NIL, the new partials are summed with the existing contents of the buffer."
+  (flet ((convert-ratios (xs) (when xs (mapcar (lambda (x) (if (typep x 'ratio) (float x) x))xs))))
+    (setf amplitudes (convert-ratios amplitudes))
+    (setf frequencies (convert-ratios frequencies))
+    (setf phases (convert-ratios phases)))
   (apply #'send-message
 	 (server buffer)
 	 (append (list "/b_gen" (bufnum buffer)
 		       (ecase wave
 			 (:cheby "cheby")
-			 (:sine (cond ((and frequencies phases) "sine3")
+			 (:sine (cond (phases "sine3")
 				      (frequencies "sine2")
 				      (t "sine1"))))
 		       (+ (if normalize 1 0)
 			  (if as-wavetable 2 0)
 			  (if clear-first 4 0)))
-		 (if (and (eql wave :sine) frequencies)
-		     (append frequencies amplitudes phases)
+		 (if (eql wave :sine)
+                     (cond ((and frequencies phases)
+                            (alexandria:flatten (mapcar #'list
+                                                        frequencies amplitudes phases)))
+                           (phases
+                            (alexandria:flatten (mapcar #'list
+                                                        (loop for x from 1 to (length amplitudes)
+                                                              collect x)
+                                                        amplitudes phases)))
+                           (frequencies
+                            (alexandria:flatten (mapcar #'list frequencies amplitudes))))
 		     amplitudes)))
   (sync server))
 
