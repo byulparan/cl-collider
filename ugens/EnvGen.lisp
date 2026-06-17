@@ -191,6 +191,27 @@
        curve
        1))
 
+(defun env-circle (levels times &optional (curve :lin) (loop-time 0.0)
+                                  (loop-curve :lin) (rate :kr))
+  "Make envelope that will cycle through its values.
+loop-curve and loop-time set the duration and curve for the loop back segment.
+Use rate :ar if you want to use this inside an EnvGen.ar."
+  (let* ((curve (loop with curve = (alexandria:ensure-list curve)
+                      with len = (length curve)
+                      for i from 0 below (length times)
+                      collect (nth (mod i len) curve)))
+         (curve (append (cons loop-curve curve) (list :lin)));; dummy value at end
+         (levels (append (cons (car levels) levels) (list 0.0))) ;; dummy value at end
+         (first0-then1 (cond ((equal loop-time 0) 0)
+                             ((eql rate :ar)
+                              (sc::mul loop-time
+                                 (latch.ar 1.0 (delay-1.ar (impulse.ar 0.0) 1 0 0.0))))
+                             (t (sc::mul loop-time
+                                   (latch.kr 1.0 (delay-1.kr (impulse.kr 0.0) 1 0 0.0))))))
+         (times (append (cons first0-then1 times) (list +inf+)))
+         (release-node (- (length levels) 2))) ;; dummy value at end
+    (env levels times curve release-node 0)))
+
 ;;; Interpolation formulas adapted from Overtone
 
 (defun step-interpolation (pos y1 y2)

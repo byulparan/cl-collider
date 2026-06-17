@@ -8,13 +8,13 @@
 		  (k2a.ar in)))))
     (multinew op nil input)))
 
-(defugen (Delay-1 "Delay1") (&optional (in 0.0) (mul 1.0) (add 0.0))
-  ((:ar (madd (multinew new 'pure-ugen in) mul add))
-   (:kr (madd (multinew new 'pure-ugen in) mul add))))
+(defugen (Delay-1 "Delay1") (&optional (in 0.0) (mul 1.0) (add 0.0) x1)
+  ((:ar (madd (multinew new 'pure-ugen in (if x1 x1 0.0)) mul add))
+   (:kr (madd (multinew new 'pure-ugen in (if x1 x1 in)) mul add))))
 
-(defugen (Delay-2 "Delay2") (&optional (in 0.0) (mul 1.0) (add 0.0))
-  ((:ar (madd (multinew new 'pure-ugen in) mul add))
-   (:kr (madd (multinew new 'pure-ugen in) mul add))))
+(defugen (Delay-2 "Delay2") (&optional (in 0.0) (mul 1.0) (add 0.0) x1 x2)
+  ((:ar (madd (multinew new 'pure-ugen in (if x1 x1 0.0) (if x2 x2 0.0)) mul add))
+   (:kr (madd (multinew new 'pure-ugen in (if x1 x1 in) (if x2 x2 in)) mul add))))
 
 
 (defugen (delay-n "DelayN")

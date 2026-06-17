@@ -193,6 +193,7 @@
 	   #:dadsr
 	   #:adsr
 	   #:asr
+           #:env-circle
 	   #:env-at
 	   #:env-as-signal
 
