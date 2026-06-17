@@ -185,14 +185,14 @@
 
 	   #:env-shape-number
 	   #:env
-	   #:triangle
-	   #:sine
-	   #:perc
-	   #:linen
-	   #:cutoff
-	   #:dadsr
-	   #:adsr
-	   #:asr
+	   #:env-triangle
+	   #:env-sine
+	   #:env-perc
+	   #:env-linen
+	   #:env-cutoff
+	   #:env-dadsr
+	   #:env-adsr
+	   #:env-asr
            #:env-circle
 	   #:env-at
 	   #:env-as-signal

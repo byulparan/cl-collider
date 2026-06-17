@@ -152,40 +152,40 @@
 			:curve-value curve-value
 			:release-node release-node :loop-node loop-node)))
 
-(defun triangle (&optional (dur 1.0) (level 1.0))
+(defun env-triangle (&optional (dur 1.0) (level 1.0))
   (let ((dur (sc::*~ dur .5)))
     (env (list 0 level 0) (list dur dur))))
 
-(defun sine (&optional (dur 1.0) (level 1.0))
+(defun env-sine (&optional (dur 1.0) (level 1.0))
   (let ((dur (sc::*~ dur .5)))
     (env (list 0 level 0) (list dur dur) :sine)))
 
-(defun perc (&optional (attack 0.01) (release 1.0) (level 1.0) (curve -4.0))
+(defun env-perc (&optional (attack 0.01) (release 1.0) (level 1.0) (curve -4.0))
   (env (list 0 level 0) (list attack release) curve))
 
-(defun linen (&optional (attack 0.01) (sus-time 1.0) (release 1.0) (level 1.0) (curve :lin))
+(defun env-linen (&optional (attack 0.01) (sus-time 1.0) (release 1.0) (level 1.0) (curve :lin))
   (env (list 0 level level 0) (list attack sus-time release) curve))
 
-(defun cutoff (&optional (release 0.1) (level 1.0) (curve :lin))
+(defun env-cutoff (&optional (release 0.1) (level 1.0) (curve :lin))
   (let* ((curve-no (env-shape-number curve))
 	 (release-level (if (= 2 curve-no) (dbamp -100) 0)))
     (env (list level release-level) (list release) curve 0)))
 
-(defun dadsr (&optional (delay-time 0.1) (attack-time 0.01) (decay-time 0.3)
+(defun env-dadsr (&optional (delay-time 0.1) (attack-time 0.01) (decay-time 0.3)
 	      (sustain-level 0.5) (release-time 1.0) (peak-level 1.0) (curve -4.0) (bias 0.0))
   (env (sc::add (list 0 0 peak-level (sc::mul peak-level sustain-level) 0) bias)
        (list delay-time attack-time decay-time release-time)
        curve
        3))
 
-(defun adsr (&optional (attack-time 0.01) (decay-time 0.3) (sustain-level .5)
+(defun env-adsr (&optional (attack-time 0.01) (decay-time 0.3) (sustain-level .5)
 	     (release-time 1.0) (peak-level 1.0) (curve -4.0) (bias 0.0))
   (env (sc::add (list 0 peak-level (sc::mul peak-level sustain-level) 0) bias)
        (list attack-time decay-time release-time)
        curve
        2))
 
-(defun asr (&optional (attack-time 0.01) (sustain-level 1.0) (release-time 1.0) (curve -4.0))
+(defun env-asr (&optional (attack-time 0.01) (sustain-level 1.0) (release-time 1.0) (curve -4.0))
   (env (list 0 sustain-level 0)
        (list attack-time release-time)
        curve
