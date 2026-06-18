@@ -82,4 +82,6 @@
                (:file "ugens/Extensions/IBufWr")
 	       (:file "ugens/Extensions/PortedPlugins")
                (:file "ugens/Extensions/safety-limiter")
-	       (:file "ugens/Extensions/sc_faust")))
+	       (:file "ugens/Extensions/sc_faust")
+	       (:file "ugens/Extensions/CDSkip")))
+
