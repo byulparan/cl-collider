@@ -334,6 +334,22 @@ Use rate :ar if you want to use this inside an EnvGen.ar."
 					    level-b
 					    curve-v))))))
 
+
+(defun env-delay (env delay)
+  (let* ((levels (levels env))
+	 (curve-number (curve-number env))
+	 (curve-value (curve-value env))
+	 (release-node (release-node env))
+	 (loop-node (loop-node env)))
+    (make-instance 'env
+      :levels (cons (elt levels 0) levels)
+      :times (cons delay (times env))
+      :curve-number (if (= 1 (length curve-number)) curve-number (cons 1 curve-number))
+      :curve-value (if (= 1 (length curve-value)) curve-value (cons 0 curve-value))
+      :release-node (if (= -99 release-node) release-node (+ release-node 1))
+      :loop-node (if (= -99 loop-node) loop-node (+ loop-node 1)))))
+
+
 (defmethod env-as-signal ((env env) (frames integer))
   "Return a list of length FRAMES created by sampling ENV at FRAMES number of intervals."
   (with-accessors ((levels levels) (times times)

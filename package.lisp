@@ -195,6 +195,7 @@
 	   #:env-asr
            #:env-circle
 	   #:env-at
+	   #:env-delay
 	   #:env-as-signal
 
 	   #:fft
