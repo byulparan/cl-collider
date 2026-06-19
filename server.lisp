@@ -758,7 +758,7 @@
 
 ;;; tempo-clock
 (defun set-clock (new-clock)
-  (stop)
+  (sched-clear (scheduler *s*))
   (tempo-clock-stop (tempo-clock *s*))
   (setf (tempo-clock *s*) new-clock)
   (setf (server new-clock) *s*)
