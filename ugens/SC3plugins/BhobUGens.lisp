@@ -211,11 +211,6 @@
   ((:ar
     (multinew new 'pv-chain-ugen buffer1 buffer2 fade))))
 
-(defugen (pv-xfade "PV_XFade")
-    (buffer1 buffer2 &optional (fade 0.0))
-  ((:ar
-    (multinew new 'pv-chain-ugen buffer1 buffer2 fade))))
-
 (defugen (pv-soft-wipe "PV_SoftWipe")
     (buffer1 buffer2 &optional (wipe 0.0))
   ((:ar
