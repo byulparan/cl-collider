@@ -285,7 +285,9 @@
 				    (min sc::min~)
 				    (logand sc::logand~)
 				    (logior sc::logior~)
-				    (ash sc::ash~))
+				    (ash sc::ash~)
+                                    (1+ sc::1+~)
+                                    (1- sc::1-~))
   "Table mapping function names to their synthdef-compatible equivalents. Used by `convert-code' and `synthdef-equivalent-function' to convert lisp functions in synthdef bodies to ugen functions.")
 
 (defun synthdef-equivalent-function (function)

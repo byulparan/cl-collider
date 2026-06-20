@@ -304,6 +304,13 @@
 (defun ash~ (in1 in2)
   (if (plusp in2) (<< in1 in2)
       (>> in1 (- in2))))
+
+(defun 1+~ (i)
+  (+ 1 i))
+
+(defun 1-~ (i)
+  (- i 1))
+
 ;;;
 ;;;
 ;;;
