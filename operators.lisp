@@ -217,7 +217,8 @@
   (reduce 'add args))
 
 (defun -~ (&rest args)
-  (reduce 'minus args))
+  (if (= 1 (length args)) (neg (car args))
+    (reduce 'minus args)))
 
 (defun *~ (&rest args)
   (reduce 'mul args))
