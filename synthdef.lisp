@@ -403,9 +403,9 @@
 
 (defvar *temp-synth-name* "temp-synth")
 
-(defmacro play (body &key id (out-bus 0) (gain 1.0) (lag 1.0) (fade 0.02) (to (default-group *s*)) (pos :head))
+(defmacro play (body &key id (out-bus 0) (gain 1.0) (lag 1.0) (fade 0.02) to (pos :head))
   (alexandria:with-gensyms (synthdef result dt buses gate gain-sym lag-sym
-                                     start-val env node-id name fade-time outlets seqs node)
+                                     start-val env node-id name fade-time outlets seqs node target)
     `(let* ((,name *temp-synth-name*)
             (,fade-time nil)
             (,synthdef (make-instance 'synthdef :name ,name))
@@ -433,16 +433,17 @@
                        ((eql :control (rate ,result)) (,outlets 'out.kr ,buses ,result ,gain-sym ,lag-sym))
                        (t (error "Play: ~a is not a UGen." ,result))))))))
        (build-synthdef ,synthdef)
-       (let* ((,node-id (or ,id (get-next-id *s*)))
-              (,node (make-instance 'node :server *s* :id ,node-id :name *temp-synth-name* :pos ,pos :to ,to)))
+       (let* ((,target (if ,to ,to (default-group *s*)))
+	      (,node-id (or ,id (get-next-id *s*)))
+              (,node (make-instance 'node :server *s* :id ,node-id :name *temp-synth-name* :pos ,pos :to ,target)))
 	 (setf (synthdef-metadata ,name :fade-time) ,fade-time)
-         (recv-synthdef ,synthdef ,node (apply 'sc-osc::encode-message (apply #'make-synth-msg *s* ,name ,node-id ,to ,pos
+         (recv-synthdef ,synthdef ,node (apply 'sc-osc::encode-message (apply #'make-synth-msg *s* ,name ,node-id ,target ,pos
 									      (loop for (key value) on (synthdef-metadata ,name :params) by #'cddr
 										    append (list (string-downcase key) (floatfy value))))))
          (sync)
          ,node))))
 
-(defun synth (name &rest args &key id (pos :head) (to (default-group *s*)) &allow-other-keys)
+(defun synth (name &rest args &key id (pos :head) to &allow-other-keys)
   "Start a synth by name.
 
 Optionally takes keyword arguments ID POS and HEAD.
@@ -455,12 +456,13 @@ via :TO, possible values are :HEAD, :TAIL, :BEFORE, :AFTER.
 :TO passes a node either as a `node' object or node id."
   (let* ((name-string (string-downcase (symbol-name name)))
          (next-id (or id (get-next-id *s*)))
-         (new-synth (make-instance 'node :server *s* :id next-id :name name-string :pos pos :to to))
+	 (target (if to to (default-group *s*)))
+         (new-synth (make-instance 'node :server *s* :id next-id :name name-string :pos pos :to target))
          (args (loop :for (arg val) :on args :by #'cddr
 		     :unless (member arg '(:id :to :pos))
 		     :append (list (string-downcase arg) (floatfy val)))))
     (message-distribute new-synth
-			(apply #'make-synth-msg *s* name-string next-id to pos args)
+			(apply #'make-synth-msg *s* name-string next-id target pos args)
 			*s*)))
 
 (defun get-controls-list (form)
@@ -474,7 +476,7 @@ via :TO, possible values are :HEAD, :TAIL, :BEFORE, :AFTER.
                  :unless (null res)
                    :return res)))))
 
-(defmacro proxy (key body &key id (gain 1.0) (fade .5) (rel 1) (pos :head) (to (default-group *s*)) (out-bus 0))
+(defmacro proxy (key body &key id (gain 1.0) (fade .5) (rel 1) (pos :head) to (out-bus 0))
   (alexandria:with-gensyms (node node-alive-p d-key has-fade)
     `(let* ((,node (gethash ,key (node-proxy-table *s*)))
 	    (,node-alive-p (when ,node (if (typep *s* 'nrt-server) t (is-playing-p ,node))))

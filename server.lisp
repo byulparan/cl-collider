@@ -729,7 +729,8 @@
 (defmethod print-object ((node group) stream)
   (format stream "#<~s :server ~s :id ~s>" 'group (server node) (id node)))
 
-(defun make-group (&key id (server *s*) (pos :after) (to 1))
+(defun make-group (&key id (server *s*) (pos :head) to)
+  (unless to (setf to (default-group server)))
   (with-node (to target-id rt-server)
     (unless (numberp to)
       (assert (eql rt-server server) nil "Target server is not group's server. (/= ~a ~a)" rt-server server))

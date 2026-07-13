@@ -18,7 +18,7 @@
 		 (with-controls ((amp new-amp) (gate 1))
 		   (x-out.ar 0 (linen.kr gate .01 1.0 .05 :act :free)
 			     (* (in.ar 0 num-output) (lag.kr amp .1))))
-		 :to 1 :pos :after)))
+		 :to (default-group rt-server) :pos :after)))
 	  (ctrl (volume-control-synth rt-server) :amp new-amp))
       (when is-playing-p
 	(ctrl (volume-control-synth rt-server) :amp 1.0 :gate 0)))
