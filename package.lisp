@@ -58,6 +58,10 @@
 	   #:with-async
 	   #:sync
 
+	   #:volume
+	   #:mute
+	   #:unmute
+	   
 	   #:at
 	   #:free
 	   #:release
