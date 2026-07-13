@@ -201,7 +201,10 @@
     :accessor volume)
    (volume-control-synth
     :initform nil
-    :accessor volume-control-synth)))
+    :accessor volume-control-synth)
+   (on-free-handlers
+    :initform (make-hash-table)
+    :reader on-free-handlers)))
 
 
 
@@ -299,6 +302,7 @@
 	(get-next-bus rt-server :audio 1 i))
       (dotimes (i (server-options-num-input-bus options))
 	(get-next-bus rt-server :audio 1 (+ i (server-options-num-output-bus options)))))
+    (clrhash (on-free-handlers rt-server))
     (setf (slot-value rt-server 'volume) 0.0
 	  (slot-value rt-server 'volume-control-synth) nil))
   (dolist (f *server-boot-hooks*)
@@ -394,6 +398,9 @@
      "/n_end"
      (lambda (id &rest args)
        (declare (ignore args))
+       (alexandria:when-let ((handle (gethash id (on-free-handlers rt-server))))
+	 (unwind-protect (funcall handle)
+	   (remhash id (on-free-handlers rt-server))))
        (alexandria:removef (node-watcher rt-server) id)))
     (add-reply-responder
      "/d_removed" (lambda (&rest args) (declare (ignore args))))
@@ -613,9 +620,9 @@
 	 (values)))))
 
 
-;;; -------------------------------------------------------
-;;; Node
-;;; -------------------------------------------------------
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Node
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defclass node ()
   ((server :initarg :server :reader server)
@@ -722,7 +729,17 @@
       (when (find id (node-watcher server))
 	t))))
 
-;;; Group
+
+(defun on-free (node handler)
+  "Registers a callback function to be called when the node is freed. "
+  (with-node (node id server)
+    (setf (gethash id (on-free-handlers server)) handler)))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Group
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defclass group (node)
   ())
 
@@ -777,7 +794,11 @@
 (defun server-status (&optional (rt-server *s*))
   (send-message rt-server "/status"))
 
-;;; scheduler
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; scheduler
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defun callback (time f &rest args)
   (if (typep *s* 'rt-server)
       (apply #'sched-add (scheduler *s*) time f args)

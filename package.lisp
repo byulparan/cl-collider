@@ -68,6 +68,7 @@
 	   #:ctrl
 	   #:map-bus
 	   #:is-playing-p
+	   #:on-free
 
 	   #:move-node
 	   
