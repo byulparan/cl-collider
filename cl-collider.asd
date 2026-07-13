@@ -26,6 +26,7 @@
 	       (:file "ugen")
 	       (:file "synthdef")
 	       (:file "operators")
+	       (:file "volume")
 	       (:file "ugens/BEQSuite")
 	       (:file "ugens/BufIO")
 	       (:file "ugens/Chaos")
