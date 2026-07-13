@@ -194,7 +194,16 @@
     :allocation :class)
    (node-watcher
     :initform nil
-    :accessor node-watcher)))
+    :accessor node-watcher)
+   (volume
+    :initform 0.0
+    :accessor volume)
+   (volume-control-synth
+    :initform nil
+    :accessor volume-control-synth)))
+
+
+
 
 (defmethod initialize-instance :after ((self rt-server) &key)
   (push self *all-rt-servers*)
@@ -228,12 +237,14 @@
 
 (defvar *async-in-place* nil)
 
+
 (defmacro with-async ((&key blocking) &body body)
   "The `sync' function is ignored inside this form. In cl-collider, many functions internally call `sync' (especially those related to buffers). If you want to avoid unnecessary waiting in such cases, you can use `with-async'."
   `(prog1 (let* ((*async-in-place* t))
 	    ,@body)
      (when ,blocking
        (sync))))
+
 
 (defun sync (&optional (rt-server *s*))
   "This function waits until all asynchronous commands on the server are completed. However, if it is called from the server’s response thread, it will be ignored to prevent a deadlock. It is also ignored when used inside the `with-async' macro."
@@ -247,6 +258,7 @@
         #+ecl (mp:wait-on-semaphore semaphore)
         #+lisworks (mp:semaphore-acquire semaphore))))
   rt-server)
+
 
 (defmethod server-boot ((rt-server rt-server))
   (assert (not (boot-p rt-server)) nil "~a already running." rt-server)
@@ -285,10 +297,14 @@
       (dotimes (i (server-options-num-output-bus options))
 	(get-next-bus rt-server :audio 1 i))
       (dotimes (i (server-options-num-input-bus options))
-	(get-next-bus rt-server :audio 1 (+ i (server-options-num-output-bus options))))))
+	(get-next-bus rt-server :audio 1 (+ i (server-options-num-output-bus options)))))
+    (setf (slot-value rt-server 'volume) 0.0
+	  (slot-value rt-server 'volume-control-synth) nil))
   (dolist (f *server-boot-hooks*)
     (funcall f))
   rt-server)
+
+
 
 (defmethod server-quit ((rt-server rt-server))
   (assert (boot-p rt-server) nil "~a is not running." rt-server)
@@ -304,11 +320,14 @@
     (funcall f))
   rt-server)
 
+
 (defun add-reply-responder (cmd handler)
   (install-reply-responder *s* cmd handler))
 
+
 (defun remove-reply-responder (cmd)
   (uninstall-reply-responder *s* cmd))
+
 
 (defun process-buffer-complete-handle (server key &optional values)
   (let* ((handlers (gethash key (buffer-get-handlers server))))
@@ -316,6 +335,7 @@
       (funcall (car handlers) (if values values (elt (buffers server) (second key))))
       (bt:with-lock-held ((server-lock server))
 	(setf (gethash key (buffer-get-handlers server)) (cdr handlers))))))
+
 
 (defun initialize-server-responder (rt-server)
   (let ((*s* rt-server))
@@ -379,6 +399,8 @@
     (add-reply-responder
      "/n_move" (lambda (&rest args) (declare (ignore args))))))
 
+
+
 (defun control-get (index &optional action)
   (let ((result nil)
 	(index (floor (floatfy index))))
@@ -388,8 +410,18 @@
       (sync)
       result)))
 
+
+
 (defun control-set (index value)
   (message-distribute nil (list "/c_set" (floatfy index) value) *s*))
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Jack configure for Linux
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 #+(or linux freebsd)
 (defun jack-connect (&key (client-name "SuperCollider") (input-name "system:capture") (output-name "system:playback"))
