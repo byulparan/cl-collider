@@ -68,6 +68,7 @@
 	   #:move-node
 	   
 	   #:make-group
+	   #:default-group
 	   #:server-query-all-nodes
 	   #:group-free-all
 	   #:server-free-all

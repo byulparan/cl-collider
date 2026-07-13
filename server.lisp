@@ -63,6 +63,7 @@
    (server-lock :initform (bt:make-lock) :reader server-lock)
    (id :initform (list #-sbcl 999 #+sbcl 1000) :accessor id)
    (group-id :initform 1 :accessor group-id)
+   (default-group :initform nil :accessor default-group)
    (buffers :initarg :buffers :accessor buffers)
    (audio-buses :initarg :audio-buses :accessor audio-buses)
    (control-buses :initarg :control-buses :accessor control-buses)
@@ -552,7 +553,7 @@
 				 :timestamp (lambda () 0.0d0))
 	     (node-proxy-table *s*) (make-hash-table))
        (let* ((*nrt-pad* ,pad))
-	 (make-group :id 1 :pos :head :to 0)
+	 (setf (default-group *s*) (make-group :id 1 :pos :head :to 0))
 	 ,@body
 	 (when *nrt-pad* (send-bundle *s* (* 1.0d0 *nrt-pad*) (list "/c_set" 0 0)))
 	 (with-open-file (,non-realtime-stream ,osc-file :direction :output :if-exists :supersede
@@ -724,18 +725,19 @@
     (tempo-clock-clear (tempo-clock rt-server))
     (send-message rt-server "/g_freeAll" 0)
     (send-message rt-server "/clearSched")
-    (make-group :id 1 :pos :head :to 0)
+    (setf (default-group rt-server) (make-group :id 1 :pos :head :to 0))
     (dolist (hook *server-free-all-hooks*)
       (funcall hook))))
 
 (defvar *stop-hooks* nil)
 
-(defun stop (&optional (group 1) &rest groups)
+(defun stop (&optional (group (default-group *s*)) &rest groups)
   (sched-clear (scheduler *s*))
   (tempo-clock-clear (tempo-clock *s*))
   (send-message *s* "/clearSched")
   (dolist (group (cons group groups))
-    (send-message *s* "/g_freeAll" group))
+    (with-node (group id *s*)
+      (send-message *s* "/g_freeAll" id)))
   (dolist (hook *stop-hooks*)
     (funcall hook)))
 

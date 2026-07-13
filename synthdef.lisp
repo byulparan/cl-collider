@@ -403,7 +403,7 @@
 
 (defvar *temp-synth-name* "temp-synth")
 
-(defmacro play (body &key id (out-bus 0) (gain 1.0) (lag 1.0) (fade 0.02) (to 1) (pos :head))
+(defmacro play (body &key id (out-bus 0) (gain 1.0) (lag 1.0) (fade 0.02) (to (default-group *s*)) (pos :head))
   (alexandria:with-gensyms (synthdef result dt buses gate gain-sym lag-sym
                                      start-val env node-id name fade-time outlets seqs node)
     `(let* ((,name *temp-synth-name*)
@@ -442,7 +442,7 @@
          (sync)
          ,node))))
 
-(defun synth (name &rest args &key id (pos :head) (to 1) &allow-other-keys)
+(defun synth (name &rest args &key id (pos :head) (to (default-group *s*)) &allow-other-keys)
   "Start a synth by name.
 
 Optionally takes keyword arguments ID POS and HEAD.
@@ -474,7 +474,7 @@ via :TO, possible values are :HEAD, :TAIL, :BEFORE, :AFTER.
                  :unless (null res)
                    :return res)))))
 
-(defmacro proxy (key body &key id (gain 1.0) (fade .5) (rel 1) (pos :head) (to 1) (out-bus 0))
+(defmacro proxy (key body &key id (gain 1.0) (fade .5) (rel 1) (pos :head) (to (default-group *s*)) (out-bus 0))
   (alexandria:with-gensyms (node node-alive-p d-key has-fade)
     `(let* ((,node (gethash ,key (node-proxy-table *s*)))
 	    (,node-alive-p (when ,node (if (typep *s* 'nrt-server) t (is-playing-p ,node))))
