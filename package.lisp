@@ -35,6 +35,8 @@
 	   #:synthdef-metadata
 	   #:with-controls
 	   #:named-control
+	   #:reblock
+	   #:resample
 	   #:kr
 	   #:play
 	   #:proxy
