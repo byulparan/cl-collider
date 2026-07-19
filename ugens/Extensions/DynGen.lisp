@@ -96,7 +96,7 @@ If the code for an already existing name gets updated, all running instances of 
 
 
 
-(defun dyn-gen.ar (num-output name &key inputs params (update 1.0) (sync 0.0))
+(defun dyn-gen.ar (num-output name &key inputs params (update 1.0) (sync 0.0) (pause 0.0))
   "This UGen evaluates EEL2 (expression evaluation library/realtime compiler) code in a VM which runs on the server. This allows to write DSP code on the fly and perform single sample operations.
 
 The code has to be registered using DynGenDef and follows a similar approach to SynthDef by registering a resource (code) under a given name. This also allows to update the evaluated code on the fly.
@@ -122,6 +122,7 @@ Each script can expose multiple outputs and the output for each channel can be w
 	     (dyn-gen-hash name)
 	     update
 	     sync
+	     pause
 	     (length inputs)
 	     (/ (length params) 2)
 	     (append inputs params)))))
