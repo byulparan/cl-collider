@@ -69,6 +69,12 @@
 	    "~D curves were provided, but the envelope only has ~D segments."
 	    (length curve-number) (length times))))
 
+
+
+(defmethod floatfy ((object env))
+  (map 'list #'identity (alexandria:ensure-car (make-env-array-from-env object))))
+
+
 (defparameter +env-shape-table+
   (let ((table (make-hash-table)))
     (labels ((sethash (&rest hash)
@@ -105,7 +111,9 @@
 
 
 (defmethod make-env-array-from-env ((env list))
-  env)
+  (if (every (lambda (in) (typep in 'ugen)) env) (list (map 'vector #'identity env))
+    env))
+
 
 (defmethod make-env-array-from-env ((env env))
   (with-slots (levels times curve-number curve-value release-node loop-node) env
