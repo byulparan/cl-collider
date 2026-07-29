@@ -131,6 +131,19 @@
       (sync server)
       buffer)))
 
+
+(defun buffer-read-no-update (path &key bufnum (server *s*) complete-handler)
+  (let ((file-path (full-pathname path)))
+    (assert (file-exists-p file-path) (path) "File does not exist: ~a" file-path)
+    (let* ((buffer (get-next-buffer server bufnum))
+	   (bufnum (slot-value buffer 'bufnum)))
+      (setf (slot-value buffer 'path) file-path
+            (slot-value buffer 'server) server)
+      (with-sync-or-call-handle (server buffer "/b_allocRead" complete-handler)
+	(apply #'send-message server (list "/b_allocRead" bufnum file-path 0 -1)))
+      buffer)))
+
+
 (defun buffer-cue-soundfile (path &key (server *s*) (start-frame 0) (chanls 2) (frames 32768))
   (let* ((file-path (full-pathname path)))
     (assert (file-exists-p file-path) (path) "File does not exist: ~a" file-path)

@@ -107,6 +107,7 @@
 	   #:path
 	   #:buffer-read
 	   #:buffer-read-channel
+	   #:buffer-read-no-update
 	   #:buffer-alloc
            #:buffer-alloc-consecutive
 	   #:buffer-set-sr
