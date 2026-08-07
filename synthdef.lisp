@@ -110,14 +110,15 @@
   (with-slots (reblock resample) synthdef
     (unless reblock (reblock))
     (unless resample (resample))
-    (cond ((numberp reblock) (setf reblock (list reblock 0)))
-	  ((typep reblock 'proxy-output) (setf reblock (list -1 (+ (special-index (source reblock))
-								   (output-index reblock)))))
-	  (t (error "Reblock requires a number or Synth Control")))
-    (cond ((numberp resample) (setf resample (list (float resample 1.0) 0)))
-	  ((typep resample 'proxy-output) (setf resample (list -1.0 (+ (special-index (source resample))
-								       (output-index resample)))))
-	  (t (error "Resample requires a number or Synth Control")))))
+    (list
+     (cond ((numberp reblock) (list reblock 0))
+	   ((typep reblock 'proxy-output) (list -1 (+ (special-index (source reblock))
+						      (output-index reblock))))
+	   (t (error "Reblock requires a number or Synth Control")))
+     (cond ((numberp resample) (list (float resample 1.0) 0))
+	   ((typep resample 'proxy-output) (list -1.0 (+ (special-index (source resample))
+							 (output-index resample))))
+	   (t (error "Resample requires a number or Synth Control"))))))
 
 
 (defmethod build-synthdef ((synthdef synthdef))
@@ -579,42 +580,41 @@ via :TO, possible values are :HEAD, :TAIL, :BEFORE, :AFTER.
 
 (defun to-byte-array-synthdef-3 (synthdef)
   (let* ((*synthdef* synthdef))
-    (process-reblock-and-resample synthdef))
-  (let* ((result
-	  (flex:with-output-to-sequence (stream)
-	    (write-sequence +type-id+ stream)
-	    (write-sequence (osc::encode-int32 3) stream)
-	    (write-sequence (sc-osc::encode-int16 1) stream)
-	    (write-sequence (osc::encode-int32 0) stream) ;; size of the synth definition in bytes
-	    (write-sequence (make-pstring (name synthdef)) stream)
-	    (write-sequence (osc::encode-int32 (length (constants synthdef))) stream)
-	    (dolist (const (constants synthdef))
-	      (write-sequence (osc::encode-float32 const) stream))
-	    (write-sequence (osc::encode-int32 (length (controls synthdef))) stream)
-	    (dolist (control (controls synthdef))
-	      (write-sequence (osc::encode-float32 control) stream))
-	    (write-sequence (osc::encode-int32 (length (control-names synthdef))) stream)
-	    (dolist (name (control-names synthdef))
-	      (write-sequence (make-pstring (first name)) stream)
-	      (write-sequence (osc::encode-int32 (second name)) stream))
-	    (write-sequence (osc::encode-int32 (length (children synthdef))) stream)
-	    (dolist (ugen (children synthdef))
-	      (write-def-ugen-version2 ugen stream))
-	    ;; currently not support variants
-	    (write-sequence (sc-osc::encode-int16 0) stream) 
-	    ;; reblock
-	    (let* ((reblock (slot-value synthdef 'reblock)))
-	      (write-sequence (osc::encode-int32 (first reblock)) stream)
-	      (write-sequence (osc::encode-int32 (second reblock)) stream))
-	    ;; resample
-	    (let* ((resample (slot-value synthdef 'resample)))
-	      (write-sequence (osc::encode-float32 (first resample)) stream)
-	      (write-sequence (osc::encode-int32 (second resample)) stream))))
-	 (byte-size (- (length result) 10))
-	 (size-byte (osc::encode-int32 byte-size)))
-    (dotimes (i 4)
-      (setf (aref result (+ 10 i)) (aref size-byte i)))
-    result))
+    (destructuring-bind (reblock resample)
+	(process-reblock-and-resample synthdef)
+      (let* ((result
+	      (flex:with-output-to-sequence (stream)
+		(write-sequence +type-id+ stream)
+		(write-sequence (osc::encode-int32 3) stream)
+		(write-sequence (sc-osc::encode-int16 1) stream)
+		(write-sequence (osc::encode-int32 0) stream) ;; size of the synth definition in bytes
+		(write-sequence (make-pstring (name synthdef)) stream)
+		(write-sequence (osc::encode-int32 (length (constants synthdef))) stream)
+		(dolist (const (constants synthdef))
+		  (write-sequence (osc::encode-float32 const) stream))
+		(write-sequence (osc::encode-int32 (length (controls synthdef))) stream)
+		(dolist (control (controls synthdef))
+		  (write-sequence (osc::encode-float32 control) stream))
+		(write-sequence (osc::encode-int32 (length (control-names synthdef))) stream)
+		(dolist (name (control-names synthdef))
+		  (write-sequence (make-pstring (first name)) stream)
+		  (write-sequence (osc::encode-int32 (second name)) stream))
+		(write-sequence (osc::encode-int32 (length (children synthdef))) stream)
+		(dolist (ugen (children synthdef))
+		  (write-def-ugen-version2 ugen stream))
+		;; currently not support variants
+		(write-sequence (sc-osc::encode-int16 0) stream) 
+		;; reblock
+		(write-sequence (osc::encode-int32 (first reblock)) stream)
+		(write-sequence (osc::encode-int32 (second reblock)) stream)
+		;; resample
+		(write-sequence (osc::encode-float32 (first resample)) stream)
+		(write-sequence (osc::encode-int32 (second resample)) stream)))
+	     (byte-size (- (length result) 10))
+	     (size-byte (osc::encode-int32 byte-size)))
+	(dotimes (i 4)
+	  (setf (aref result (+ 10 i)) (aref size-byte i)))
+	result))))
 
 
 
