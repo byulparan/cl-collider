@@ -99,10 +99,12 @@
   (setf (slot-value *synthdef* 'reblock) block-size))
 
 
-(defun resample (&optional (factor 1.0))
+(defun resample (&optional (factor 1))
   (when (slot-value *synthdef* 'resample)
     (error "Resample duplicated"))
   (assert (= *synthdef-version* 3) nil "Resample should used be in synthdef version 3")
+  (when (numberp factor)
+    (assert (power-of-two-p factor) nil "resample factor ~d is not a power of two" factor))
   (setf (slot-value *synthdef* 'resample) factor))
 
 
