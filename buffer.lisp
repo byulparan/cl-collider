@@ -153,17 +153,18 @@
       (sync server)
       buffer)))
 
-(defun buffer-write (buffer path &key (server *s*) (frames -1) (start-frame 0) (format :int24)
+(defun buffer-write (buffer path &key (server *s*) (frames -1) (start-frame 0) header (format :int24)
 				   leave-open-p complete-handler)
   "Make audio-file from Buffer."
   (let ((bufnum (bufnum buffer))
 	(file-path (full-pathname path)))
     (with-sync-or-call-handle (server buffer "/b_write" complete-handler)
-      (send-message server "/b_write" bufnum file-path (pathname-type file-path) (ecase format
-										   (:int16 "int16")
-										   (:int24 "int24")
-										   (:float "float")
-										   (:double "double"))
+      (send-message server "/b_write" bufnum file-path (if header header (pathname-type file-path))
+		    (ecase format
+		      (:int16 "int16")
+		      (:int24 "int24")
+		      (:float "float")
+		      (:double "double"))
 		    frames start-frame (if leave-open-p 1 0)))))
 
 (defun buffer-close (buffer &key (server *s*) complete-handler)
