@@ -669,9 +669,13 @@
 
 (defun ctrl (node &rest param &key &allow-other-keys)
   (with-node (node id server)
-    (let* ((args (loop :for (key val) :on param :by #'cddr
-		       :append (list (if (numberp key) key (string-downcase key)) (floatfy val)))))
-      (when (keywordp node)
+    (let* ((has-number-key nil)
+	   (args (loop :for (key val) :on param :by #'cddr
+		       :append (list (if (numberp key) (progn
+							 (setf has-number-key t) 
+							 key)
+				       (string-downcase key)) (floatfy val)))))
+      (when (and (keywordp node) (not has-number-key))
 	(loop with controls = (synthdef-metadata node :controls)
 	      for (key value) on param by #'cddr
 	      for key-name = (intern (string-upcase key))
