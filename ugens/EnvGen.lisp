@@ -72,7 +72,7 @@
 
 
 (defmethod floatfy ((object env))
-  (map 'list #'identity (alexandria:ensure-car (make-env-array-from-env object))))
+  (map 'list #'(lambda (seg) (float seg 1.0)) (alexandria:ensure-car (make-env-array-from-env object))))
 
 
 (defparameter +env-shape-table+
@@ -152,6 +152,7 @@
 
 (defun env (levels times &optional (curve :lin) (release-node -99) (loop-node -99))
   (let* ((curves (alexandria:ensure-list curve))
+	 (times (alexandria:ensure-list times))
 	 (curve-value
 	   (loop for curve in curves
 		 collect
