@@ -251,16 +251,19 @@
 
 
 (defun sync (&optional (rt-server *s*))
-  "This function waits until all asynchronous commands on the server are completed. However, if it is called from the server’s response thread, it will be ignored to prevent a deadlock. It is also ignored when used inside the `with-async' macro."
-  (if (or (eql (bt:current-thread) (sc-reply-thread rt-server)) *async-in-place*) nil
-    (when (typep rt-server 'rt-server)
-      (let* ((semaphore (get-semaphore-by-thread))
-             (id (assign-id-map-id (sync-id-map rt-server) semaphore)))
-        (send-message rt-server "/sync" id)
-        #+ccl (ccl:wait-on-semaphore semaphore)
-        #+sbcl (sb-thread:wait-on-semaphore semaphore)
-        #+ecl (mp:wait-on-semaphore semaphore)
-        #+lisworks (mp:semaphore-acquire semaphore))))
+  "This function waits until all asynchronous commands on the server are completed. However, if it is called from the server’s response thread or TempoClock thread, it will be ignored to prevent a deadlock. It is also ignored when used inside the `with-async' macro."
+  (cond (*async-in-place* nil)
+	((find (bt:current-thread) (list (sc-reply-thread rt-server)
+					 (sched-thread (tempo-clock rt-server))))
+	 (warn "SYNC sfunction is not effect in Reply Thread or TempoClock thread"))
+	((typep rt-server 'rt-server)
+	 (let* ((semaphore (get-semaphore-by-thread))
+		(id (assign-id-map-id (sync-id-map rt-server) semaphore)))
+           (send-message rt-server "/sync" id)
+           #+ccl (ccl:wait-on-semaphore semaphore)
+           #+sbcl (sb-thread:wait-on-semaphore semaphore)
+           #+ecl (mp:wait-on-semaphore semaphore)
+           #+lisworks (mp:semaphore-acquire semaphore))))
   rt-server)
 
 
