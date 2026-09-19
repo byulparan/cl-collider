@@ -58,10 +58,10 @@
                          program res result-string)))
   #+ecl
   (uiop:run-program (format nil "~{~s ~}" (cons program options))
-		    :output :interactive)
+		    :output *standard-output*)
   #-(or ecl lispworks)
   (uiop:run-program (cons program options)
-		    :output :interactive :error-output *debug-io*))
+		    :output *standard-output* :error-output *debug-io*))
 
 (defun as-keyword (object)
   (alexandria:make-keyword
