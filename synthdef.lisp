@@ -308,6 +308,7 @@
 				    (sin sc::sin~)
 				    (cos sc::cos~)
 				    (tan sc::tan~)
+				    (atan sc::atan~)
 				    (tanh sc::tanh~)
 				    (expt sc::expt~)
 				    (+ sc::+~)

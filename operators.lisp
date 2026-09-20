@@ -93,6 +93,9 @@
 (def-unary-op tan~ #'tan
   :special-index 30)
 
+(def-unary-op atan~ #'atan
+  :special-index 33)
+
 (def-unary-op tanh~ #'tanh
   :special-index 36)
 
