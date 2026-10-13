@@ -355,3 +355,164 @@
 		      (export ',ugen-name)
 		      #-lispworks
 		      (setf (documentation ',ugen-name 'function) (read-ugen-description ,(second name))))))))))
+
+;;; ------------------------------------------------------------------------------------------
+;;; auto-definition of ugens from sclang
+;;; ------------------------------------------------------------------------------------------
+
+(defun sclang-path-not-found-warning ()
+  (progn (warn "sclang was not found in the default path.") nil))
+
+(defvar *sclang-program*
+  #+darwin (or (find-if #'uiop:file-exists-p '("/Applications/SuperCollider/SuperCollider.app/Contents/Resources/sclang"
+					       "/Applications/SuperCollider.app/Contents/Resources/sclang"))
+	       (sclang-path-not-found-warning))
+  #+linux (handler-case
+	      (uiop:run-program '("which" "sclang") :output :line)
+            (t (c)
+              (declare (ignore c))
+              (sclang-path-not-found-warning)))
+  #+windows (merge-pathnames *win-sc-dir* #P"sclang.exe")
+  "The path to the sclang binary. Primarily used for `import-sclang-ugens'.")
+
+(defparameter *auto-generate-ugen-exclusions*
+  (list
+   ;; abstract
+   "AbstractIn" "AbstractOut" "AudioControl" "BasicOpUGen" "BEQSuite" "BufInfoUGenBase" "ChaosGen" "DUGen" "Filter" "ListDUGen" "MultiOutUGen" "OutputProxy" "PureMultiOutUGen" "PureUGen" "WidthFirstUGen"
+   ;; deprecated
+   "SharedIn" "SharedOut"
+   ;; composite & derived
+   "Changed" "DynKlang" "DynKlank" "HilbertFIR" "InBus" "LagControl" "Splay" "SplayAz" "Tap"
+   ;; non-user & implicit
+   "Control"
+   ;; text label
+   "SendPeakRMS" "SendReply" "FFTTrigger" "PackFFT" "Unpack1FFT" "UnpackFFT" "MulAdd"
+   ;; implicit length input
+   "ClearBuf" "SetBuf"
+   ;; count input
+   "MaxLocalBufs"
+   ;; other excluded
+   "Out" "MultiOutUGen" "OutputProxy" "BinaryOpUGen" "UnaryOpUGen" "MulAdd")
+  "List of UGens to exclude by default when auto-generating with `import-sclang-ugens'.")
+
+(defun defugen-function-names (defugen-form) ; FIX: remove, i think this is not needed
+  "Given DEFUGEN-FORM, return the list of functions that that form would define.
+
+Example:
+
+;; (defugen-function-names '(defugen (SinOsc \"SinOsc\") ...)) ;=> (SINOSC.AR SINOSC.KR)
+
+See also: `auto-generate-defugens'"
+  (destructuring-bind (defugen ugen-names arguments methods) defugen-form
+    (declare (ignore defugen arguments))
+    (let ((ugen-name (first ugen-names)))
+      (mapcar (lambda (method)
+		(intern (cat (string ugen-name) "." (string (first method))) '#:cl-collider))
+	      methods))))
+
+(defun ugen-plist-arguments-list (plist)
+  (loop :with arguments := (remove-duplicates (getf plist :arguments) :key #'car :test #'string-equal :from-end t) ; from-end because it seems more likely that the argument with the correct default value will appear first, thus we discard the last
+	:with optional-used := nil
+	:for arg :in arguments
+	:for name := (intern (string-upcase (first arg)) '#:cl-collider)
+	:for default := (second arg)
+	:when (eql name t) ; T cannot be used as the name of an argument in common lisp
+	  :do (setf name 't-0) ; ...so we change it to t-0
+	:if (and default
+		 (not optional-used))
+	  :collect (progn (setf optional-used t)
+			  '&optional)
+	:collect (if default
+		     (list name default)
+		     name)))
+
+;; ugen multinew functions: _range _exp-range b-pass4-new smooth-clip-s-gen smooth-clip-q-gen smooth-fold-s-gen smooth-fold-s2-gen smooth-fold-q-gen smooth-fold-q2-gen var-lag-new
+
+(defun ugen-plist-function (plist)
+  (let* ((methods (getf plist :methods))
+	 (arguments (getf plist :arguments))
+	 (argument-names (mapcar #'first arguments))
+	 (superclass (getf plist :superclass))
+	 (parent (case (intern (string-upcase superclass) '#:keyword)
+		   (:pureugen 'pure-ugen)
+		   (:multioutugen 'multiout-ugen)
+		   (:dugen 'dugen)
+		   ;; ('poll-ugen) ; cannot be determined by the SC-provided superclass. used by: Poll
+		   (:abstractout 'abstract-out)
+		   ;; ('lf-gauss) ; cannot be determined by the SC-provided superclass. used by: LFGauss
+		   ;; ('nooutput-ugen) ; cannot be determined by the SC-provided superclass. used by: SendTrig, SendReply
+		   (:pv_chainugen 'pv-chain-ugen)
+		   (:widthfirstugen 'width-first-ugen)
+		   ;; ('klang) ; cannot be determined by the SC-provided superclass. used by: Klang
+		   ;; ('klank) ; cannot be determined by the SC-provided superclass. used by: Klank
+		   ;; ('dyn-klank) ; cannot be determined by the SC-provided superclass. used by: DynKlank
+		   ;; ('dyn-klang) ; cannot be determined by the SC-provided superclass. used by: DynKlang
+		   ;; ('unary-operator)
+		   ;; ('binary-operator)
+		   (otherwise 'ugen)))
+	 (new `(multinew new ',parent ,@(loop :for arg :in (remove-if (lambda (arg)
+									(member arg (list "mul" "add") :test #'string=))
+								      argument-names)
+					      :if arg
+						:collect (if (eql t arg) ; T cannot be used as the name of an argument in common lisp
+							     't-0 ; ...so we change it to t-0
+							     (intern (string-upcase arg) '#:cl-collider)))))
+	 (creation (if (and (member "mul" argument-names :test #'string=)
+			    (member "add" argument-names :test #'string=))
+		       `(madd ,new mul add)
+		       new)))
+    (loop :for method :in methods
+	  :collect `(,method ,creation))))
+
+;; FIX: PV UGens use `def-pv-chain-ugen' instead of `defugen'
+(defun ugen-plist-defugen (plist)
+  "Generate a `defugen' form from PLIST, a plist of information about a UGen."
+  (let ((ugen (getf plist :ugen)))
+    `(defugen (,(intern (string-upcase ugen) '#:cl-collider) ,ugen)
+	 ,(ugen-plist-arguments-list plist)
+       ,(ugen-plist-function plist))))
+
+(defun ugen-already-defined-p (ugen methods)
+  "True if UGEN is already defined. METHODS should be the list of the UGen's supported class methods (i.e. :ar, :kr, :ir, etc)."
+  (if methods
+      (find-if (lambda (method)
+		 (fboundp (intern (format nil "~A~@[.~A~]" (string-upcase ugen) method) '#:cl-collider)))
+	       methods)
+      (fboundp (intern (string-upcase ugen) '#:cl-collider))))
+
+(defun auto-generate-defugens (&key overwrite-existing (exclude *auto-generate-ugen-exclusions*))
+  "Generate a loadable Lisp file of `defugen' forms from UGen definitions known to SuperCollider/sclang using the dump-ugens.scd script. With OVERWRITE-EXISTING, import definitions even if they already exist in the Lisp image. EXCLUDE is a list of UGen names (as strings) that should be ignored rather than imported--by default, this is a list of UGens already defined by cl-collider, which this function is not able to import automatically.
+
+Generally, users will probably want to call `import-sclang-ugens' instead of calling this directly."
+  (let ((dump-file (namestring (asdf:system-relative-pathname '#:cl-collider "ugens/dumped-ugens.lisp")))
+	(sclang-output-file "/tmp/sclang-output.txt")) ; FIX: don't assume this directory exists; perhaps put it in the project's directory (and add it to gitignore if so)
+    (format *debug-io* "~&Saving sclang output to ~S~%" sclang-output-file)
+    (uiop:run-program (list *sclang-program*
+			    "-u" "57920" ; use a non-default port to attempt to avoid conflicts with already-running sclang processes.
+			    (namestring (asdf:system-relative-pathname '#:cl-collider "dump-ugens.scd"))
+			    dump-file)
+		      :output sclang-output-file
+		      :error-output sclang-output-file)
+    (let ((forms (uiop:read-file-forms dump-file))
+	  (defugens-file "/tmp/defugens.lisp") ; FIX: don't assume this directory exists
+	  (*package* (find-package '#:cl-collider)))
+      (format *debug-io* "~&Saving defugen forms to ~S~%" defugens-file)
+      (with-open-file (s defugens-file :direction :output :if-exists :rename-and-delete :if-does-not-exist :create)
+	(print '(in-package :cl-collider) s)
+	(dolist (form forms)
+	  (let* ((ugen (getf form :ugen))
+		 (methods (getf form :methods))
+		 (defined-already (unless overwrite-existing
+				    (ugen-already-defined-p ugen methods))))
+	    ;; (format t "~&UGen: ~S methods: ~S defined-already: ~S~%" ugen methods defined-already)
+	    (unless (or (member ugen exclude :test #'string=)
+			defined-already)
+	      (print (ugen-plist-defugen form) s)))))
+      defugens-file)))
+
+(defun import-sclang-ugens (&key overwrite-existing (exclude *auto-generate-ugen-exclusions*))
+  "Import UGens from sclang into cl-collider. With OVERWRITE-EXISTING, import definitions even if they already exist in the Lisp image. EXCLUDE is a list of UGen names (as strings) that should be ignored rather than imported--by default, this is a list of UGens already defined by cl-collider, which this function is not able to import automatically."
+  (format *debug-io* "~&Reading UGen metadata from sclang...~%")
+  (let ((defugens-file (auto-generate-defugens :overwrite-existing overwrite-existing :exclude exclude)))
+    (format *debug-io* "~&Loading UGens...~%")
+    (load defugens-file)))
