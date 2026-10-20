@@ -500,7 +500,7 @@ via :TO, possible values are :HEAD, :TAIL, :BEFORE, :AFTER.
 	 (target (if to to (default-group *s*)))
          (new-synth (make-instance 'node :server *s* :id next-id :name name-string :pos pos :to target))
          (args (loop :for (arg val) :on args :by #'cddr
-		     :unless (member arg '(:id :to :pos))
+		     :unless (or (member arg '(:id :to :pos)) (not val))
 		     :append (list (string-downcase arg) (floatfy val)))))
     (message-distribute new-synth
 			(apply #'make-synth-msg *s* name-string next-id target pos args)
