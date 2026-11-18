@@ -25,3 +25,20 @@
 		    in
 		    (elt in 1))
 		damp early-diff high-cut high low-cut low mod-depth mod-freq mid size time)))))
+
+(defugen (diode-ring-mod "DiodeRingMod")
+    (carrier modulator)
+  ((:ar (sc::multinew new 'ugen
+                      carrier modulator))))
+
+(defugen (complex-res "ComplexRes")
+    (&optional (in 0) (freq 100) (decay 0.2))
+  ((:ar (sc::multinew new 'ugen
+                      in freq decay))))
+
+(defugen (rms "RMS")
+    (in &key (lp-freq 100))
+  ((:ar (multinew new 'ugen
+                  in lp-freq))
+   (:kr (multinew new 'ugen
+                  in lp-freq))))
